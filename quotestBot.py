@@ -5,7 +5,9 @@ import datetime
 
 TOKEN = 'OTc0NzY1NDI1Mjk4NjQ5MDk4.GGVRVj.r6Pzitvw3K0aTYKZTVR6s8mQwI-EvWq_t2GKiM'
 
-client = discord.Client()
+intents = discord.Intents(messages=True, guilds=True, members=True)
+
+client = discord.Client(intents=intents)
 
 
 def last_monday():
@@ -45,7 +47,6 @@ async def on_message(msg):
                 await msg.channel.send(give_quote().text)
                 
             case '!activechange':
-                if msg.author == client.get_user(482591737538281472) or msg.author == client.get_user(107523639410180096):
                     guild = client.get_guild(msg.guild.id)
                     mlist = memberlist(msg)
                     for m in mlist:
@@ -55,9 +56,8 @@ async def on_message(msg):
                                 if j.author == guild.get_member(m[0]):
                                     m[1] +=  1
                         mem = guild.get_member(m[0])
-                        active = new_role = role = discord.utils.get(mem.guild.roles, name='active')
-                        Active = new_role = role = discord.utils.get(mem.guild.roles, name='Active')
-                        print(mem.roles)
+                        active = discord.utils.get(mem.guild.roles, name='active')
+                        Active = discord.utils.get(mem.guild.roles, name='Active')
                         if m[1] < 11:
                             if Active in mem.roles:
                                 await mem.remove_roles(Active)
@@ -71,7 +71,8 @@ async def on_message(msg):
                                 await mem.remove_roles(active) 
                                 await mem.add_roles(Active)
                             else:
-                                await mem.add_roles(active)   
+                                await mem.add_roles(Active)
+                    await msg.channel.send("done")
         return
 if __name__ == "__main__":     
     client.run(TOKEN)
