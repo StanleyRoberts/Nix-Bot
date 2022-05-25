@@ -46,6 +46,9 @@ async def on_message(msg):
             case '!quote':
                 await msg.channel.send(give_quote().text)
                 
+            case '!annoystan':
+                await msg.channel.send('<@107523639410180096>')
+                
             case '!activechange':
                     guild = client.get_guild(msg.guild.id)
                     mlist = memberlist(msg)
