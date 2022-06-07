@@ -2,13 +2,44 @@ import discord
 import requests
 import json
 import datetime
+from ctypes import sizeof
+import praw
+import random
+
 
 TOKEN = 'OTc0NzY1NDI1Mjk4NjQ5MDk4.GGVRVj.r6Pzitvw3K0aTYKZTVR6s8mQwI-EvWq_t2GKiM'
+
+CLIENT_ID = 'atOZU5hA9clYKG-oTZKNsA'
+SECRET_KEY = 'bchDQT8bPriqN03okgKNSgppYWGq2Q'
+USER_AGENT = 'atOZU5hA9clYKG-oTZKNsA'
+
 
 intents = discord.Intents(messages=True, guilds=True, members=True)
 
 client = discord.Client(intents=intents)
 
+reddit_read_only = praw.Reddit(client_id = CLIENT_ID,
+                               client_secret = SECRET_KEY,
+                               user_agent= USER_AGENT)
+
+reddit_authorized = praw.Reddit(client_id = CLIENT_ID,         
+                                client_secret = SECRET_KEY, 
+                                user_agent= USER_AGENT,        
+                                username="WatchingRacoons",    
+                                password="M3m3s4Disc") 
+
+async def getmeme(subr, time):
+    subreddit = reddit_read_only.subreddit(subr)
+    memes = subreddit.top(time)
+    mem = []
+    for post in memes:
+        mem.append(post)
+    meme = mem[random.randint(0, len(mem)-1)]
+    if not meme.is_self:
+        link = meme.url
+    else:
+        link = meme.selftext
+    return (meme.title, link)
 
 def last_monday():
     today = datetime.datetime.today()
@@ -76,6 +107,16 @@ async def on_message(msg):
                             else:
                                 await mem.add_roles(Active)
                     await msg.channel.send("done")
+        if '!meme' in user_message.lower().split():
+            messagew = user_message.split()
+            subr = messagew[1]
+            words = len(messagew)
+            if words >= 3:
+                time = messagew[2]
+            else:
+                time = "all"
+            fun = await getmeme(subr, time)
+            await msg.channel.send("***"+fun[0]+"***\n"+fun[1])
         return
 if __name__ == "__main__":     
     client.run(TOKEN)
