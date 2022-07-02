@@ -77,7 +77,8 @@ async def on_message(msg):
     if msg.channel.name == '🤖-bot-commands' or msg.channel.name == 'testing-of-the-bot🤖':
         message = user_message.lower().split()
         if message[0][0] == prefix:
-            match message[1:]:
+            print("prefix here")
+            match message[0][1:]:
                 case 'quote':
                     await msg.channel.send(give_quote().text)   
                 case 'annoystan':
