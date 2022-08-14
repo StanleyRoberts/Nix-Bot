@@ -141,7 +141,9 @@ async def on_message(msg):
                         await msg.channel.send("Subreddit\'"+subr+"\' banned")
                     except prawcore.exceptions.Forbidden:
                         await msg.channel.send("Subreddit\'"+subr+"\' private")
-                    await msg.channel.send("***"+fun[0]+"***\n"+fun[1])
+                    await msg.channel.send("***"+fun[0]+"***\n"+fun[1])                 
+                case 'fact':
+                    await msg.channel.send(give_fact())
         return
 if __name__ == "__main__":     
     client.run(TOKEN)
