@@ -15,7 +15,7 @@ SECRET_KEY = 'bchDQT8bPriqN03okgKNSgppYWGq2Q'
 USER_AGENT = 'atOZU5hA9clYKG-oTZKNsA'
 
 prefix = '!'
-
+#Hi
 intents = discord.Intents(messages=True, guilds=True, members=True)
 
 client = discord.Client(intents=intents)
