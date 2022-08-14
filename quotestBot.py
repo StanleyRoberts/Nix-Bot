@@ -15,7 +15,9 @@ SECRET_KEY = 'bchDQT8bPriqN03okgKNSgppYWGq2Q'
 USER_AGENT = 'atOZU5hA9clYKG-oTZKNsA'
 
 prefix = '!'
-#Hi
+
+API_KEY = 'PW28Q/V4PH0amKO/DbtbfQ==yR6f6tfRxigcL7uA'
+
 intents = discord.Intents(messages=True, guilds=True, members=True)
 
 client = discord.Client(intents=intents)
@@ -55,6 +57,19 @@ def memberlist(msg):
         member_id = i.id
         mlist.append([member_id, 0])
     return mlist
+
+def give_fact():
+    api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
+    response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
+    if response.status_code == requests.codes.ok:
+        print(type(response.text))
+        cjson = json.loads(response.text)
+        print(cjson[0]["fact"])
+        return cjson[0]["fact"]
+    else:
+        print("Error:", response.status_code, response.text)
+    return "error"
+
 
 @client.event
 async def on_ready():
