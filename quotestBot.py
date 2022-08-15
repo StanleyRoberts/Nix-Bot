@@ -33,21 +33,21 @@ allowed_channels = ['🤖-bot-commands', 'testing-of-the-bot🤖']
 
 ### Command Functions ###
 
-async def give_meme(message):
+def give_meme(message):
     subr = message[1]
-    time = message[2] if len(message)>=3 else "all" # message[2] needs sanity check
+    time = message[2] if len(message)>=3 else "all" # message[2] needs sanity check (hahahha same)
     try:
-        subreddit = await reddit_read_only.subreddit(subr)
+        subreddit = reddit_read_only.subreddit(subr)
         posts = subreddit.top(time)
         memes = [post for post in posts]
     except prawcore.exceptions.Redirect:
-        return "Subreddit\'"+subr+"\' not found"
+        return "Subreddit \'"+subr+" \' not found"
     except prawcore.exceptions.NotFound:
-        return "Subreddit\'"+subr+"\' banned"
+        return "Subreddit \'"+subr+"\' banned"
     except prawcore.exceptions.Forbidden:
-        return "Subreddit\'"+subr+"\' private"
+        return "Subreddit \'"+subr+"\' private"
 
-    meme = random.choice(memes) # this should work directly with 'posts' variable but i cant test it
+    meme = random.choice(memes) 
 
     if meme.is_self:
         link = meme.selftext
@@ -67,11 +67,11 @@ def give_quote():
     response = requests.get("https://inspirobot.me/api?generate=true")
     return response.text
 
-async def parse_command(message):
+def parse_command(message):
     match message[0][1:]:
         case 'quote': return give_quote()
         case 'annoystan': return '<@107523639410180096>'
-        case 'meme': return await give_meme()
+        case 'meme': return give_meme(message)
         case 'fact': return give_fact()
         case _: return "Unknown command"
 
