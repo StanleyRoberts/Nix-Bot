@@ -1,8 +1,6 @@
 import discord
 import requests
 import json
-import datetime
-from ctypes import sizeof
 import praw
 import random
 import prawcore
@@ -69,11 +67,11 @@ def give_quote():
     response = requests.get("https://inspirobot.me/api?generate=true")
     return response.text
 
-def parse_command(message):
+async def parse_command(message):
     match message[0][1:]:
         case 'quote': return give_quote()
         case 'annoystan': return '<@107523639410180096>'
-        case 'meme': return give_meme()
+        case 'meme': return await give_meme()
         case 'fact': return give_fact()
         case _: return "Unknown command"
 
