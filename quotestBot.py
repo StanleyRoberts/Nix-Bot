@@ -38,6 +38,8 @@ async def give_meme(message):
     time = message[2] if len(message)>=3 else "all" # message[2] needs sanity check
     try:
         subreddit = await reddit_read_only.subreddit(subr)
+        posts = subreddit.top(time)
+        memes = [post for post in posts]
     except prawcore.exceptions.Redirect:
         return "Subreddit\'"+subr+"\' not found"
     except prawcore.exceptions.NotFound:
@@ -45,8 +47,6 @@ async def give_meme(message):
     except prawcore.exceptions.Forbidden:
         return "Subreddit\'"+subr+"\' private"
 
-    posts = subreddit.top(time)
-    memes = [post for post in posts]
     meme = random.choice(memes) # this should work directly with 'posts' variable but i cant test it
 
     if meme.is_self:
