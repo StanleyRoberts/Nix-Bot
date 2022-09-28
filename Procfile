@@ -1,1 +1,1 @@
-worker: python quotestBot.py -a
+worker: python quotestBot.py -a watching-racoons-bot
