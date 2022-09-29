@@ -5,6 +5,7 @@ import asyncpraw as praw, prawcore
 from dotenv import load_dotenv
 import sqlite3
 
+
 ### CONSTANTS ###
 
 load_dotenv()
@@ -15,12 +16,13 @@ CLIENT_ID = os.getenv('CLIENT_ID') # PRAW/Reddit API client ID
 SECRET_KEY = os.getenv('SECRET_KEY') # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT') #PRAW/Reddit API user agent
 
-intents = discord.Intents(messages=True, guilds=True)
+intents = discord.Intents(messages=True, message_content=True, guilds=True)
 bot = discord.Bot(intents=intents, command_prefix='?')
 
 reddit = praw.Reddit(client_id = CLIENT_ID,         
                      client_secret = SECRET_KEY, 
                      user_agent= USER_AGENT,) 
+
 
 ### Command Functions ###
 
@@ -65,6 +67,7 @@ async def set_counting_channel(ctx, channel: discord.TextChannel):
     single_SQL("UPDATE Channels SET CountingChannelID={0} WHERE GuildID={1}".format(channel.id, ctx.guild_id))
     await ctx.respond("Counting channel set to {0}".format(channel))
 
+
 ### Helpers ###
 
 def single_SQL(query):
@@ -80,7 +83,7 @@ def single_SQL(query):
 
 @bot.event
 async def on_guild_join(guild):
-    single_SQL("INSERT INTO Channels VALUES ({0}, -1);".format(guild.id))
+    single_SQL("INSERT INTO Channels VALUES ({0}, NULL);".format(guild.id))
 
 @bot.event
 async def on_ready():
