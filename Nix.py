@@ -1,9 +1,9 @@
 import discord
 import requests
 import json, random, os
-import praw, prawcore
-from discord.ext import commands
+import asyncpraw as praw, prawcore
 from dotenv import load_dotenv
+import sqlite3
 
 ### CONSTANTS ###
 
@@ -18,32 +18,25 @@ USERNAME = "WatchingRacoons" # reddit account username
 PASSWORD = os.getenv('PASSWORD') # reddit account password
 
 intents = discord.Intents(messages=True, guilds=True, members=True)
-bot = commands.Bot(intents=intents, command_prefix='?') # Change to Bot rather than Client
+bot = discord.Bot(intents=intents, command_prefix='?') # Change to Bot rather than Client
 
-reddit_read_only = praw.Reddit(client_id = CLIENT_ID,
-                               client_secret = SECRET_KEY,
-                               user_agent= USER_AGENT)
-
-reddit_authorized = praw.Reddit(client_id = CLIENT_ID,         
+reddit = praw.Reddit(client_id = CLIENT_ID,         
                                 client_secret = SECRET_KEY, 
                                 user_agent= USER_AGENT,        
                                 username=USERNAME,    
                                 password=PASSWORD) 
 
-### Customisable variables ###
-
-prefix = '!'
-allowed_channels = ['🤖-bot-commands', 'testing-of-the-bot🤖']
-
 ### Command Functions ###
 
-def give_meme(message):
-    subr = message[1]
-    time = message[2] if len(message)>=3 else "all" # message[2] needs sanity check (hahahha same)
+@bot.slash_command(name='reddit')
+async def send_reddit_post(ctx, subreddit,
+                           time: discord.Option(str, default="day",
+                                                choices=["month", "hour", "week", "all", "day", "year"])):
     try:
-        subreddit = reddit_read_only.subreddit(subr)
-        posts = subreddit.top(time)
-        memes = [post for post in posts]
+        subr = await reddit.subreddit(subreddit)
+        posts = [post async for post in subr.top(time_filter=time, limit=100)]
+        #print(type(posts))
+        #memes = [a for a in posts]
     except prawcore.exceptions.Redirect:
         return "Subreddit \'"+subr+" \' not found"
     except prawcore.exceptions.NotFound:
@@ -51,54 +44,32 @@ def give_meme(message):
     except prawcore.exceptions.Forbidden:
         return "Subreddit \'"+subr+"\' private"
 
-    meme = random.choice(memes) 
+    subm = random.choice(posts)
+    link = subm.selftext if subm.is_self else subm.url
 
-    if meme.is_self:
-        link = meme.selftext
-    else:
-        link = meme.url
-    return "***"+meme.title+"***\n"+link
+    await ctx.respond("***"+subm.title+"***\n"+link)
 
-def give_fact():
+@bot.slash_command(name='fact')
+async def send_fact(ctx):
     api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
     response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
+    message = "Error: "+str(response.status_code)+"\n"+response.text
     if response.status_code == requests.codes.ok:
         cjson = json.loads(response.text)
-        return cjson[0]["fact"]
-    return "Error: "+response.status_code+"\n"+response.text
+        message = cjson[0]["fact"]
+    await ctx.respond(message)
 
-def give_quote():
+@bot.slash_command(name='quote')
+async def send_quote(ctx):
     response = requests.get("https://inspirobot.me/api?generate=true")
-    return response.text
+    await ctx.respond(response.text)
 
-def parse_command(message):
-    match message[0][1:]:
-        case 'quote': return give_quote()
-        case 'annoystan': return '<@107523639410180096>'
-        case 'meme': return give_meme(message)
-        case 'fact': return give_fact()
-        case _: return "Unknown command"
 
 ### Client Event Handlers ###
 
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
-
-@bot.event
-async def on_message(msg):
-    username = str(msg.author).split('#')[0]
-    user_message = str(msg.content)
-    channel = str(msg.channel.name)
-    print(f'{username}: {user_message} ({channel})')
-
-    if msg.author == bot.user:
-        return
-
-    message = user_message.lower().split()
-    if msg.channel.name in allowed_channels and message[0][0] == prefix:
-        response = parse_command(message)
-        await msg.channel.send(response)
 
 if __name__ == "__main__":     
     bot.run(TOKEN)
