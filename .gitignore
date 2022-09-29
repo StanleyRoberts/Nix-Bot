@@ -1,0 +1,4 @@
+.venv
+.env
+test.sql
+test.py
