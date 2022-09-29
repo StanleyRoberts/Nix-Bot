@@ -59,10 +59,10 @@ async def send_quote(ctx):
     response = requests.get("https://inspirobot.me/api?generate=true")
     await ctx.respond(response.text)
 
-@bot.slash_command(name='set_counting_channel', default_member_permissions=discord.Permissions(32),
-                   description="Sets the channel for the counting game")
+@bot.slash_command(name='set_counting_channel', description="Sets the channel for the counting game")
+@discord.commands.default_permissions(manage_guild=True)
 async def set_counting_channel(ctx, channel: discord.TextChannel):
-    single_SQL("UPDATE Channel SET CountingChannelID={0} WHERE ChannelID={1}".format(channel.id, ctx.guild_id))
+    single_SQL("UPDATE Channels SET CountingChannelID={0} WHERE GuildID={1}".format(channel.id, ctx.guild_id))
     await ctx.respond("Counting channel set to {0}".format(channel))
 
 ### Helpers ###
