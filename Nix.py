@@ -30,13 +30,7 @@ async def send_reddit_post(ctx, subreddit,
                                                 choices=["month", "hour", "week", "all", "day", "year"])):
     try:
         subr = await reddit.subreddit(subreddit)
-        posts = []
-        async for post in subr.top(time_filter=time, limit=100):
-            posts.append(post)
-            if len(posts)>99: break
-        #posts = [post async for post in subr.top(time_filter=time, limit=100)]
-        #print(type(posts))
-        #memes = [a for a in posts]
+        posts = [post async for post in subr.top(time_filter=time, limit=100)]
     except prawcore.exceptions.Redirect:
         return "Subreddit \'"+subr+" \' not found"
     except prawcore.exceptions.NotFound:
