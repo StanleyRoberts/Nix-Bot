@@ -15,8 +15,8 @@ CLIENT_ID = os.getenv('CLIENT_ID') # PRAW/Reddit API client ID
 SECRET_KEY = os.getenv('SECRET_KEY') # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT') #PRAW/Reddit API user agent
 
-intents = discord.Intents(messages=True, guilds=True, members=True)
-bot = discord.Bot(intents=intents, command_prefix='?') # Change to Bot rather than Client
+intents = discord.Intents(messages=True, guilds=True)
+bot = discord.Bot(intents=intents, command_prefix='?')
 
 reddit = praw.Reddit(client_id = CLIENT_ID,         
                      client_secret = SECRET_KEY, 
@@ -24,10 +24,11 @@ reddit = praw.Reddit(client_id = CLIENT_ID,
 
 ### Command Functions ###
 
-@bot.slash_command(name='reddit')
+@bot.slash_command(name='reddit', description="Displays a random top reddit post from the given subreddit")
 async def send_reddit_post(ctx, subreddit,
                            time: discord.Option(str, default="day",
-                                                choices=["month", "hour", "week", "all", "day", "year"])):
+                                                choices=["month", "hour", "week", "all", "day", "year"],
+                                                description="Time period to search for top posts")):
     try:
         subr = await reddit.subreddit(subreddit)
         posts = [post async for post in subr.top(time_filter=time, limit=100)]
@@ -43,7 +44,7 @@ async def send_reddit_post(ctx, subreddit,
 
     await ctx.respond("***"+subm.title+"***\n"+link)
 
-@bot.slash_command(name='fact')
+@bot.slash_command(name='fact', description="Displays a random fact")
 async def send_fact(ctx):
     api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
     response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
@@ -53,13 +54,33 @@ async def send_fact(ctx):
         message = cjson[0]["fact"]
     await ctx.respond(message)
 
-@bot.slash_command(name='quote')
+@bot.slash_command(name='quote', description="Displays an AI-generated quote on an inspirational image")
 async def send_quote(ctx):
     response = requests.get("https://inspirobot.me/api?generate=true")
     await ctx.respond(response.text)
 
+@bot.slash_command(name='set_counting_channel', default_member_permissions=discord.Permissions(32),
+                   description="Sets the channel for the counting game")
+async def set_counting_channel(ctx, channel: discord.TextChannel):
+    single_SQL("UPDATE Channel SET CountingChannelID={0} WHERE ChannelID={1}".format(channel.id, ctx.guild_id))
+    await ctx.respond("Counting channel set to {0}".format(channel))
+
+### Helpers ###
+
+def single_SQL(query):
+    con = sqlite3.connect("server_data.db")
+    cur = con.cursor()
+    cur.execute(query)
+    con.commit()
+    cur.close()
+    con.close()
+
 
 ### Client Event Handlers ###
+
+@bot.event
+async def on_guild_join(guild):
+    single_SQL("INSERT INTO Channels VALUES ({0}, -1);".format(guild.id))
 
 @bot.event
 async def on_ready():
