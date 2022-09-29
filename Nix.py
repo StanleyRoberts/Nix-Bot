@@ -14,17 +14,13 @@ API_KEY = os.getenv('API_KEY') # X-API-Key for API-Ninjas
 CLIENT_ID = os.getenv('CLIENT_ID') # PRAW/Reddit API client ID
 SECRET_KEY = os.getenv('SECRET_KEY') # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT') #PRAW/Reddit API user agent
-USERNAME = "WatchingRacoons" # reddit account username
-PASSWORD = os.getenv('PASSWORD') # reddit account password
 
 intents = discord.Intents(messages=True, guilds=True, members=True)
 bot = discord.Bot(intents=intents, command_prefix='?') # Change to Bot rather than Client
 
 reddit = praw.Reddit(client_id = CLIENT_ID,         
-                                client_secret = SECRET_KEY, 
-                                user_agent= USER_AGENT,        
-                                username=USERNAME,    
-                                password=PASSWORD) 
+                     client_secret = SECRET_KEY, 
+                     user_agent= USER_AGENT,) 
 
 ### Command Functions ###
 
@@ -34,7 +30,11 @@ async def send_reddit_post(ctx, subreddit,
                                                 choices=["month", "hour", "week", "all", "day", "year"])):
     try:
         subr = await reddit.subreddit(subreddit)
-        posts = [post async for post in subr.top(time_filter=time, limit=100)]
+        posts = []
+        async for post in subr.top(time_filter=time, limit=100):
+            posts.append(post)
+            if len(posts)>99: break
+        #posts = [post async for post in subr.top(time_filter=time, limit=100)]
         #print(type(posts))
         #memes = [a for a in posts]
     except prawcore.exceptions.Redirect:

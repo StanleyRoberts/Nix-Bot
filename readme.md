@@ -1,7 +1,7 @@
 # Nix the Bot
 
 
-Nix is a multi-purpose discord bot we created for our server, the *Watching Racoons*.  
+Nix is a multi-purpose discord bot we created for our server, the *Watching Raccoons*.  
 Nix provides many functions, mainly as a provider for many other API's such as random quotes, facts, or reddit posts.
 
 ## Setup
