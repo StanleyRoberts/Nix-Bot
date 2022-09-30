@@ -2,7 +2,8 @@ import discord
 import requests
 import json, random, os
 import asyncpraw as praw, asyncprawcore as prawcore
-from discord.ext import commands
+from discord.ext import tasks, commands
+import datetime as dt
 from dotenv import load_dotenv
 import sqlite3
 
@@ -18,7 +19,7 @@ SECRET_KEY = os.getenv('SECRET_KEY') # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT') #PRAW/Reddit API user agent
 
 intents = discord.Intents(messages=True, message_content=True, guilds=True)
-bot = commands.Bot(intents=intents, command_prefix='?')
+bot = commands.Bot(intents=intents, command_prefix='?', activity=discord.Game(name="/help"))
 
 reddit = praw.Reddit(client_id = CLIENT_ID,         
                      client_secret = SECRET_KEY, 
@@ -49,13 +50,7 @@ async def send_reddit_post(ctx, subreddit,
 
 @bot.slash_command(name='fact', description="Displays a random fact")
 async def send_fact(ctx):
-    api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
-    response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
-    message = "Error: "+str(response.status_code)+"\n"+response.text
-    if response.status_code == requests.codes.ok:
-        cjson = json.loads(response.text)
-        message = cjson[0]["fact"]
-    await ctx.respond(message)
+    await ctx.respond(get_fact())
 
 @bot.slash_command(name='quote', description="Displays an AI-generated quote over an inspirational image")
 async def send_quote(ctx):
@@ -68,13 +63,43 @@ async def set_counting_channel(ctx, channel: discord.TextChannel):
     single_SQL("UPDATE Guilds SET CountingChannelID={0} WHERE ID={1}".format(channel.id, ctx.guild_id))
     await ctx.respond("Counting channel set to {0}".format(channel))
 
+@bot.slash_command(name='set_birthday_channel', description="Sets the channel for the birthday messages")
+@discord.commands.default_permissions(manage_guild=True)
+async def set_counting_channel(ctx, channel: discord.TextChannel):
+    single_SQL("UPDATE Guilds SET BirthdayChannelID={0} WHERE ID={1}".format(channel.id, ctx.guild_id))
+    await ctx.respond("Birthday channel set to {0}".format(channel))
+
+@bot.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
+@discord.commands.default_permissions(manage_guild=True)
+async def set_fact_channel(ctx, channel: discord.TextChannel):
+    single_SQL("UPDATE Guilds SET FactChannelID={0} WHERE ID={1}".format(channel.id, ctx.guild_id))
+    await ctx.respond("Facts channel set to {0}".format(channel))
+
+@bot.slash_command(name='stop_facts', description="Disables daily facts (run set_fact_channel to enable again)")
+@discord.commands.default_permissions(manage_guild=True)
+async def toggle_facts(ctx):
+    single_SQL("UPDATE Guilds SET FactChannelID=NULL WHERE ID={0}".format(ctx.guild_id))
+    await ctx.respond("Stopping daily facts")
+
 @bot.slash_command(name='help', description="Displays the help page for NixBot")
 async def display_help(ctx):
     embed = discord.Embed(title="Help Page",
                           description = "Note: depending on your server settings and role permissions,"\
                           " some of these commands may be hidden or disabled\n\n"
-                          +"".join(sorted([command.mention+" : "+command.description+"\n" for command in bot.walk_application_commands()])))
+                          +"".join(sorted([command.mention+" : "+command.description+"\n"
+                                           for command in bot.walk_application_commands()])))
     await ctx.respond(embed=embed)
+
+@bot.slash_command(name='birthday', description="Set your birthday")
+# make both options necessary
+async def set_birthday(ctx,
+                       day: discord.Option(int, "Enter day of the month (as integer)", min_value=0, max_value=31),
+                       month=discord.Option(str, "Enter month of the year",
+                                            choices=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])):
+    single_SQL("INSERT OR REPLACE INTO Birthdays VALUES ({0}, {1}, \'{2}\')".format(ctx.guild.id, ctx.author.id, month+str(day)))
+    sender = await bot.fetch_user(ctx.author.id)
+    await ctx.respond(sender.mention+" your birthday is set to {0} {1}".format(day, month))
 
 
 ### Helpers ###
@@ -83,16 +108,37 @@ def single_SQL(query):
     con = sqlite3.connect("server_data.db")
     cur = con.cursor()
     cur.execute(query)
+    val = cur.fetchall()
     con.commit()
     cur.close()
     con.close()
+    return val
+
+def get_fact():
+    api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
+    response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
+    message = "Error: "+str(response.status_code)+"\n"+response.text
+    if response.status_code == requests.codes.ok:
+        cjson = json.loads(response.text)
+        message = cjson[0]["fact"]
+    return message
+
+### Looping Tasks ###
+
+@tasks.loop(time=dt.time(hour=9), count=1) #1 behind curr time
+async def daily_check():
+    print("starting daily check")
+    for guild in bot.guilds:
+        factID = single_SQL("SELECT FactChannelID FROM Guilds WHERE ID={0}".format(guild.id))[0][0]
+        if factID:
+            bot.get_channel(factID).send(get_fact())
 
 
 ### Client Event Handlers ###
 
 @bot.event
 async def on_guild_join(guild):
-    single_SQL("INSERT INTO Guilds VALUES ({0}, NULL);".format(guild.id))
+    single_SQL("INSERT INTO Guilds VALUES ({0}, NULL, NULL, NULL, 0);".format(guild.id))
 
 @bot.event
 async def on_guild_leave(guild):
@@ -106,5 +152,6 @@ async def on_member_remove(member):
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
 
-if __name__ == "__main__":     
+if __name__ == "__main__":
+    daily_check.start() 
     bot.run(TOKEN)
