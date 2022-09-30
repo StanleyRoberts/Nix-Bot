@@ -64,8 +64,35 @@ async def send_quote(ctx):
 @bot.slash_command(name='set_counting_channel', description="Sets the channel for the counting game")
 @discord.commands.default_permissions(manage_guild=True)
 async def set_counting_channel(ctx, channel: discord.TextChannel):
-    single_SQL("UPDATE Channels SET CountingChannelID={0} WHERE GuildID={1}".format(channel.id, ctx.guild_id))
+    single_SQL("UPDATE Channels SET CountingChannelID={0} WHERE ID={1}".format(channel.id, ctx.guild_id))
     await ctx.respond("Counting channel set to {0}".format(channel))
+    
+async def countCorrect(number): pass
+
+
+
+@bot.event
+async def on_message(msg):
+    conn = sqlite3.connect("server_data.db")
+    cur = conn.cursor()
+    cur.execute("SELECT CountingChannelID, CurrentCount, LastCounterID FROM Guilds WHERE ID={0}".format(msg.guild.id))
+    values = cur.fetchall()
+    if(msg.channel.id == values[0][0]): #Checks for the right channel
+        if(int(msg.content) == values[0][1] + 1): #Checks if it is the correct number
+            if(msg.author.id != values[0][2]): #Checks if the same user wrote twice 
+                await msg.add_reaction('<:NixBlep:1025434663281492120>') #!!Change for the NixP-Emote before adding it to the server!!
+                single_SQL("UPDATE Guilds SET LastCounterID = {0}, CurrentCount = CurrentCount+1 WHERE ID = {1}".format(msg.author.id, msg.guild.id))
+            else: #The same user wrote two times in a row
+                single_SQL("UPDATE Guilds SET CurrentCount = 0, LastCounterID = 0 WHERE ID = {0}".format(msg.guild.id))
+                await msg.add_reaction('<:NixCrying:1025433818527715459>')
+                await msg.channel.send("Counting failed: same user entered two numbers in a row")
+        else: #Wrong number got typed in the chat
+            single_SQL("UPDATE Guilds SET CurrentCount = 0 WHERE ID = {0}".format(msg.guild.id))
+            await msg.add_reaction('<:NixCrying:1025433818527715459>')
+            await msg.channel.send("Counting failed: Wrong number")
+            
+            
+
 
 
 ### Helpers ###
@@ -83,7 +110,7 @@ def single_SQL(query):
 
 @bot.event
 async def on_guild_join(guild):
-    single_SQL("INSERT INTO Channels VALUES ({0}, NULL);".format(guild.id))
+    single_SQL("INSERT INTO Channels VALUES ({0}, NULL, 0);".format(guild.id))
 
 @bot.event
 async def on_ready():
