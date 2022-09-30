@@ -1,7 +1,8 @@
 import discord
 import requests
 import json, random, os
-import asyncpraw as praw, prawcore
+import asyncpraw as praw, asyncprawcore as prawcore
+from discord.ext import commands
 from dotenv import load_dotenv
 import sqlite3
 
@@ -17,7 +18,7 @@ SECRET_KEY = os.getenv('SECRET_KEY') # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT') #PRAW/Reddit API user agent
 
 intents = discord.Intents(messages=True, message_content=True, guilds=True)
-bot = discord.Bot(intents=intents, command_prefix='?')
+bot = commands.Bot(intents=intents, command_prefix='?')
 
 reddit = praw.Reddit(client_id = CLIENT_ID,         
                      client_secret = SECRET_KEY, 
@@ -31,20 +32,20 @@ async def send_reddit_post(ctx, subreddit,
                            time: discord.Option(str, default="day",
                                                 choices=["month", "hour", "week", "all", "day", "year"],
                                                 description="Time period to search for top posts")):
+    response = "Unknown error searching for subreddit"+subreddit
     try:
         subr = await reddit.subreddit(subreddit)
-        posts = [post async for post in subr.top(time_filter=time, limit=100)]
+        subm = random.choice([post async for post in subr.top(time_filter=time, limit=100)])
+        link = subm.selftext if subm.is_self else subm.url
+        response = "***"+subm.title+"***\n"+link
     except prawcore.exceptions.Redirect:
-        return "Subreddit \'"+subr+" \' not found"
+        response = "Subreddit \'"+subreddit+" \' not found"
     except prawcore.exceptions.NotFound:
-        return "Subreddit \'"+subr+"\' banned"
+        response = "Subreddit \'"+subreddit+"\' banned"
     except prawcore.exceptions.Forbidden:
-        return "Subreddit \'"+subr+"\' private"
+        response = "Subreddit \'"+subreddit+"\' private"
 
-    subm = random.choice(posts)
-    link = subm.selftext if subm.is_self else subm.url
-
-    await ctx.respond("***"+subm.title+"***\n"+link)
+    await ctx.respond(response)
 
 @bot.slash_command(name='fact', description="Displays a random fact")
 async def send_fact(ctx):
@@ -56,7 +57,7 @@ async def send_fact(ctx):
         message = cjson[0]["fact"]
     await ctx.respond(message)
 
-@bot.slash_command(name='quote', description="Displays an AI-generated quote on an inspirational image")
+@bot.slash_command(name='quote', description="Displays an AI-generated quote over an inspirational image")
 async def send_quote(ctx):
     response = requests.get("https://inspirobot.me/api?generate=true")
     await ctx.respond(response.text)
@@ -64,8 +65,16 @@ async def send_quote(ctx):
 @bot.slash_command(name='set_counting_channel', description="Sets the channel for the counting game")
 @discord.commands.default_permissions(manage_guild=True)
 async def set_counting_channel(ctx, channel: discord.TextChannel):
-    single_SQL("UPDATE Channels SET CountingChannelID={0} WHERE GuildID={1}".format(channel.id, ctx.guild_id))
+    single_SQL("UPDATE Guilds SET CountingChannelID={0} WHERE ID={1}".format(channel.id, ctx.guild_id))
     await ctx.respond("Counting channel set to {0}".format(channel))
+
+@bot.slash_command(name='help', description="Displays the help page for NixBot")
+async def display_help(ctx):
+    embed = discord.Embed(title="Help Page",
+                          description = "Note: depending on your server settings and role permissions,"\
+                          " some of these commands may be hidden or disabled\n\n"
+                          +"".join(sorted([command.mention+" : "+command.description+"\n" for command in bot.walk_application_commands()])))
+    await ctx.respond(embed=embed)
 
 
 ### Helpers ###
@@ -83,7 +92,15 @@ def single_SQL(query):
 
 @bot.event
 async def on_guild_join(guild):
-    single_SQL("INSERT INTO Channels VALUES ({0}, NULL);".format(guild.id))
+    single_SQL("INSERT INTO Guilds VALUES ({0}, NULL);".format(guild.id))
+
+@bot.event
+async def on_guild_leave(guild):
+    single_SQL("DELETE FROM Guilds WHERE ID={0}; DELETE FROM Birthdays WHERE GuildID={0}".format(guild.id))
+
+@bot.event
+async def on_member_remove(member):
+    single_SQL("DELETE FROM Birthdays WHERE GuildID={0} AND UserID={1}".format(member.guild.id, member.id))
 
 @bot.event
 async def on_ready():
