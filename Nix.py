@@ -64,7 +64,7 @@ async def send_quote(ctx):
 @bot.slash_command(name='set_counting_channel', description="Sets the channel for the counting game")
 @discord.commands.default_permissions(manage_guild=True)
 async def set_counting_channel(ctx, channel: discord.TextChannel):
-    single_SQL("UPDATE Channels SET CountingChannelID={0} WHERE ID={1}".format(channel.id, ctx.guild_id))
+    single_SQL("UPDATE Guilds SET CountingChannelID={0} WHERE ID={1}".format(channel.id, ctx.guild_id))
     await ctx.respond("Counting channel set to {0}".format(channel))
 
 @bot.slash_command(name='get_highscore', description="Shows you the highest count your server has reached")
@@ -107,7 +107,17 @@ async def on_message(msg):
                 await msg.channel.send("Counting failed: Wrong number")
                 await msg.author.add_roles(msg.guild.get_role(values[0][4]))
             
-
+async def clearLosers():
+    conn = sqlite3.connect("server_data.db")
+    cur = conn.cursor()
+    cur.execute("SELECT ID FROM *")
+    guilds = cur.fetchall()
+    for g in bot.get_guild(guilds[0][0]): #Goes through all guilds
+        cur.execute("SELECT RoleForLosers FROM Guild WHERE ID = {0}".format(g.id))
+        rfl = cur.fetchall
+        members = g.get_role(rfl[0][0]).members #Get all members with the role
+        for i in members:
+            i.remove_roles(g.get_role(rfl[0][0])) #Remove the role for all of them
 
 
 ### Helpers ###
