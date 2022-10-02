@@ -77,7 +77,7 @@ async def on_guild_join(guild):
     helper.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID) VALUES (?, NULL, NULL, NULL);", (guild.id,))
 
 @bot.event
-async def on_guild_leave(guild):
+async def on_guild_remove(guild):
     helper.single_SQL("DELETE FROM Guilds WHERE ID=?; DELETE FROM Birthdays WHERE GuildID=?", (guild.id, guild.id))
 
 @bot.event
