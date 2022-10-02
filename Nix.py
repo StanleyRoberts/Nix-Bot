@@ -131,7 +131,7 @@ def single_SQL(query):
 
 @bot.event
 async def on_guild_join(guild):
-    single_SQL("INSERT INTO Guilds VALUES ({0}, NULL, 0, 0, 0);".format(guild.id))
+    single_SQL("INSERT INTO Guilds (ID, CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, LoserRoleID) VALUES ({0}, NULL, 0, 0, 0, 0);".format(guild.id))
 
 @bot.event
 async def on_ready():
