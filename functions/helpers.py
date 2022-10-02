@@ -4,10 +4,10 @@ import asyncpraw as praw, asyncprawcore as prawcore
 from Nix import API_KEY, CLIENT_ID, SECRET_KEY, USER_AGENT
 
 
-def single_SQL(query):
+def single_SQL(query, values):
     con = sqlite3.connect("server_data.db")
     cur = con.cursor()
-    cur.execute(query)
+    cur.execute(query, values)
     val = cur.fetchall()
     con.commit()
     cur.close()

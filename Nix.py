@@ -36,7 +36,7 @@ async def send_quote(ctx):
 @bot.slash_command(name='set_counting_channel', description="Sets the channel for the counting game")
 @discord.commands.default_permissions(manage_guild=True)
 async def set_counting_channel(ctx, channel: discord.TextChannel):
-    helper.single_SQL("UPDATE Guilds SET CountingChannelID={0} WHERE ID={1}".format(channel.id, ctx.guild_id))
+    helper.single_SQL("UPDATE Guilds SET CountingChannelID=? WHERE ID=?", (channel.id, ctx.guild_id))
     await ctx.respond("Counting channel set to {0}".format(channel))
 
 @bot.slash_command(name='help', description="Displays the help page for NixBot")
@@ -62,7 +62,8 @@ async def daily_check():
             await (await bot.fetch_channel(factID[0])).send(fact)
     
     today=dt.date.today().strftime("%b%e").replace(" ", "")
-    val = helper.single_SQL("SELECT BirthdayChannelID, group_concat(UserID, ' ') as UserID FROM Birthdays INNER JOIN Guilds ON Birthdays.GuildID=Guilds.ID WHERE Birthdays.Birthdate=\'{0}\'GROUP BY ID;".format(today))
+    val = helper.single_SQL("SELECT BirthdayChannelID, group_concat(UserID, ' ') as UserID FROM Birthdays INNER JOIN"\
+                            " Guilds ON Birthdays.GuildID=Guilds.ID WHERE Birthdays.Birthdate=\'?\'GROUP BY ID;", (today,))
     for guild in val:
         users = " ".join([(await bot.fetch_user(int(user))).mention for user in guild[1].split(" ")])
         if guild[0]:
@@ -73,15 +74,15 @@ async def daily_check():
 
 @bot.event
 async def on_guild_join(guild):
-    helper.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID) VALUES ({0}, NULL, NULL, NULL);".format(guild.id))
+    helper.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID) VALUES (?, NULL, NULL, NULL);", (guild.id,))
 
 @bot.event
 async def on_guild_leave(guild):
-    helper.single_SQL("DELETE FROM Guilds WHERE ID={0}; DELETE FROM Birthdays WHERE GuildID={0}".format(guild.id))
+    helper.single_SQL("DELETE FROM Guilds WHERE ID=?; DELETE FROM Birthdays WHERE GuildID=?", (guild.id, guild.id))
 
 @bot.event
 async def on_member_remove(member):
-    helper.single_SQL("DELETE FROM Birthdays WHERE GuildID={0} AND UserID={1}".format(member.guild.id, member.id))
+    helper.single_SQL("DELETE FROM Birthdays WHERE GuildID=? AND UserID=?", (member.guild.id, member.id))
 
 @bot.event
 async def on_ready():
