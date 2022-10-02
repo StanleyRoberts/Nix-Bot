@@ -96,7 +96,7 @@ async def set_birthday(ctx,
                        month: discord.Option(str, "Enter month of the year", required=True,
                                             choices=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])):
-    single_SQL("INSERT OR REPLACE INTO Birthdays VALUES ({0}, {1}, \'{2}\')".format(ctx.guild.id, ctx.author.id, month+str(day)))
+    single_SQL("INSERT OR REPLACE INTO Birthdays (GuildID, UserID, Birthdate) VALUES ({0}, {1}, \'{2}\')".format(ctx.guild.id, ctx.author.id, month+str(day)))
     sender = await bot.fetch_user(ctx.author.id)
     await ctx.respond(sender.mention+" your birthday is set to {0} {1}".format(day, month))
 
@@ -145,7 +145,7 @@ async def daily_check():
 
 @bot.event
 async def on_guild_join(guild):
-    single_SQL("INSERT INTO Guilds VALUES ({0}, NULL, NULL, NULL);".format(guild.id))
+    single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID) VALUES ({0}, NULL, NULL, NULL);".format(guild.id))
 
 @bot.event
 async def on_guild_leave(guild):
