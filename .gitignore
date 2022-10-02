@@ -2,3 +2,4 @@
 .env
 test.*
 *.db
+__pycache__
