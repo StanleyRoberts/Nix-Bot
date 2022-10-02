@@ -53,20 +53,20 @@ async def display_help(ctx):
 
 ### Looping Tasks ###
 
-@tasks.loop(time=dt.time(hour=9), count=1) #1 behind curr time
+@tasks.loop(time=dt.time(hour=9)) #1 behind curr time
 async def daily_check():
     guilds = helper.single_SQL("SELECT FactChannelID FROM Guilds")
     fact = helper.get_fact()
     for factID in guilds:
-        if factID:
-            await bot.get_channel(factID[0]).send(fact)
+        if factID[0]:
+            await (await bot.fetch_channel(factID[0])).send(fact)
     
     today=dt.date.today().strftime("%b%e").replace(" ", "")
     val = helper.single_SQL("SELECT BirthdayChannelID, group_concat(UserID, ' ') as UserID FROM Birthdays INNER JOIN Guilds ON Birthdays.GuildID=Guilds.ID WHERE Birthdays.Birthdate=\'{0}\'GROUP BY ID;".format(today))
     for guild in val:
         users = " ".join([(await bot.fetch_user(int(user))).mention for user in guild[1].split(" ")])
         if guild[0]:
-            await bot.get_channel(guild[0]).send("Happy Birthday to: "+users+"!\nHope you have a brilliant day <:NixFire:1025434443642589305>")
+            await (await bot.fetch_channel(guild[0])).send("Happy Birthday to: "+users+"!\nHope you have a brilliant day <:NixFire:1025434443642589305>")
 
 
 ### Client Event Handlers ###
