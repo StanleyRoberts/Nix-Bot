@@ -91,10 +91,9 @@ async def display_help(ctx):
     await ctx.respond(embed=embed)
 
 @bot.slash_command(name='birthday', description="Set your birthday")
-# make both options necessary
 async def set_birthday(ctx,
-                       day: discord.Option(int, "Enter day of the month (as integer)", min_value=0, max_value=31),
-                       month=discord.Option(str, "Enter month of the year",
+                       day: discord.Option(int, "Enter day of the month (as integer)", min_value=0, max_value=31, required=True),
+                       month: discord.Option(str, "Enter month of the year", required=True,
                                             choices=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])):
     single_SQL("INSERT OR REPLACE INTO Birthdays VALUES ({0}, {1}, \'{2}\')".format(ctx.guild.id, ctx.author.id, month+str(day)))
@@ -128,17 +127,25 @@ def get_fact():
 @tasks.loop(time=dt.time(hour=9), count=1) #1 behind curr time
 async def daily_check():
     print("starting daily check")
-    for guild in bot.guilds:
-        factID = single_SQL("SELECT FactChannelID FROM Guilds WHERE ID={0}".format(guild.id))[0][0]
+    guilds = single_SQL("SELECT FactChannelID FROM Guilds")
+    fact = get_fact()
+    for factID in guilds:
         if factID:
-            bot.get_channel(factID).send(get_fact())
-
+            await bot.get_channel(factID[0]).send(fact)
+    
+    today=dt.date.today().strftime("%b%e").replace(" ", "")
+    val = single_SQL("SELECT BirthdayChannelID, group_concat(UserID, ' ') as UserID FROM Birthdays INNER JOIN Guilds ON Birthdays.GuildID=Guilds.ID WHERE Birthdays.Birthdate=\'{0}\'GROUP BY ID;".format(today))
+    print(val)
+    for guild in val:
+        users = " ".join([(await bot.fetch_user(int(user))).mention for user in guild[1].split(" ")])
+        if guild[0]:
+            await bot.get_channel(guild[0]).send("Happy Birthday to: "+users+"!\nHope you have a brilliant day <:NixFire:1025434443642589305>")
 
 ### Client Event Handlers ###
 
 @bot.event
 async def on_guild_join(guild):
-    single_SQL("INSERT INTO Guilds VALUES ({0}, NULL, NULL, NULL, 0);".format(guild.id))
+    single_SQL("INSERT INTO Guilds VALUES ({0}, NULL, NULL, NULL);".format(guild.id))
 
 @bot.event
 async def on_guild_leave(guild):
