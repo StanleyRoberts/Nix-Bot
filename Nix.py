@@ -16,7 +16,7 @@ CLIENT_ID = os.getenv('CLIENT_ID') # PRAW/Reddit API client ID
 SECRET_KEY = os.getenv('SECRET_KEY') # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT') #PRAW/Reddit API user agent
 
-intents = discord.Intents(messages=True, message_content=True, guilds=True)
+intents = discord.Intents(messages=True, message_content=True, guilds=True, members = True)
 bot = discord.Bot(intents=intents, command_prefix='?')
 
 reddit = praw.Reddit(client_id = CLIENT_ID,         
@@ -75,6 +75,12 @@ async def get_highscore(ctx):
     highscore = cur.fetchall()
     await ctx.respond("Your highscore is {0}".format(highscore[0][0]))
     
+@bot.slash_command(name='clearlosers', description="Testing to clear Loserrole")
+@discord.commands.default_permissions(manage_guild=True)
+async def clearrole(ctx):
+    await clearLosers()
+    print("done")
+
 @bot.slash_command(name='set_loser_role', description="Set the role the person who failed at counting should get")
 @discord.commands.default_permissions(manage_guild=True)
 async def set_loserRole(ctx, role: discord.Role):
@@ -110,14 +116,13 @@ async def on_message(msg):
 async def clearLosers():
     conn = sqlite3.connect("server_data.db")
     cur = conn.cursor()
-    cur.execute("SELECT ID FROM *")
+    cur.execute("SELECT ID FROM Guilds")
     guilds = cur.fetchall()
-    for g in bot.get_guild(guilds[0][0]): #Goes through all guilds
-        cur.execute("SELECT RoleForLosers FROM Guild WHERE ID = {0}".format(g.id))
-        rfl = cur.fetchall
-        members = g.get_role(rfl[0][0]).members #Get all members with the role
-        for i in members:
-            i.remove_roles(g.get_role(rfl[0][0])) #Remove the role for all of them
+    for g in guilds: #Goes through all guilds
+        cur.execute("SELECT RoleForLosers FROM Guilds WHERE ID = {0}".format(g[0]))
+        rfl = cur.fetchall()
+        for i in bot.get_guild(g[0]).get_role(rfl[0][0]).members:
+            await i.remove_roles(bot.get_guild(g[0]).get_role(rfl[0][0])) #Remove the role for all of the people with it
 
 
 ### Helpers ###
