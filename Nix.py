@@ -69,10 +69,7 @@ async def set_counting_channel(ctx, channel: discord.TextChannel):
 
 @bot.slash_command(name='get_highscore', description="Shows you the highest count your server has reached")
 async def get_highscore(ctx):
-    conn = sqlite3.connect("server_data.db")
-    cur = conn.cursor()
-    cur.execute("SELECT HighScoreCounting FROM Guilds WHERE ID = {0}".format(ctx.guild_id))
-    highscore = cur.fetchall()
+    highscore = single_SQL("SELECT HighScoreCounting FROM Guilds WHERE ID = {0}".format(ctx.guild_id))
     await ctx.respond("Your highscore is {0}".format(highscore[0][0]))
     
 @bot.slash_command(name='clearlosers', description="Testing to clear Loserrole")
@@ -84,16 +81,13 @@ async def clearrole(ctx):
 @bot.slash_command(name='set_loser_role', description="Set the role the person who failed at counting should get")
 @discord.commands.default_permissions(manage_guild=True)
 async def set_loserRole(ctx, role: discord.Role):
-    single_SQL("UPDATE Guilds SET RoleForLosers={0} WHERE ID={1}".format(role.id, ctx.guild_id))
+    single_SQL("UPDATE Guilds SET LoserRoleID={0} WHERE ID={1}".format(role.id, ctx.guild_id))
     await ctx.respond("The role for the loser is set to {0}".format(role.name))
     
 @bot.event
 async def on_message(msg):
     if(msg.content.isdigit()):
-        conn = sqlite3.connect("server_data.db")
-        cur = conn.cursor()
-        cur.execute("SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, RoleForLosers FROM Guilds WHERE ID={0}".format(msg.guild.id))
-        values = cur.fetchall()
+        values = single_SQL("SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, LoserRoleID FROM Guilds WHERE ID={0}".format(msg.guild.id))
         if(msg.channel.id == values[0][0]): #Checks for the right channel
             if(int(msg.content) == values[0][1] + 1): #Checks if it is the correct number
                 if(msg.author.id != values[0][2]): #Checks if the same user wrote twice 
@@ -114,15 +108,10 @@ async def on_message(msg):
                 await msg.author.add_roles(msg.guild.get_role(values[0][4]))
             
 async def clearLosers():
-    conn = sqlite3.connect("server_data.db")
-    cur = conn.cursor()
-    cur.execute("SELECT ID FROM Guilds")
-    guilds = cur.fetchall()
-    for g in guilds: #Goes through all guilds
-        cur.execute("SELECT RoleForLosers FROM Guilds WHERE ID = {0}".format(g[0]))
-        rfl = cur.fetchall()
-        for i in bot.get_guild(g[0]).get_role(rfl[0][0]).members:
-            await i.remove_roles(bot.get_guild(g[0]).get_role(rfl[0][0])) #Remove the role for all of the people with it
+    gandR = single_SQL("SELECT ID, LoserRoleID FROM Guilds")
+    for g in gandR:
+        for user in bot.get_guild(g[0]).get_role(g[1]).members: #For all users with the role
+            await user.remove_roles(bot.get_guild(g[0]).get_role(g[1])) #Remove the role
 
 
 ### Helpers ###
@@ -131,9 +120,11 @@ def single_SQL(query):
     con = sqlite3.connect("server_data.db")
     cur = con.cursor()
     cur.execute(query)
+    val = cur.fetchall()
     con.commit()
     cur.close()
     con.close()
+    return val
 
 
 ### Client Event Handlers ###
