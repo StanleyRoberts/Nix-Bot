@@ -38,6 +38,7 @@ class Counting(commands.Cog):
     async def get_highscore(self, ctx):
         highscore = helper.single_SQL("SELECT HighScoreCounting FROM Guilds WHERE ID = ?", (ctx.guild.id,))
         await ctx.respond("Your highscore is {0}".format(highscore[0][0]))
+        
     
 def setup(bot):
     bot.add_cog(Counting(bot))
