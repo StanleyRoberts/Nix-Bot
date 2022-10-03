@@ -10,7 +10,9 @@ def single_SQL(query, values):
     con = psycopg2.connect(DATABASE_URL)
     cur = con.cursor()
     cur.execute(query, values)
-    val = cur.fetchall()
+    val = None
+    if cur.description:
+        val = cur.fetchall()
     con.commit()
     cur.close()
     con.close()
