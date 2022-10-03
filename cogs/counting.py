@@ -19,7 +19,7 @@ class Counting(commands.Cog):
                 else:
                     await msg.add_reaction('<:NixBlep:1026494035994607717>')
                     helper.single_SQL("UPDATE Guilds SET LastCounterID =%s, CurrentCount = CurrentCount+1, HighScoreCounting="\
-                                      "IIF(%s>HighScoreCounting, %s, HighScoreCounting) WHERE ID =%s",
+                                      "(CASE WHEN %s>HighScoreCounting THEN %s ELSE HighScoreCounting END) WHERE ID =%s",
                                       (msg.author.id, msg.content, msg.content, msg.guild.id))
                     
     @commands.slash_command(name='set_fail_role', description="Sets the role the given to users who fail at counting")
