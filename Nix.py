@@ -59,7 +59,7 @@ async def daily_check():
     
     today=dt.date.today().strftime("%b%e").replace(" ", "")
     val = helper.single_SQL("SELECT BirthdayChannelID, group_concat(UserID, ' ') as UserID FROM Birthdays INNER JOIN"\
-                            " Guilds ON Birthdays.GuildID=Guilds.ID WHERE Birthdays.Birthdate=\'?\'GROUP BY ID;", (today,))
+                            " Guilds ON Birthdays.GuildID=Guilds.ID WHERE Birthdays.Birthdate=? GROUP BY ID;", (today,))
     for guild in val:
         users = " ".join([(await bot.fetch_user(int(user))).mention for user in guild[1].split(" ")])
         if guild[0]:

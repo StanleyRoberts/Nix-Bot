@@ -19,7 +19,7 @@ class Birthdays(commands.Cog):
                            month: discord.Option(str, "Enter month of the year", required=True,
                                                  choices=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])):
-        single_SQL("INSERT OR REPLACE INTO Birthdays (GuildID, UserID, Birthdate) VALUES (?, ?, \'?\')", (ctx.guild.id, ctx.author.id, month+str(day)))
+        single_SQL("INSERT OR REPLACE INTO Birthdays (GuildID, UserID, Birthdate) VALUES (?, ?, ?)", (ctx.guild.id, ctx.author.id, month+str(day)))
         await ctx.respond(ctx.author.mention+" your birthday is set to {0} {1} <:NixUwU:1026494034371420250>".format(day, month))
 
 def setup(bot):
