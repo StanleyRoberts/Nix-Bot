@@ -19,7 +19,7 @@ class Counting(commands.Cog):
                             helper.single_SQL("UPDATE Guilds SET HighScoreCounting =? WHERE ID =?", (values[0][1]+1, msg.guild.id))  
                             print(values[0][3])
                     else: #The same user wrote two times in a row
-                        helper.API_KEYsingle_SQL("UPDATE Guilds SET CurrentCount = 0, LastCounterID = 0 WHERE ID =?", (msg.guild.id,))
+                        helper.single_SQL("UPDATE Guilds SET CurrentCount = 0, LastCounterID = 0 WHERE ID =?", (msg.guild.id,))
                         await msg.add_reaction('<:NixCrying:1025433818527715459>')
                         await msg.channel.send("Counting failed: same user entered two numbers in a row")
                         await msg.author.add_roles(msg.guild.get_role(values[0][4]))
