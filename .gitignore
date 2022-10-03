@@ -1,4 +1,5 @@
 .venv
 .env
-test.sql
-test.py
+test.*
+*.db
+__pycache__
