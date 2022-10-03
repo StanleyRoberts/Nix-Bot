@@ -1,13 +1,13 @@
-import sqlite3, requests, json, random
+import psycopg2, requests, json, random
 import asyncpraw as praw, asyncprawcore as prawcore
 from discord.ext import commands
 import discord
 
-from Nix import API_KEY, CLIENT_ID, SECRET_KEY, USER_AGENT
+from Nix import API_KEY, CLIENT_ID, SECRET_KEY, USER_AGENT, DATABASE_URL
 
 
 def single_SQL(query, values):
-    con = sqlite3.connect("server_data.db")
+    con = psycopg2.connect(DATABASE_URL)
     cur = con.cursor()
     cur.execute(query, values)
     val = cur.fetchall()
