@@ -63,7 +63,7 @@ async def daily_check():
     for guild in val:
         users = " ".join([(await bot.fetch_user(int(user))).mention for user in guild[1].split(" ")])
         if guild[0]:
-            await (await bot.fetch_channel(guild[0])).send("Happy Birthday to: "+users+"!\nHope you have a brilliant day <:NixFire:1025434443642589305>")
+            await (await bot.fetch_channel(guild[0])).send("Happy Birthday to: "+users+"!\nHope you have a brilliant day <:NixHeart:1026494038825779331>")
 
 
 ### Client Event Handlers ###
