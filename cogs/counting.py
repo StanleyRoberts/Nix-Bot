@@ -30,6 +30,10 @@ class Counting(commands.Cog):
                     await msg.channel.send("Counting failed: Wrong number")
                     if(values[0][4]):
                         await msg.author.add_roles(msg.guild.get_role(values[0][4])) 
+    
+    @commands.Cog.listener()
+    async def on_guild_role_delete(self, role):
+        helper.single_SQL("UPDATE Guilds SET LoserRoleID=NULL WHERE LoserRoleID=?", (role.id,))
                     
     @commands.slash_command(name='set_loser_role', description="Set the role the person who failed at counting should get")
     @discord.commands.default_permissions(manage_guild=True)
@@ -47,6 +51,7 @@ class Counting(commands.Cog):
     async def get_highscore(self, ctx):
         highscore = helper.single_SQL("SELECT HighScoreCounting FROM Guilds WHERE ID = ?", (ctx.guild.id,))
         await ctx.respond("Your highscore is {0}".format(highscore[0][0]))
+        
     
 def setup(bot):
     bot.add_cog(Counting(bot))
