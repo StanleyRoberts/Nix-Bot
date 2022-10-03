@@ -68,11 +68,12 @@ async def daily_check():
 
 @bot.event
 async def on_guild_join(guild):
-    helper.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, LoserRoleID) VALUES (?, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
+    helper.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (?, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
 
 @bot.event
 async def on_guild_remove(guild):
-    helper.single_SQL("DELETE FROM Guilds WHERE ID=?; DELETE FROM Birthdays WHERE GuildID=?", (guild.id, guild.id))
+    helper.single_SQL("DELETE FROM Guilds WHERE ID=?", (guild.id,))
+    helper.single_SQL("DELETE FROM Birthdays WHERE GuildID=?", (guild.id,))
 
 @bot.event
 async def on_member_remove(member):

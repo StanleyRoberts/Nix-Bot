@@ -50,3 +50,10 @@ async def clearLosers():
     for g in gandR:
         for user in commands.get_guild(g[0]).get_role(g[1]).members: #For all users with the role
             await user.remove_roles(commands.get_guild(g[0]).get_role(g[1])) #Remove the role
+
+async def fail(msg, err_txt, role):
+    await msg.add_reaction('<:NixCrying:1025433818527715459>')
+    await msg.channel.send(err_txt)
+    if role:
+        await msg.author.add_roles(msg.guild.get_role(role))
+    single_SQL("UPDATE Guilds SET CurrentCount=0, LastCounterID=NULL WHERE ID=?", (msg.guild.id,))

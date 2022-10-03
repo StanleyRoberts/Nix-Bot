@@ -14,7 +14,7 @@ class Facts(commands.Cog):
     @discord.commands.default_permissions(manage_guild=True)
     async def set_fact_channel(self, ctx, channel: discord.TextChannel):
         helper.single_SQL("UPDATE Guilds SET FactChannelID=? WHERE ID=?", (channel.id, ctx.guild_id))
-        await ctx.respond("Facts channel set to {0}".format(channel))
+        await ctx.respond("Facts channel set to {0}".format(channel.mention), ephemeral=True)
 
     @commands.slash_command(name='stop_facts', description="Disables daily facts (run set_fact_channel to enable again)")
     @discord.commands.default_permissions(manage_guild=True)
