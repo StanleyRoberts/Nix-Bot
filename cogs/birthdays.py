@@ -11,7 +11,7 @@ class Birthdays(commands.Cog):
     @discord.commands.default_permissions(manage_guild=True)
     async def set_counting_channel(self, ctx, channel: discord.TextChannel):
         single_SQL("UPDATE Guilds SET BirthdayChannelID=? WHERE ID=?", (channel.id, ctx.guild_id))
-        await ctx.respond("Birthday channel set to {0}".format(channel.mention), ephemeral=True)
+        await ctx.respond("<:NixDrinking:929938768016863293> Birthday channel set to {0}".format(channel.mention), ephemeral=True)
 
     @commands.slash_command(name='birthday', description="Set your birthday")
     async def set_birthday(self, ctx,
