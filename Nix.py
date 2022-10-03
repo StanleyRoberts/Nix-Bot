@@ -83,7 +83,7 @@ async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
 
 if __name__ == "__main__":
-    cogs = ['birthdays', 'facts']
+    cogs = ['birthdays', 'facts', 'counting']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
     daily_check.start() 
