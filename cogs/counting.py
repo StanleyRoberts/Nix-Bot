@@ -22,12 +22,14 @@ class Counting(commands.Cog):
                         helper.single_SQL("UPDATE Guilds SET CurrentCount = 0, LastCounterID = 0 WHERE ID =?", (msg.guild.id,))
                         await msg.add_reaction('<:NixCrying:1025433818527715459>')
                         await msg.channel.send("Counting failed: same user entered two numbers in a row")
-                        await msg.author.add_roles(msg.guild.get_role(values[0][4]))
+                        if(values[0][4]):
+                            await msg.author.add_roles(msg.guild.get_role(values[0][4]))
                 else: #Wrong number got typed in the chat
                     helper.single_SQL("UPDATE Guilds SET CurrentCount = 0, LastCounterID = 0 WHERE ID = ?", (msg.guild.id,))
                     await msg.add_reaction('<:NixCrying:1025433818527715459>')
                     await msg.channel.send("Counting failed: Wrong number")
-                    await msg.author.add_roles(msg.guild.get_role(values[0][4])) 
+                    if(values[0][4]):
+                        await msg.author.add_roles(msg.guild.get_role(values[0][4])) 
                     
     @commands.slash_command(name='set_loser_role', description="Set the role the person who failed at counting should get")
     @discord.commands.default_permissions(manage_guild=True)
