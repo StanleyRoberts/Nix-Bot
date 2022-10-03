@@ -17,7 +17,6 @@ CLIENT_ID = os.getenv('CLIENT_ID') # PRAW/Reddit API client ID
 SECRET_KEY = os.getenv('SECRET_KEY') # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT') #PRAW/Reddit API user agent
 API_KEY = os.getenv('API_KEY') # X-API-Key for API-Ninjas
-print(TOKEN)
 
 intents = discord.Intents(messages=True, message_content=True, guilds=True, members = True)
 bot = commands.Bot(intents=intents, command_prefix='?', activity=discord.Game(name="/help"))
