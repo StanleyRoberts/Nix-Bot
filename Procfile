@@ -1,1 +1,1 @@
-worker: python Nix.py --app watching-racoons-bot
+worker: python Nix.py
