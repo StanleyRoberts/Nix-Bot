@@ -20,7 +20,7 @@ API_KEY = os.getenv('API_KEY') # X-API-Key for API-Ninjas
 DATABASE_URL = os.getenv('DATABASE_URL') # PostgreSQL db
 
 intents = discord.Intents(messages=True, message_content=True, guilds=True, members = True)
-bot = commands.Bot(intents=intents, command_prefix='?', activity=discord.Game(name="/help"))
+bot = commands.Bot(intents=intents, command_prefix='%s', activity=discord.Game(name="/help"))
 
 
 ### Command Functions ###
@@ -60,7 +60,7 @@ async def daily_check():
     
     today=dt.date.today().strftime("%b%e").replace(" ", "")
     val = helper.single_SQL("SELECT BirthdayChannelID, group_concat(UserID, ' ') as UserID FROM Birthdays INNER JOIN"\
-                            " Guilds ON Birthdays.GuildID=Guilds.ID WHERE Birthdays.Birthdate=? GROUP BY ID;", (today,))
+                            " Guilds ON Birthdays.GuildID=Guilds.ID WHERE Birthdays.Birthdate=%s GROUP BY ID;", (today,))
     for guild in val:
         users = " ".join([(await bot.fetch_user(int(user))).mention for user in guild[1].split(" ")])
         if guild[0]:
@@ -71,16 +71,16 @@ async def daily_check():
 
 @bot.event
 async def on_guild_join(guild):
-    helper.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (?, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
+    helper.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (%s, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
 
 @bot.event
 async def on_guild_remove(guild):
-    helper.single_SQL("DELETE FROM Guilds WHERE ID=?", (guild.id,))
-    helper.single_SQL("DELETE FROM Birthdays WHERE GuildID=?", (guild.id,))
+    helper.single_SQL("DELETE FROM Guilds WHERE ID=%s", (guild.id,))
+    helper.single_SQL("DELETE FROM Birthdays WHERE GuildID=%s", (guild.id,))
 
 @bot.event
 async def on_member_remove(member):
-    helper.single_SQL("DELETE FROM Birthdays WHERE GuildID=? AND UserID=?", (member.guild.id, member.id))
+    helper.single_SQL("DELETE FROM Birthdays WHERE GuildID=%s AND UserID=%s", (member.guild.id, member.id))
 
 @bot.event
 async def on_ready():

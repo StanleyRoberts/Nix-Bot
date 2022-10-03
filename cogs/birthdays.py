@@ -10,7 +10,7 @@ class Birthdays(commands.Cog):
     @commands.slash_command(name='set_birthday_channel', description="Sets the channel for the birthday messages")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_counting_channel(self, ctx, channel: discord.TextChannel):
-        single_SQL("UPDATE Guilds SET BirthdayChannelID=? WHERE ID=?", (channel.id, ctx.guild_id))
+        single_SQL("UPDATE Guilds SET BirthdayChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
         await ctx.respond("<:NixDrinking:1026494037043187713> Birthday channel set to {0}".format(channel.mention), ephemeral=True)
 
     @commands.slash_command(name='birthday', description="Set your birthday")
@@ -19,7 +19,7 @@ class Birthdays(commands.Cog):
                            month: discord.Option(str, "Enter month of the year", required=True,
                                                  choices=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])):
-        single_SQL("INSERT OR REPLACE INTO Birthdays (GuildID, UserID, Birthdate) VALUES (?, ?, ?)", (ctx.guild.id, ctx.author.id, month+str(day)))
+        single_SQL("INSERT OR REPLACE INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s)", (ctx.guild.id, ctx.author.id, month+str(day)))
         await ctx.respond(ctx.author.mention+" your birthday is set to {0} {1} <:NixUwU:1026494034371420250>".format(day, month))
 
 def setup(bot):

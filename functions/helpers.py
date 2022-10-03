@@ -53,7 +53,7 @@ async def clearLosers():
             await user.remove_roles(commands.get_guild(g[0]).get_role(g[1])) #Remove the role
 
 async def fail(msg, err_txt, roleID):
-    single_SQL("UPDATE Guilds SET CurrentCount=0, LastCounterID=NULL WHERE ID=?", (msg.guild.id,))
+    single_SQL("UPDATE Guilds SET CurrentCount=0, LastCounterID=NULL WHERE ID=%s", (msg.guild.id,))
     await msg.add_reaction('<:NixCrying:1026494029002723398>')
     await msg.channel.send(err_txt)
     if roleID:
@@ -61,4 +61,4 @@ async def fail(msg, err_txt, roleID):
             await msg.author.add_roles(msg.guild.get_role(roleID))
         except discord.errors.Forbidden:
             await msg.channel.send("<:NixConfused:1026494027727638599> Whoops! I couldn't set the {0} role (I need 'Manage Roles' to do that).\nI won't try again until you set a new fail role".format(msg.guild.get_role(roleID).mention))
-            single_SQL("UPDATE Guilds SET FailRoleID=NULL WHERE ID=?", (msg.guild.id,))
+            single_SQL("UPDATE Guilds SET FailRoleID=NULL WHERE ID=%s", (msg.guild.id,))

@@ -13,13 +13,13 @@ class Facts(commands.Cog):
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_fact_channel(self, ctx, channel: discord.TextChannel):
-        helper.single_SQL("UPDATE Guilds SET FactChannelID=? WHERE ID=?", (channel.id, ctx.guild_id))
+        helper.single_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
         await ctx.respond("<:NixDrinking:1026494037043187713> Facts channel set to {0}".format(channel.mention), ephemeral=True)
 
     @commands.slash_command(name='stop_facts', description="Disables daily facts (run set_fact_channel to enable again)")
     @discord.commands.default_permissions(manage_guild=True)
     async def toggle_facts(self, ctx):
-        helper.single_SQL("UPDATE Guilds SET FactChannelID=NULL WHERE ID=?", (ctx.guild_id,))
+        helper.single_SQL("UPDATE Guilds SET FactChannelID=NULL WHERE ID=%s", (ctx.guild_id,))
         await ctx.respond("<:NixNoEmotion:1026494031670300773> Stopping daily facts", ephemeral=True)
 
 def setup(bot):
