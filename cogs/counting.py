@@ -7,7 +7,7 @@ class Counting(commands.Cog):
         self.bot = bot
     
     @commands.Cog.listener()
-    async def on_message(msg):
+    async def on_message(self, msg):
         if(msg.content.isdigit()):
             values = helper.single_SQL("SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, LoserRoleID FROM Guilds WHERE ID=?", (msg.guild.id,))
             if(msg.channel.id == values[0][0]): #Checks for the right channel
@@ -31,18 +31,18 @@ class Counting(commands.Cog):
                     
     @commands.slash_command(name='set_loser_role', description="Set the role the person who failed at counting should get")
     @discord.commands.default_permissions(manage_guild=True)
-    async def set_loserRole(ctx, role: discord.Role):
+    async def set_loserRole(self, ctx, role: discord.Role):
         helper.single_SQL("UPDATE Guilds SET LoserRoleID=? WHERE ID=?", (role.id, ctx.guild_id))
         await ctx.respond("The role for the loser is set to {0}".format(role.name))
         
     @commands.slash_command(name='set_counting_channel', description="Sets the channel for the counting game")
     @discord.commands.default_permissions(manage_guild=True)
-    async def set_counting_channel(ctx, channel: discord.TextChannel):   
+    async def set_counting_channel(self, ctx, channel: discord.TextChannel):   
         helper.single_SQL("UPDATE Guilds SET CountingChannelID=? WHERE ID=?", (channel.id, ctx.guild_id))
         await ctx.respond("Counting channel set to {0}".format(channel))
 
     @commands.slash_command(name='get_highscore', description="Shows you the highest count your server has reached")
-    async def get_highscore(ctx):
+    async def get_highscore(self, ctx):
         highscore = helper.single_SQL("SELECT HighScoreCounting FROM Guilds WHERE ID = ?", (ctx.guild.id,))
         await ctx.respond("Your highscore is {0}".format(highscore[0][0]))
     
