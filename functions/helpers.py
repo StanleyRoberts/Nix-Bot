@@ -1,5 +1,6 @@
 import sqlite3, requests, json, random
 import asyncpraw as praw, asyncprawcore as prawcore
+from discord.ext import commands
 
 from Nix import API_KEY, CLIENT_ID, SECRET_KEY, USER_AGENT
 
@@ -43,3 +44,9 @@ async def get_reddit_post(subreddit, time):
     except prawcore.exceptions.Forbidden:
         response = "Subreddit \'"+subreddit+"\' private"
     return response
+
+async def clearLosers():
+    gandR = single_SQL("SELECT ID, LoserRoleID FROM Guilds")
+    for g in gandR:
+        for user in commands.get_guild(g[0]).get_role(g[1]).members: #For all users with the role
+            await user.remove_roles(commands.get_guild(g[0]).get_role(g[1])) #Remove the role
