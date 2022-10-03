@@ -72,12 +72,6 @@ async def get_highscore(ctx):
     highscore = single_SQL("SELECT HighScoreCounting FROM Guilds WHERE ID = {0}".format(ctx.guild_id))
     await ctx.respond("Your highscore is {0}".format(highscore[0][0]))
     
-@bot.slash_command(name='clearlosers', description="Testing to clear Loserrole")
-@discord.commands.default_permissions(manage_guild=True)
-async def clearrole(ctx):
-    await clearLosers()
-    print("done")
-
 @bot.slash_command(name='set_loser_role', description="Set the role the person who failed at counting should get")
 @discord.commands.default_permissions(manage_guild=True)
 async def set_loserRole(ctx, role: discord.Role):
