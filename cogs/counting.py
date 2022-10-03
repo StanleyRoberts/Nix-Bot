@@ -8,19 +8,7 @@ class Counting(commands.Cog):
     
     @commands.Cog.listener()
     async def on_message(self, msg):
-        if(msg.content.isdigit()):
-            values = helper.single_SQL("SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, "\
-                                       "FailRoleID FROM Guilds WHERE ID=%s", (msg.guild.id,))
-            if(msg.channel.id == values[0][0]): #Checks for the right channel
-                if(int(msg.content) != values[0][1] + 1): #Checks if it is the correct number
-                    await helper.fail(msg, "Wrong number", values[0][4])
-                elif(msg.author.id == values[0][2]): #Checks if the same user wrote twice 
-                    await helper.fail(msg, "Same user entered two numbers", values[0][4])
-                else:
-                    await msg.add_reaction('<:NixBlep:1026494035994607717>')
-                    helper.single_SQL("UPDATE Guilds SET LastCounterID =%s, CurrentCount = CurrentCount+1, HighScoreCounting="\
-                                      "(CASE WHEN %s>HighScoreCounting THEN %s ELSE HighScoreCounting END) WHERE ID =%s",
-                                      (msg.author.id, msg.content, msg.content, msg.guild.id))
+        await helper.process_count(msg)
                     
     @commands.slash_command(name='set_fail_role', description="Sets the role the given to users who fail at counting")
     @discord.commands.default_permissions(manage_guild=True)

@@ -64,3 +64,18 @@ async def fail(msg, err_txt, roleID):
         except discord.errors.Forbidden:
             await msg.channel.send("<:NixConfused:1026494027727638599> Whoops! I couldn't set the {0} role (I need 'Manage Roles' to do that).\nI won't try again until you set a new fail role".format(msg.guild.get_role(roleID).mention))
             single_SQL("UPDATE Guilds SET FailRoleID=NULL WHERE ID=%s", (msg.guild.id,))
+
+async def process_count(msg):
+    if(msg.content.isdigit()):
+        values = single_SQL("SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, "\
+                                    "FailRoleID FROM Guilds WHERE ID=%s", (msg.guild.id,))
+        if(msg.channel.id == values[0][0]): #Checks for the right channel
+            if(int(msg.content) != values[0][1] + 1): #Checks if it is the correct number
+                await fail(msg, "Wrong number", values[0][4])
+            elif(msg.author.id == values[0][2]): #Checks if the same user wrote twice 
+                await fail(msg, "Same user entered two numbers", values[0][4])
+            else:
+                await msg.add_reaction('<:NixBlep:1026494035994607717>')
+                single_SQL("UPDATE Guilds SET LastCounterID =%s, CurrentCount = CurrentCount+1, HighScoreCounting="\
+                                    "(CASE WHEN %s>HighScoreCounting THEN %s ELSE HighScoreCounting END) WHERE ID =%s",
+                                    (msg.author.id, msg.content, msg.content, msg.guild.id))
