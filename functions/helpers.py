@@ -6,7 +6,7 @@ import discord
 from Nix import API_KEY, CLIENT_ID, SECRET_KEY, USER_AGENT, DATABASE_URL
 
 
-def single_SQL(query, values):
+def single_SQL(query, values=None):
     con = psycopg2.connect(DATABASE_URL)
     cur = con.cursor()
     cur.execute(query, values)
