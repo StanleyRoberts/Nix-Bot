@@ -8,7 +8,8 @@ class Counting(commands.Cog):
     
     @commands.Cog.listener()
     async def on_message(self, msg):
-        await helper.process_count(msg)
+        self.bot.run(helper.process_count(msg))
+        #await helper.process_count(msg)
                     
     @commands.slash_command(name='set_fail_role', description="Sets the role the given to users who fail at counting")
     @discord.commands.default_permissions(manage_guild=True)
