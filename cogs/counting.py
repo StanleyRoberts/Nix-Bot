@@ -10,7 +10,7 @@ class Counting(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, msg):
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(helper.process_count(msg))
+        loop.run_until_complete(await helper.process_count(msg))
         #await helper.process_count(msg)
                     
     @commands.slash_command(name='set_fail_role', description="Sets the role the given to users who fail at counting")
