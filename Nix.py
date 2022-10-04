@@ -30,7 +30,7 @@ async def send_reddit_post(ctx, subreddit,
                            time: discord.Option(str, default="day",
                                                 choices=["month", "hour", "week", "all", "day", "year"],
                                                 description="Time period to search for top posts")):
-    await ctx.respond(helper.get_reddit_post(subreddit, time))
+    await ctx.respond(await helper.get_reddit_post(subreddit, time))
 
 @bot.slash_command(name='quote', description="Displays an AI-generated quote over an inspirational image")
 async def send_quote(ctx):
