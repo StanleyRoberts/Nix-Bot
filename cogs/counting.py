@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import functions.helpers as helper
+import asyncio
 
 class Counting(commands.Cog):
     def __init__(self, bot):
@@ -8,7 +9,8 @@ class Counting(commands.Cog):
     
     @commands.Cog.listener()
     async def on_message(self, msg):
-        self.bot.run(helper.process_count(msg))
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(helper.process_count(msg))
         #await helper.process_count(msg)
                     
     @commands.slash_command(name='set_fail_role', description="Sets the role the given to users who fail at counting")
