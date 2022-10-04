@@ -3,11 +3,14 @@ import asyncpraw as praw, asyncprawcore as prawcore
 from discord.ext import commands
 import discord
 
-from Nix import API_KEY, CLIENT_ID, SECRET_KEY, USER_AGENT, DATABASE_URL
+from Nix import API_KEY, CLIENT_ID, SECRET_KEY, USER_AGENT, DATABASE_URL, HEROKU
 
 
 def single_SQL(query, values=None):
-    con = psycopg2.connect(DATABASE_URL)
+    if HEROKU:
+        con = psycopg2.connect(DATABASE_URL)
+    else:
+        con = psycopg2.connect(**DATABASE_URL)
     cur = con.cursor()
     cur.execute(query, values)
     val = None
@@ -17,6 +20,16 @@ def single_SQL(query, values=None):
     cur.close()
     con.close()
     return val
+
+def populate():
+    con = psycopg2.connect(**DATABASE_URL)   
+    cur = con.cursor()
+    cur.execute("CREATE TABLE Guilds(ID BIGINT, CountingChannelID BIGINT, BirthdayChannelID BIGINT, FactChannelID BIGINT, CurrentCount INTEGER, LastCounterID BIGINT, HighScoreCounting INTEGER, FailRoleID BIGINT, PRIMARY KEY(ID));")
+    cur.execute("CREATE TABLE Birthdays(GuildID BIGINT, UserID BIGINT, Birthdate TEXT, FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, UserID));")
+    cur.execute("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (821016940462080000, NULL, NULL, NULL, 0, NULL, 0, NULL);")
+    con.commit()
+    cur.close()
+    con.close()
 
 def get_fact():
     api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
@@ -64,18 +77,3 @@ async def fail(msg, err_txt, roleID):
         except discord.errors.Forbidden:
             await msg.channel.send("<:NixConfused:1026494027727638599> Whoops! I couldn't set the {0} role (I need 'Manage Roles' to do that).\nI won't try again until you set a new fail role".format(msg.guild.get_role(roleID).mention))
             single_SQL("UPDATE Guilds SET FailRoleID=NULL WHERE ID=%s", (msg.guild.id,))
-
-async def process_count(msg):
-    if(msg.content.isdigit()):
-        values = single_SQL("SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, "\
-                                    "FailRoleID FROM Guilds WHERE ID=%s", (msg.guild.id,))
-        if(msg.channel.id == values[0][0]): #Checks for the right channel
-            if(int(msg.content) != values[0][1] + 1): #Checks if it is the correct number
-                await fail(msg, "Wrong number", values[0][4])
-            elif(msg.author.id == values[0][2]): #Checks if the same user wrote twice 
-                await fail(msg, "Same user entered two numbers", values[0][4])
-            else:
-                await msg.add_reaction('<:NixBlep:1026494035994607717>')
-                single_SQL("UPDATE Guilds SET LastCounterID =%s, CurrentCount = CurrentCount+1, HighScoreCounting="\
-                                    "(CASE WHEN %s>HighScoreCounting THEN %s ELSE HighScoreCounting END) WHERE ID =%s",
-                                    (msg.author.id, msg.content, msg.content, msg.guild.id))

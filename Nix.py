@@ -19,6 +19,11 @@ USER_AGENT = os.getenv('USER_AGENT') #PRAW/Reddit API user agent
 API_KEY = os.getenv('API_KEY') # X-API-Key for API-Ninjas
 DATABASE_URL = os.getenv('DATABASE_URL') # PostgreSQL db
 
+if not HEROKU:
+    import testing.postgresql
+    postgres = testing.postgresql.Postgresql()
+    DATABASE_URL= postgres.dsn()
+
 intents = discord.Intents(messages=True, message_content=True, guilds=True, members = True)
 bot = commands.Bot(intents=intents, command_prefix='%s', activity=discord.Game(name="/help"))
 
@@ -87,6 +92,7 @@ async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
 
 if __name__ == "__main__":
+    if not HEROKU: helper.populate()
     cogs = ['birthdays', 'facts', 'counting']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
