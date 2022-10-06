@@ -3,7 +3,7 @@ import asyncpraw as praw, asyncprawcore as prawcore
 from discord.ext import commands
 import discord
 
-from Nix import API_KEY, CLIENT_ID, SECRET_KEY, USER_AGENT, DATABASE_URL, HEROKU
+from Nix import API_KEY, DATABASE_URL, HEROKU
 
 
 def single_SQL(query, values=None):
@@ -27,6 +27,7 @@ def populate():
     cur.execute("CREATE TABLE Guilds(ID BIGINT, CountingChannelID BIGINT, BirthdayChannelID BIGINT, FactChannelID BIGINT, CurrentCount INTEGER, LastCounterID BIGINT, HighScoreCounting INTEGER, FailRoleID BIGINT, PRIMARY KEY(ID));")
     cur.execute("CREATE TABLE Birthdays(GuildID BIGINT, UserID BIGINT, Birthdate TEXT, FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, UserID));")
     cur.execute("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (821016940462080000, NULL, NULL, NULL, 0, NULL, 0, NULL);")
+    cur.execute("CREATE TABLE subreddits(GuildID BIGINT, subreddit TEXT, SubredditChannelID BIGINT, PRIMARY KEY(GuildID, subreddit));")
     con.commit()
     cur.close()
     con.close()
@@ -42,24 +43,6 @@ def get_fact():
 
 def get_quote():
     return requests.get("https://inspirobot.me/api?generate=true").text
-
-async def get_reddit_post(subreddit, time):
-    reddit = praw.Reddit(client_id = CLIENT_ID,         
-                         client_secret = SECRET_KEY, 
-                         user_agent= USER_AGENT,) 
-    response = "<:NixWTF:1026494030407806986> Unknown error searching for subreddit"+subreddit
-    try:
-        subr = await reddit.subreddit(subreddit)
-        subm = random.choice([post async for post in subr.top(time_filter=time, limit=100)])
-        link = subm.selftext if subm.is_self else subm.url
-        response = "***"+subm.title+"***\n"+link
-    except prawcore.exceptions.Redirect:
-        response = "<:NixWTF:1026494030407806986> Subreddit \'"+subreddit+" \' not found"
-    except prawcore.exceptions.NotFound:
-        response = "<:NixWTF:1026494030407806986> Subreddit \'"+subreddit+"\' banned"
-    except prawcore.exceptions.Forbidden:
-        response = "<:NixWTF:1026494030407806986> Subreddit \'"+subreddit+"\' private"
-    return response
 
 async def clearLosers():
     gandR = single_SQL("SELECT ID, LoserRoleID FROM Guilds")

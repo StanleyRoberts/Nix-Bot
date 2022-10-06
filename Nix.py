@@ -30,13 +30,6 @@ bot = commands.Bot(intents=intents, command_prefix='%s', activity=discord.Game(n
 
 ### Command Functions ###
 
-@bot.slash_command(name='reddit', description="Displays a random top reddit post from the given subreddit")
-async def send_reddit_post(ctx, subreddit,
-                           time: discord.Option(str, default="day",
-                                                choices=["month", "hour", "week", "all", "day", "year"],
-                                                description="Time period to search for top posts")):
-    await ctx.respond(await helper.get_reddit_post(subreddit, time))
-
 @bot.slash_command(name='quote', description="Displays an AI-generated quote over an inspirational image")
 async def send_quote(ctx):
     await ctx.respond(helper.get_quote())
@@ -70,7 +63,9 @@ async def daily_check():
         users = " ".join([(await bot.fetch_user(int(user))).mention for user in guild[1].split(" ")])
         if guild[0]:
             await (await bot.fetch_channel(guild[0])).send("Happy Birthday to: "+users+"!\nHope you have a brilliant day <:NixHeart:1026494038825779331>")
+            
 
+    
 
 ### Client Event Handlers ###
 
@@ -93,7 +88,7 @@ async def on_ready():
 
 if __name__ == "__main__":
     if not HEROKU: helper.populate()
-    cogs = ['birthdays', 'facts', 'counting']
+    cogs = ['birthdays', 'facts', 'counting', 'reddit']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
     daily_check.start() 
