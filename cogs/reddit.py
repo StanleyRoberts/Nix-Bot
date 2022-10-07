@@ -21,9 +21,11 @@ class Reddit(commands.Cog):
                                                 description="Time period to search for top posts")):
         await ctx.respond(await self.get_reddit_post(subreddit, time))
 
-    @commands.slash_command(name='subscribe_to_subreddit', description="Get a daily meme from a subreddit") #Set a default channel !!
+    @commands.slash_command(name='subscribe_to_subreddit', description="Get a daily meme from a subreddit")
     @discord.commands.default_permissions(manage_guild=True)
-    async def subscribeToSub(self, ctx, sub, channel: discord.TextChannel):
+    async def subscribing(self, ctx, sub, channel : discord.Option(discord.TextChannel, required=False)):
+        if not channel:
+            channel = ctx.channel
         try:
             subr = await self.reddit.subreddit(sub)#Needed to check if subreddit exists
             random.choice([post async for post in subr.top(time_filter="day", limit= 1)]) #Needed to check if subreddit exists
