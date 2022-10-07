@@ -59,7 +59,8 @@ class Counting(commands.Cog):
             try:
                 await msg.author.add_roles(msg.guild.get_role(roleID))
             except discord.errors.Forbidden:
-                await msg.channel.send("<:NixConfused:1026494027727638599> Whoops! I couldn't set the {0} role (I need 'Manage Roles' to do that).\nI won't try again until you set a new fail role".format(msg.guild.get_role(roleID).mention))
+                await msg.channel.send("<:NixConfused:1026494027727638599> Whoops! I couldn't set the {0} role (I need 'Manage Roles' to do that)"\
+                                       ".\nI won't try again until you set a new fail role".format(msg.guild.get_role(roleID).mention))
                 single_SQL("UPDATE Guilds SET FailRoleID=NULL WHERE ID=%s", (msg.guild.id,))
             
     

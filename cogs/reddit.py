@@ -29,7 +29,8 @@ class Reddit(commands.Cog):
             channel = ctx.channel
         try:
             (await self.reddit.subreddit(sub)).top(time_filter="day", limit= 1) #Needed to check if subreddit exists
-            single_SQL("INSERT INTO subreddits (GuildID, subreddit, SubredditChannelID) VALUES (%s, %s, %s)", (ctx.guild_id, sub, channel.id)) #Add subscription to SQL
+            single_SQL("INSERT INTO subreddits (GuildID, subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
+                       (ctx.guild_id, sub, channel.id)) #Add subscription to SQL
             await ctx.respond("This server is now subscribed to {0}".format(sub))
          
         except prawcore.exceptions.AsyncPrawcoreException: #Can´t find subreddit exception

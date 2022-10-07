@@ -49,7 +49,8 @@ async def display_help(ctx):
 
 @bot.event
 async def on_guild_join(guild):
-    db.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (%s, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
+    db.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID)"\
+                  " VALUES (%s, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
 
 @bot.event
 async def on_guild_remove(guild):
