@@ -7,10 +7,7 @@ from Nix import API_KEY, DATABASE_URL, HEROKU
 
 
 def single_SQL(query, values=None):
-    if HEROKU:
-        con = psycopg2.connect(DATABASE_URL)
-    else:
-        con = psycopg2.connect(**DATABASE_URL)
+    con = psycopg2.connect(DATABASE_URL)
     cur = con.cursor()
     cur.execute(query, values)
     val = None

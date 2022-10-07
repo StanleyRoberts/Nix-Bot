@@ -22,7 +22,7 @@ DATABASE_URL = os.getenv('DATABASE_URL') # PostgreSQL db
 if not HEROKU:
     import testing.postgresql
     postgres = testing.postgresql.Postgresql()
-    DATABASE_URL= postgres.dsn()
+    DATABASE_URL= postgres.url()
 
 intents = discord.Intents(messages=True, message_content=True, guilds=True, members = True)
 bot = commands.Bot(intents=intents, command_prefix='%s', activity=discord.Game(name="/help"))
