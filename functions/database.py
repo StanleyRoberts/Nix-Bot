@@ -2,11 +2,16 @@ import psycopg2
 
 from Nix import DATABASE_URL
 
+class KeyViolation(Exception):
+  pass
 
 def single_SQL(query, values=None):
     con = psycopg2.connect(DATABASE_URL)
     cur = con.cursor()
-    cur.execute(query, values)
+    try:
+        cur.execute(query, values)
+    except psycopg2.errors.UniqueViolation: #something is in the SQL twice
+         raise KeyViolation("Key constraint violated")
     val = None
     if cur.description:
         val = cur.fetchall()

@@ -3,8 +3,9 @@ from discord.ext import commands, tasks
 import datetime as dt
 import asyncpraw as praw, asyncprawcore as prawcore
 import random
-from functions.database import single_SQL
+from functions.database import single_SQL, KeyViolation
 from Nix import CLIENT_ID, SECRET_KEY, USER_AGENT
+
 
 
 class Reddit(commands.Cog):
@@ -28,13 +29,16 @@ class Reddit(commands.Cog):
         if not channel:
             channel = ctx.channel
         try:
-            (await self.reddit.subreddit(sub)).top(time_filter="day", limit= 1) #Needed to check if subreddit exists
+            [post async for post in (await self.reddit.subreddit(sub)).top(time_filter="day", limit= 1)][0] #Needed to check if subreddit exists
             single_SQL("INSERT INTO subreddits (GuildID, subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
                        (ctx.guild_id, sub, channel.id)) #Add subscription to SQL
-            await ctx.respond("This server is now subscribed to {0}".format(sub))
+            await ctx.respond("This server is now subscribed to {0} <:NixBlep:1026494035994607717>".format(sub))
          
         except prawcore.exceptions.AsyncPrawcoreException: #Can´t find subreddit exception
-            await ctx.respond("The subreddit {0} is not available".format(sub))
+            await ctx.respond("The subreddit {0} is not available <:NixCrying:1026494029002723398>".format(sub))
+            
+        except KeyViolation:
+            await ctx.respond("This server is already subscribed to {0} <:NixCrying:1026494029002723398>".format(sub))
         
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
