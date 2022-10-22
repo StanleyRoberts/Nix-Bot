@@ -12,7 +12,7 @@ And install the requirements with: `pip install -r requirements.txt`
 
 You will also need a `.env` file, which establishes private keys/tokens to be used within the app. If you are not one of the original authors for this project you will have to create this yourself with your own keys/tokens as required (these are the variables retrieved with `os.getenv`).
 
-Running the project locally (i.e. not on Heroku) runs a testing build, with a fresh esting database.
+Running the project locally (i.e. not on Heroku) runs a testing build, with a fresh testing database however you will need [PostgreSQL](https://www.postgresql.org/download/) installed on your machine.
 
 ## Live Development
 
