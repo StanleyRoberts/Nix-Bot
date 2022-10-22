@@ -30,7 +30,7 @@ class Reddit(commands.Cog):
             channel = ctx.channel
         try:
             [post async for post in (await self.reddit.subreddit(sub)).top(time_filter="day", limit= 1)][0] #Needed to check if subreddit exists
-            single_SQL("INSERT INTO subreddits (GuildID, subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
+            single_SQL("INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
                        (ctx.guild_id, sub, channel.id)) #Add subscription to SQL
             await ctx.respond("This server is now subscribed to {0} <:NixHug:1033423234370125904>".format(sub))
          
@@ -39,16 +39,18 @@ class Reddit(commands.Cog):
             
         except KeyViolation:
             await ctx.respond("This server is already subscribed to {0} <:NixSuprise:1033423188937416704>".format(sub))
+        print(single_SQL("SELECT * FROM Subreddits"))
         
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
     async def unsubscribe_from_sub(self, ctx, sub):
-        single_SQL("DELETE FROM subreddits WHERE GuildID=%s AND subreddit=%s ", (ctx.guild_id, sub)) #Delete the subscription out of the SQL
+        single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub)) #Delete the subscription out of the SQL
         await ctx.respond("This server is now unsubscribed from {0} <:NixSneaky:1033423327320080485>".format(sub))
+    
     
     @tasks.loop(time=dt.time(hour=9))
     async def daily_post(self):
-        subs = single_SQL("SELECT GuildID, subreddit, SubredditChannelID FROM subreddits")
+        subs = single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
             self.bot.fetch_channel(entry[2]).send(self.get_reddit_post(entry[1], "day")) #Go through the SQL and post the requested post in the chosen channel
     
