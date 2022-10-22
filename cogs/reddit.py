@@ -52,7 +52,7 @@ class Reddit(commands.Cog):
     async def daily_post(self):
         subs = single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
-            self.bot.fetch_channel(entry[2]).send(self.get_reddit_post(entry[1], "day")) #Go through the SQL and post the requested post in the chosen channel
+            self.bot.fetch_channel(entry[2]).send("Daily post ("+entry[1]+")\n"+self.get_reddit_post(entry[1], "day")) #Go through the SQL and post the requested post in the chosen channel
     
     async def get_reddit_post(self, subreddit, time):
         response = "<:NixWTF:1026494030407806986> Unknown error searching for subreddit"+subreddit
