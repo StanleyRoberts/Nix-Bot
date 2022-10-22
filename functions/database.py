@@ -26,7 +26,7 @@ def populate():
     cur.execute("CREATE TABLE Guilds(ID BIGINT, CountingChannelID BIGINT, BirthdayChannelID BIGINT, FactChannelID BIGINT, CurrentCount INTEGER, LastCounterID BIGINT, HighScoreCounting INTEGER, FailRoleID BIGINT, PRIMARY KEY(ID));")
     cur.execute("CREATE TABLE Birthdays(GuildID BIGINT, UserID BIGINT, Birthdate TEXT, FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, UserID));")
     cur.execute("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (821016940462080000, NULL, NULL, NULL, 0, NULL, 0, NULL);")
-    cur.execute("CREATE TABLE subreddits(GuildID BIGINT, subreddit TEXT, SubredditChannelID BIGINT, PRIMARY KEY(GuildID, subreddit));")
+    cur.execute("CREATE TABLE Subreddits(GuildID BIGINT, subreddit TEXT, SubredditChannelID BIGINT, PRIMARY KEY(GuildID, subreddit));")
     con.commit()
     cur.close()
     con.close()
