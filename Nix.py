@@ -37,10 +37,10 @@ async def send_quote(ctx):
 async def display_help(ctx):
     embed = discord.Embed(title="Help Page",
                           description = "Note: depending on your server settings and role permissions,"\
-                          " some of these commands may be hidden or disabled\n\n# Generic\n"
+                          " some of these commands may be hidden or disabled\n\n***Generic***\n"
                           +"".join(sorted([command.mention+" : "+command.description+"\n"
                                            for command in bot.walk_application_commands() if not command.cog]))\
-                          +"".join(["\n# "+cog+"\n"+"".join(sorted([command.mention+" : "+command.description+"\n"
+                          +"".join(["\n***"+cog+"***\n"+"".join(sorted([command.mention+" : "+command.description+"\n"
                                       for command in bot.cogs[cog].walk_commands()])) for cog in bot.cogs]))
     await ctx.respond(embed=embed)
     
