@@ -32,19 +32,19 @@ class Reddit(commands.Cog):
             [post async for post in (await self.reddit.subreddit(sub)).top(time_filter="day", limit= 1)][0] #Needed to check if subreddit exists
             single_SQL("INSERT INTO subreddits (GuildID, subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
                        (ctx.guild_id, sub, channel.id)) #Add subscription to SQL
-            await ctx.respond("This server is now subscribed to {0} <:NixBlep:1026494035994607717>".format(sub))
+            await ctx.respond("This server is now subscribed to {0} <:NixHug:1033423234370125904>".format(sub))
          
         except prawcore.exceptions.AsyncPrawcoreException: #Can´t find subreddit exception
-            await ctx.respond("The subreddit {0} is not available <:NixCrying:1026494029002723398>".format(sub))
+            await ctx.respond("The subreddit {0} is not available <:NixEvil:1033423155034849340>".format(sub))
             
         except KeyViolation:
-            await ctx.respond("This server is already subscribed to {0} <:NixCrying:1026494029002723398>".format(sub))
+            await ctx.respond("This server is already subscribed to {0} <:NixSuprise:1033423188937416704>".format(sub))
         
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
     async def unsubscribe_from_sub(self, ctx, sub):
         single_SQL("DELETE FROM subreddits WHERE GuildID=%s AND subreddit=%s ", (ctx.guild_id, sub)) #Delete the subscription out of the SQL
-        await ctx.respond("This server is now unsubscribed from {0}".format(sub))
+        await ctx.respond("This server is now unsubscribed from {0} <:NixSneaky:1033423327320080485>".format(sub))
     
     @tasks.loop(time=dt.time(hour=9))
     async def daily_post(self):

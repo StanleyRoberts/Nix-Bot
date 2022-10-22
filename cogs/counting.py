@@ -54,7 +54,7 @@ class Counting(commands.Cog):
     async def fail(msg, err_txt, roleID):
         single_SQL("UPDATE Guilds SET CurrentCount=0, LastCounterID=NULL WHERE ID=%s", (msg.guild.id,))
         await msg.add_reaction('<:NixCrying:1026494029002723398>')
-        await msg.channel.send(err_txt)
+        await msg.channel.send("Counting Failed <:NixCrying:1026494029002723398> "+err_txt)
         if roleID:
             try:
                 await msg.author.add_roles(msg.guild.get_role(roleID))
