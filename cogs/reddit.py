@@ -48,11 +48,12 @@ class Reddit(commands.Cog):
         await ctx.respond("This server is now unsubscribed from {0} <:NixSneaky:1033423327320080485>".format(sub))
     
     
-    @tasks.loop(time=dt.time(hour=9))
+    
+    @tasks.loop(time=dt.time(hour = 9))
     async def daily_post(self):
         subs = db.single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
-            self.bot.fetch_channel(entry[2]).send("Daily post ("+entry[1]+")\n"+self.get_reddit_post(entry[1], "day")) #Go through the SQL and post the requested post in the chosen channel
+            await (await self.bot.fetch_channel(entry[2])).send("Daily post ("+entry[1]+")\n"+ (await self.get_reddit_post(entry[1], "day"))) #Go through the SQL and post the requested post in the chosen channel
     
     async def get_reddit_post(self, subreddit, time):
         response = "<:NixWTF:1026494030407806986> Unknown error searching for subreddit"+subreddit
