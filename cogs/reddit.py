@@ -45,12 +45,6 @@ class Reddit(commands.Cog):
     async def unsubscribe_from_sub(self, ctx, sub):
         single_SQL("DELETE FROM subreddits WHERE GuildID=%s AND subreddit=%s ", (ctx.guild_id, sub)) #Delete the subscription out of the SQL
         await ctx.respond("This server is now unsubscribed from {0}".format(sub))
-        
-    @commands.slash_command(name='test', description="Testing")
-    async def testing(self, ctx):
-        subs = single_SQL("SELECT GuildID, subreddit, SubredditChannelID FROM subreddits")
-        for entry in subs:
-            await (await self.bot.fetch_channel(entry[2])).send(await self.get_reddit_post(entry[1], "day"))
     
     @tasks.loop(time=dt.time(hour=9))
     async def daily_post(self):
