@@ -56,7 +56,12 @@ async def on_guild_join(guild):
 async def on_guild_remove(guild):
     db.single_SQL("DELETE FROM Guilds WHERE ID=%s", (guild.id,))
     db.single_SQL("DELETE FROM Birthdays WHERE GuildID=%s", (guild.id,))
+    db.single_SQL("DELETE FROM subreddits WHERE GuildID=%s", (guild.id))
 
+@bot.event
+async def on_guild_channel_delete(channel):
+    db.single_SQL(("DELETE FROM subreddits WHERE SubredditChannelID=%s", (channel.id)))
+    
 @bot.event
 async def on_member_remove(member):
     db.single_SQL("DELETE FROM Birthdays WHERE GuildID=%s AND UserID=%s", (member.guild.id, member.id))
