@@ -13,7 +13,7 @@ class Facts(commands.Cog):
     
     @commands.slash_command(name='fact', description="Displays a random fact")
     async def send_fact(self, ctx):
-        await ctx.respond(db.get_fact())
+        await ctx.respond(self.get_fact())
 
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
     @discord.commands.default_permissions(manage_guild=True)
@@ -30,7 +30,7 @@ class Facts(commands.Cog):
     @tasks.loop(time=dt.time(hour=9))
     async def daily_fact(self):
         guilds = db.single_SQL("SELECT FactChannelID FROM Guilds")
-        fact = db.get_fact()
+        fact = self.get_fact()
         for factID in guilds:
             if factID[0]:
                 await (await self.bot.fetch_channel(factID[0])).send(fact)
