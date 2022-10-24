@@ -56,21 +56,22 @@ class Reddit(commands.Cog):
             "SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
             # Go through the SQL and post the requested post in the chosen channel
-            await (await self.bot.fetch_channel(entry[2])).send("Daily post ("+entry[1]+")\n" + (await self.get_reddit_post(entry[1], "day")))
+            await (await self.bot.fetch_channel(entry[2])).send("Daily post (" + entry[1] + ")\n" +
+                                                                (await self.get_reddit_post(entry[1], "day")))
 
     async def get_reddit_post(self, subreddit, time):
-        response = "<:NixWTF:1026494030407806986> Unknown error searching for subreddit"+subreddit
+        response = "<:NixWTF:1026494030407806986> Unknown error searching for subreddit" + subreddit
         try:
             subr = await self.reddit.subreddit(subreddit)
             subm = random.choice([post async for post in subr.top(time_filter=time, limit=100)])
             link = subm.selftext if subm.is_self else subm.url
-            response = "***"+subm.title+"***\n"+link
+            response = "***" + subm.title + "***\n" + link
         except prawcore.exceptions.Redirect:
-            response = "<:NixWTF:1026494030407806986> Subreddit \'"+subreddit+" \' not found"
+            response = "<:NixWTF:1026494030407806986> Subreddit \'" + subreddit + " \' not found"
         except prawcore.exceptions.NotFound:
-            response = "<:NixWTF:1026494030407806986> Subreddit \'"+subreddit+"\' banned"
+            response = "<:NixWTF:1026494030407806986> Subreddit \'" + subreddit + "\' banned"
         except prawcore.exceptions.Forbidden:
-            response = "<:NixWTF:1026494030407806986> Subreddit \'"+subreddit+"\' private"
+            response = "<:NixWTF:1026494030407806986> Subreddit \'" + subreddit + "\' private"
         return response
 
 

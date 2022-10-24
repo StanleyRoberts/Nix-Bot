@@ -6,8 +6,6 @@ from dotenv import load_dotenv
 import functions.database as db
 
 
-### CONSTANTS ###
-
 HEROKU = os.getenv('HEROKU')
 if not HEROKU:
     load_dotenv()
@@ -24,36 +22,35 @@ if not HEROKU:
     postgres = testing.postgresql.Postgresql()
     DATABASE_URL = postgres.url()
 
-intents = discord.Intents(
-    messages=True, message_content=True, guilds=True, members=True)
+intents = discord.Intents(messages=True, message_content=True,
+                          guilds=True, members=True)
 bot = commands.Bot(intents=intents, command_prefix='%s',
                    activity=discord.Game(name="/help"))
 
 
-### Command Functions ###
-
-@bot.slash_command(name='quote', description="Displays an AI-generated quote over an inspirational image")
+@bot.slash_command(name='quote',
+                   description="Displays an AI-generated quote over an inspirational image")
 async def send_quote(ctx):
     await ctx.respond(requests.get("https://inspirobot.me/api?generate=true").text)
 
 
 @bot.slash_command(name='help', description="Displays the help page for NixBot")
 async def display_help(ctx):
-    embed = discord.Embed(title="Help Page",
-                          description="Note: depending on your server settings and role permissions,"
-                          " some of these commands may be hidden or disabled\n\n***Generic***\n"
-                          + "".join(sorted([command.mention+" : "+command.description+"\n"
-                                           for command in bot.walk_application_commands() if not command.cog]))
-                          + "".join(["\n***"+cog+"***\n"+"".join(sorted([command.mention+" : "+command.description+"\n"
-                                                                        for command in bot.cogs[cog].walk_commands()])) for cog in bot.cogs]))
+    desc = "Note: depending on your server settings and role permissions," + \
+           " some of these commands may be hidden or disabled\n\n***Generic***\n" \
+           + "".join(sorted([command.mention + " : " + command.description + "\n"
+                             for command in bot.walk_application_commands() if not command.cog])) \
+           + "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " + command.description + "\n"
+                                                                for command in bot.cogs[cog].walk_commands()]))
+                      for cog in bot.cogs])  # Holy hell
+    embed = discord.Embed(title="Help Page", description=desc)
     await ctx.respond(embed=embed)
 
 
-### Client Event Handlers ###
-
 @bot.event
 async def on_guild_join(guild):
-    db.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID)"
+    db.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, " +
+                  "FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID)"
                   " VALUES (%s, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
 
 

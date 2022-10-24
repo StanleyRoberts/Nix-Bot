@@ -22,9 +22,11 @@ class Facts(commands.Cog):
     async def set_fact_channel(self, ctx, channel: discord.TextChannel):
         db.single_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s",
                       (channel.id, ctx.guild_id))
-        await ctx.respond("<:NixDrinking:1026494037043187713> Facts channel set to {0}".format(channel.mention), ephemeral=True)
+        await ctx.respond("<:NixDrinking:1026494037043187713> Facts channel set to {0}"
+                          .format(channel.mention), ephemeral=True)
 
-    @commands.slash_command(name='stop_facts', description="Disables daily facts (run set_fact_channel to enable again)")
+    @commands.slash_command(name='stop_facts',
+                            description="Disables daily facts (run set_fact_channel to enable again)")
     @discord.commands.default_permissions(manage_guild=True)
     async def toggle_facts(self, ctx):
         db.single_SQL(
@@ -43,7 +45,7 @@ class Facts(commands.Cog):
     def get_fact():
         api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
         response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
-        message = "Error: "+str(response.status_code)+"\n"+response.text
+        message = "Error: " + str(response.status_code) + "\n" + response.text
         if response.status_code == requests.codes.ok:
             cjson = json.loads(response.text)
             message = cjson[0]["fact"]
