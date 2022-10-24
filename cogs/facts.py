@@ -20,6 +20,7 @@ class Facts(commands.Cog):
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_fact_channel(self, ctx, channel: discord.TextChannel):
+        # TODO channel option should default to current context
         db.single_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s",
                       (channel.id, ctx.guild_id))
         await ctx.respond("<:NixDrinking:1026494037043187713> Facts channel set to {0}"
@@ -35,6 +36,9 @@ class Facts(commands.Cog):
 
     @tasks.loop(time=dt.time(hour=9))
     async def daily_fact(self):
+        """
+        Called daily to print facts to fact channel
+        """
         guilds = db.single_SQL("SELECT FactChannelID FROM Guilds")
         fact = self.get_fact()
         for factID in guilds:
@@ -43,6 +47,12 @@ class Facts(commands.Cog):
 
     @staticmethod
     def get_fact():
+        """
+        Gets random fact from ninjas API
+
+        Returns:
+            string: Random fact
+        """
         api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
         response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
         message = "Error: " + str(response.status_code) + "\n" + response.text

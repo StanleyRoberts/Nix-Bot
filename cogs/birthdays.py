@@ -32,6 +32,9 @@ class Birthdays(commands.Cog):
 
     @tasks.loop(time=dt.time(hour=9))  # 1 behind curr time
     async def daily_bday(self):
+        """
+        Called daily to check for, and congratulate birthdays to birthday channel
+        """
         today = dt.date.today().strftime("%b%e").replace(" ", "")
         val = db.single_SQL("SELECT BirthdayChannelID, string_agg(UserID::varchar, \' \') FROM Birthdays " +
                             "INNER JOIN Guilds ON Birthdays.GuildID=Guilds.ID WHERE Birthdays.Birthdate=%s " +

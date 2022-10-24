@@ -12,6 +12,12 @@ class Counting(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
+        """
+        Triggered on all messages, used to check for counting game
+
+        Args:
+            msg (discord.Message): Message that triggered function
+        """
         async with self.lock:
             if (msg.content.isdigit()):
                 values = db.single_SQL("SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, "
@@ -55,6 +61,9 @@ class Counting(commands.Cog):
 
     @staticmethod
     async def clear_fail_role():
+        """
+        Clears fail roles from all users on all servers
+        """
         gandR = db.single_SQL("SELECT ID, LoserRoleID FROM Guilds")
         for g in gandR:
             # For all users with the role
@@ -64,6 +73,14 @@ class Counting(commands.Cog):
 
     @staticmethod
     async def fail(msg, err_txt, roleID):
+        """
+        Handles a generic counting failure
+
+        Args:
+            msg (discord.Message): Message that failed
+            err_txt (string): Failure message to print to channel
+            roleID (int): ID of role to assign to user that failed
+        """
         db.single_SQL(
             "UPDATE Guilds SET CurrentCount=0, LastCounterID=NULL WHERE ID=%s", (msg.guild.id,))
         await msg.add_reaction('<:NixCrying:1026494029002723398>')

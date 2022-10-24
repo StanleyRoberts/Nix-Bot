@@ -46,12 +46,16 @@ class Reddit(commands.Cog):
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
     async def unsubscribe_from_sub(self, ctx, sub):
+        # TODO should output current subs if sub is not provided
         db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ",
                       (ctx.guild_id, sub))  # Delete the subscription out of the SQL
         await ctx.respond("This server is now unsubscribed from {0} <:NixSneaky:1033423327320080485>".format(sub))
 
     @tasks.loop(time=dt.time(hour=9))
     async def daily_post(self):
+        """
+        Called daily to print random post from subbed sub to linked discord channel
+        """
         subs = db.single_SQL(
             "SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
@@ -60,6 +64,16 @@ class Reddit(commands.Cog):
                                                                 (await self.get_reddit_post(entry[1], "day")))
 
     async def get_reddit_post(self, subreddit, time):
+        """
+        Gets a random post (out of top 100) from a subreddit
+
+        Args:
+            subreddit (string): subreddit name to pull from
+            time (string): time period to query (day, month, all, etc)
+
+        Returns:
+            string: reddit post, consisting of title and body in markdown format
+        """
         response = "<:NixWTF:1026494030407806986> Unknown error searching for subreddit" + subreddit
         try:
             subr = await self.reddit.subreddit(subreddit)

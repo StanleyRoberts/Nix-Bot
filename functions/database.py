@@ -8,6 +8,19 @@ class KeyViolation(Exception):
 
 
 def single_SQL(query, values=None):
+    """
+    Opens a connection, submits a single SQL query to the database then cleans up
+
+    Args:
+        query (string): SQL query to execute
+        values (tuple, optional): Values to provide to the SQL query (i.e. for %s). Defaults to None.
+
+    Raises:
+        KeyViolation: Raised when key constraint is violated
+
+    Returns:
+        (list): Values returned from sql query as a list of tuples.
+    """
     con = psycopg2.connect(DATABASE_URL)
     cur = con.cursor()
     try:
