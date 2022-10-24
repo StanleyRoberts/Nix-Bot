@@ -47,8 +47,20 @@ class Reddit(commands.Cog):
         db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub)) #Delete the subscription out of the SQL
         await ctx.respond("This server is now unsubscribed from {0} <:NixSneaky:1033423327320080485>".format(sub))
     
-    
-    
+    @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
+    async def getSubs(self, ctx):
+        subscriptions = db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
+        c = 1
+        list = []
+        for i in subscriptions:
+            list.append("{0})  {1}".format(c, i[0]))
+            c += 1
+        embed = discord.Embed(
+            title="Subscription",
+            description = "These are the Subreddits you have subscribed to \n\n" + "\n".join(list),
+            color = discord.Colour.blurple())
+        await ctx.respond(embed=embed)
+        
     @tasks.loop(time=dt.time(hour = 9))
     async def daily_post(self):
         subs = db.single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
