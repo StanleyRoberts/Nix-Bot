@@ -4,6 +4,7 @@ import requests
 from discord.ext import commands
 from dotenv import load_dotenv
 import functions.database as db
+from functions.style import Colours
 
 
 HEROKU = os.getenv('HEROKU')
@@ -43,7 +44,8 @@ async def display_help(ctx):
            + "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " + command.description + "\n"
                                                                 for command in bot.cogs[cog].walk_commands()]))
                       for cog in bot.cogs])  # Holy hell
-    embed = discord.Embed(title="Help Page", description=desc)
+    embed = discord.Embed(title="Help Page", description=desc,
+                          colour=Colours.PRIMARY)
     await ctx.respond(embed=embed)
 
 
