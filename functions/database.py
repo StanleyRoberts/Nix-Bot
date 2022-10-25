@@ -37,6 +37,9 @@ def single_SQL(query, values=None):
 
 
 def populate():
+    """
+    Sets up test database, and adds testing server as an entry
+    """
     con = psycopg2.connect(DATABASE_URL)
     cur = con.cursor()
     cur.execute("CREATE TABLE Guilds(ID BIGINT, CountingChannelID BIGINT, BirthdayChannelID BIGINT, " +

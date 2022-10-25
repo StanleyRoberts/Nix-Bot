@@ -1,8 +1,9 @@
-from types import coroutine
 import discord
-from discord.ext import commands
-import functions.database as db
 import asyncio
+from discord.ext import commands
+
+import functions.database as db
+from functions.style import Emotes
 
 
 class Counting(commands.Cog):
@@ -31,7 +32,7 @@ class Counting(commands.Cog):
                     elif (msg.author.id == values[0][2]):
                         await self.fail(msg, "Same user entered two numbers", values[0][4])
                     else:
-                        await msg.add_reaction('<:NixBlep:1026494035994607717>')
+                        await msg.add_reaction(Emotes.BLEP)
                         db.single_SQL("UPDATE Guilds SET LastCounterID =%s, CurrentCount = CurrentCount+1, " +
                                       "HighScoreCounting=(CASE WHEN %s>HighScoreCounting THEN %s ELSE " +
                                       "HighScoreCounting END) WHERE ID =%s",
@@ -42,22 +43,22 @@ class Counting(commands.Cog):
     async def set_fail_role(self, ctx, role: discord.Role):
         db.single_SQL("UPDATE Guilds SET FailRoleID=%s WHERE ID=%s",
                       (role.id, ctx.guild_id))
-        await ctx.respond("<:NixDrinking:1026494037043187713> The fail role is set to {0}"
-                          .format(role.mention), ephemeral=True)
+        await ctx.respond("The fail role is set to {0} {1}"
+                          .format(role.mention, Emotes.DRINKING), ephemeral=True)
 
     @commands.slash_command(name='set_counting_channel', description="Sets the channel for the counting game")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_counting_channel(self, ctx, channel: discord.TextChannel):
         db.single_SQL(
             "UPDATE Guilds SET CountingChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
-        await ctx.respond("<:NixDrinking:1026494037043187713> Counting channel set to {0}"
-                          .format(channel.mention), ephemeral=True)
+        await ctx.respond("Counting channel set to {0} {1}"
+                          .format(channel.mention, Emotes.DRINKING), ephemeral=True)
 
     @commands.slash_command(name='get_highscore', description="Shows you the highest count your server has reached")
     async def get_highscore(self, ctx):
         highscore = db.single_SQL(
             "SELECT HighScoreCounting FROM Guilds WHERE ID = %s", (ctx.guild.id,))
-        await ctx.respond("Your server highscore is {0}! <:NixWhoa:1026494032999895161>".format(highscore[0][0]))
+        await ctx.respond("Your server highscore is {0}! {1}".format(highscore[0][0], Emotes.WHOA))
 
     @staticmethod
     async def clear_fail_role():
@@ -83,16 +84,16 @@ class Counting(commands.Cog):
         """
         db.single_SQL(
             "UPDATE Guilds SET CurrentCount=0, LastCounterID=NULL WHERE ID=%s", (msg.guild.id,))
-        await msg.add_reaction('<:NixCrying:1026494029002723398>')
-        await msg.channel.send("Counting Failed <:NixCrying:1026494029002723398> " + err_txt)
+        await msg.add_reaction(Emotes.CRYING)
+        await msg.channel.send("Counting Failed {0} {1}".format(Emotes.CRYING, err_txt))
         if roleID:
             try:
                 await msg.author.add_roles(msg.guild.get_role(roleID))
             except discord.errors.Forbidden:
-                await msg.channel.send("<:NixConfused:1026494027727638599> Whoops! I couldn't set the " +
-                                       "{0} role (I need 'Manage Roles' to do that)"
+                await msg.channel.send("Whoops! I couldn't set the " +
+                                       "{0} role {1} (I need 'Manage Roles' to do that)"
                                        ".\nI won't try again until you set a new fail role"
-                                       .format(msg.guild.get_role(roleID).mention))
+                                       .format(msg.guild.get_role(roleID).mention, Emotes.CONFUSED))
                 db.single_SQL(
                     "UPDATE Guilds SET FailRoleID=NULL WHERE ID=%s", (msg.guild.id,))
 

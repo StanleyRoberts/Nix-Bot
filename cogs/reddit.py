@@ -1,11 +1,14 @@
 import discord
+import random
 from discord.ext import commands, tasks
-import datetime as dt
 import asyncpraw as praw
 import asyncprawcore as prawcore
-import random
+
 import functions.database as db
+from functions.style import Emotes, TIME
 from Nix import CLIENT_ID, SECRET_KEY, USER_AGENT
+
+# TODO this entire class needs to be updated to use functions/style Emotes and Colour properly @LordnistLost
 
 
 class Reddit(commands.Cog):
@@ -53,19 +56,21 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
     async def getSubs(self, ctx):
-        subscriptions = db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
+        subscriptions = db.single_SQL(
+            "SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
         c = 1
-        list = []
+        lst = []
         for i in subscriptions:
-            list.append("{0})  {1}".format(c, i[0]))
+            lst.append("{0})  {1}".format(c, i[0]))
             c += 1
         embed = discord.Embed(
             title="Subscription",
-            description="These are the Subreddits you have subscribed to \n\n" + "\n".join(list),
-            color=discord.Colour.orange())
+            description="These are the Subreddits you have subscribed to \n\n" +
+            "\n".join(lst),
+            color=discord.Colour.blurple())
         await ctx.respond(embed=embed)
 
-    @tasks.loop(time=dt.time(hour=9))
+    @tasks.loop(time=TIME)
     async def daily_post(self):
         """
         Called daily to print random post from subbed sub to linked discord channel
@@ -88,7 +93,8 @@ class Reddit(commands.Cog):
         Returns:
             string: reddit post, consisting of title and body in markdown format
         """
-        response = "<:NixWTF:1026494030407806986> Unknown error searching for subreddit" + subreddit
+        response = "Unknown error searching for subreddit {0} {1}".format(
+            Emotes.WTF, subreddit)
         try:
             subr = await self.reddit.subreddit(subreddit)
             subm = random.choice([post async for post in subr.top(time_filter=time, limit=100)])
