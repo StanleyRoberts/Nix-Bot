@@ -37,13 +37,13 @@ class Reddit(commands.Cog):
             [post async for post in (await self.reddit.subreddit(sub)).top(time_filter="day", limit=1)][0]
             db.single_SQL("INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
                           (ctx.guild_id, sub, channel.id))  # Add subscription to SQL
-            await ctx.respond("This server is now subscribed to {0} <:NixHug:1033423234370125904>".format(sub))
+            await ctx.respond("This server is now subscribed to {0} {1}".format(sub, Emotes.HUG))
 
         except prawcore.exceptions.AsyncPrawcoreException:  # Can´t find subreddit exception
-            await ctx.respond("The subreddit {0} is not available <:NixEvil:1033423155034849340>".format(sub))
+            await ctx.respond("The subreddit {0} is not available {1}}".format(sub, Emotes.EVIL))
 
         except db.KeyViolation:
-            await ctx.respond("This server is already subscribed to {0} <:NixSuprise:1033423188937416704>".format(sub))
+            await ctx.respond("This server is already subscribed to {0} {1}".format(sub, Emotes.SUPRISE))
         print(db.single_SQL("SELECT * FROM Subreddits"))
 
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
@@ -52,7 +52,7 @@ class Reddit(commands.Cog):
         # TODO should output current subs if sub is not provided
         db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ",
                       (ctx.guild_id, sub))  # Delete the subscription out of the SQL
-        await ctx.respond("This server is now unsubscribed from {0} <:NixSneaky:1033423327320080485>".format(sub))
+        await ctx.respond("This server is now unsubscribed from {0} {1}".format(sub, Emotes.SNEAKY))
 
     @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
     async def getSubs(self, ctx):
@@ -67,7 +67,7 @@ class Reddit(commands.Cog):
             title="Subscription",
             description="These are the Subreddits you have subscribed to \n\n" +
             "\n".join(lst),
-            color=discord.Colour.blurple())
+            color=discord.Colour.orange())
         await ctx.respond(embed=embed)
 
     @tasks.loop(time=TIME)
@@ -101,11 +101,11 @@ class Reddit(commands.Cog):
             link = subm.selftext if subm.is_self else subm.url
             response = "***" + subm.title + "***\n" + link
         except prawcore.exceptions.Redirect:
-            response = "<:NixWTF:1026494030407806986> Subreddit \'" + subreddit + " \' not found"
+            response = "{0} Subreddit \'".format(Emotes.WTF) + subreddit + " \' not found"
         except prawcore.exceptions.NotFound:
-            response = "<:NixWTF:1026494030407806986> Subreddit \'" + subreddit + "\' banned"
+            response = "{0} Subreddit \'".format(Emotes.WTF) + subreddit + "\' banned"
         except prawcore.exceptions.Forbidden:
-            response = "<:NixWTF:1026494030407806986> Subreddit \'" + subreddit + "\' private"
+            response = "{0} Subreddit \'".format(Emotes.WTF) + subreddit + "\' private"
         return response
 
 

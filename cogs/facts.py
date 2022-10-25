@@ -4,7 +4,7 @@ import json
 from discord.ext import commands, tasks
 
 import functions.database as db
-from functions.style import Emotes, Time
+from functions.style import Emotes, TIME
 from Nix import API_KEY
 
 
@@ -19,8 +19,9 @@ class Facts(commands.Cog):
 
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
     @discord.commands.default_permissions(manage_guild=True)
-    async def set_fact_channel(self, ctx, channel: discord.TextChannel):
-        # TODO channel option should default to current context
+    async def set_fact_channel(self, ctx, channel: discord.Option(discord.TextChannel, required=False)):
+        if not channel:
+            channel = ctx.channel
         db.single_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s",
                       (channel.id, ctx.guild_id))
         await ctx.respond("Facts channel set to {0} {1}"
