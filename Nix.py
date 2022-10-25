@@ -67,7 +67,7 @@ async def on_ready():
 
 if __name__ == "__main__":
     if not HEROKU: db.populate()
-    cogs = ['birthdays', 'facts', 'counting', 'reddit']
+    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'nix_uno']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
     bot.run(TOKEN)
