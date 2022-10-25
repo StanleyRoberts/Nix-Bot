@@ -102,14 +102,9 @@ async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
 
 if __name__ == "__main__":
-<<<<<<< HEAD
-    if not HEROKU: db.populate()
-    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'nix_uno']
-=======
     if not HEROKU:
         db.populate()
-    cogs = ['birthdays', 'facts', 'counting', 'reddit']
->>>>>>> 6839bc6d17c4b25f9b322d8e6c48a2fd49d63329
+    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'nix_uno']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
     bot.run(TOKEN)
