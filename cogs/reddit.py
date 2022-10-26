@@ -5,7 +5,7 @@ import asyncpraw as praw
 import asyncprawcore as prawcore
 
 import functions.database as db
-from functions.style import Emotes, TIME
+from functions.style import Emotes, Colours, TIME
 from Nix import CLIENT_ID, SECRET_KEY, USER_AGENT
 
 # TODO this entire class needs to be updated to use functions/style Emotes and Colour properly @LordnistLost
@@ -63,11 +63,14 @@ class Reddit(commands.Cog):
         for i in subscriptions:
             lst.append("{0})  {1}".format(c, i[0]))
             c += 1
+        if c == 1:
+            desc = "You have not subscriped to any subreddits yet"
+        else:
+            desc = "These are the Subreddits you have subscribed to \n\n" + "\n".join(lst)
         embed = discord.Embed(
             title="Subscription",
-            description="These are the Subreddits you have subscribed to \n\n" +
-            "\n".join(lst),
-            color=discord.Colour.orange())
+            description=desc,
+            colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
 
     @tasks.loop(time=TIME)

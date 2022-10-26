@@ -1,10 +1,10 @@
 from enum import Enum
 import datetime
-
+import discord
 TIME = datetime.time(hour=7)
 
 
-class Colours(Enum):
+class Colours():
     """
     Colour palette for Nix
     """
@@ -13,7 +13,7 @@ class Colours(Enum):
     TEXT = discord.Colour(460551)
 
 
-class Emotes(Enum):
+class Emotes():
     """
     Emotes for Nix. Emotes should appear at the end of messages or lines, not before or within.
     Try to use Emotes in all Nix messages and try to use all emotes equally.
