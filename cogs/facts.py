@@ -44,7 +44,7 @@ class Facts(commands.Cog):
         fact = self.get_fact()
         for factID in guilds:
             if factID[0]:
-                await (await self.bot.fetch_channel(factID[0])).send(fact)
+                await (await self.bot.fetch_channel(factID[0])).send("Daily fact: " + fact)
 
     @staticmethod
     def get_fact():

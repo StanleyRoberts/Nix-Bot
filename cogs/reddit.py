@@ -41,36 +41,31 @@ class Reddit(commands.Cog):
 
         except db.KeyViolation:
             await ctx.respond("This server is already subscribed to {0} {1}".format(sub, Emotes.SUPRISE))
-        print(db.single_SQL("SELECT * FROM Subreddits"))
 
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
     async def unsubscribe_from_sub(self, ctx, sub: discord.Option(required=False)):
         if not sub:
-            await ctx.respond(await self.getSubs(ctx))
+            await self.getSubs(ctx)
+            return
+        if sub not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+            await ctx.respond("This server is not subscribed to r/{0} {1}".format(sub, Emotes.SUPRISE))
         else:
-            if sub not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
-                await ctx.respond("This server is not subscribed to r/{0} {1}".format(sub, Emotes.SUPRISE))
-            else:
-                db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ",
-                              (ctx.guild_id, sub))  # Delete the subscription out of the SQL
-                await ctx.respond("This server is now unsubscribed from {0} {1}".format(sub, Emotes.SNEAKY))
+            db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ",
+                          (ctx.guild_id, sub))  # Delete the subscription out of the SQL
+            await ctx.respond("This server is now unsubscribed from {0} {1}".format(sub, Emotes.SNEAKY))
 
     @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
-    async def getSubs(self, ctx):
+    async def get_subs(self, ctx):
         subscriptions = db.single_SQL(
             "SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
-        c = 1
-        lst = []
-        for i in subscriptions:
-            lst.append("{0})  {1}".format(c, i[0]))
-            c += 1
-        if c == 1:
-            desc = "You have not subscriped to any subreddits yet"
-        else:
-            desc = "These are the Subreddits you have subscribed to \n\n" + "\n".join(lst)
+
+        desc = "You have not subscribed to any subreddits yet\nGet started with {0}!".format(
+            self.bot.get_application_command("subscribe").mention)
+        if subscriptions:
+            desc = "\n".join(["> " + sub[0] for sub in subscriptions])
         embed = discord.Embed(
-            title="Subscription",
+            title="Subscriptions",
             description=desc,
             colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
@@ -87,6 +82,7 @@ class Reddit(commands.Cog):
             await (await self.bot.fetch_channel(entry[2])).send("Daily post (" + entry[1] + ")\n" +
                                                                 (await self.get_reddit_post(entry[1], "day")))
 
+    @staticmethod
     async def get_reddit_post(self, subreddit, time):
         """
         Gets a random post (out of top 100) from a subreddit
@@ -106,11 +102,14 @@ class Reddit(commands.Cog):
             link = subm.selftext if subm.is_self else subm.url
             response = "***" + subm.title + "***\n" + link
         except prawcore.exceptions.Redirect:
-            response = "{0} Subreddit \'".format(Emotes.WTF) + subreddit + " \' not found"
+            response = "{0} Subreddit \'".format(
+                Emotes.WTF) + subreddit + " \' not found"
         except prawcore.exceptions.NotFound:
-            response = "{0} Subreddit \'".format(Emotes.WTF) + subreddit + "\' banned"
+            response = "{0} Subreddit \'".format(
+                Emotes.WTF) + subreddit + "\' banned"
         except prawcore.exceptions.Forbidden:
-            response = "{0} Subreddit \'".format(Emotes.WTF) + subreddit + "\' private"
+            response = "{0} Subreddit \'".format(
+                Emotes.WTF) + subreddit + "\' private"
         return response
 
 
