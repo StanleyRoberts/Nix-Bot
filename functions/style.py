@@ -1,6 +1,7 @@
-from enum import Enum
 import datetime
 import discord
+
+
 TIME = datetime.time(hour=7)
 
 
