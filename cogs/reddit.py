@@ -8,8 +8,6 @@ import functions.database as db
 from functions.style import Emotes, Colours, TIME
 from Nix import CLIENT_ID, SECRET_KEY, USER_AGENT
 
-# TODO this entire class needs to be updated to use functions/style Emotes and Colour properly @LordnistLost
-
 
 class Reddit(commands.Cog):
     def __init__(self, bot):
@@ -50,6 +48,10 @@ class Reddit(commands.Cog):
     @discord.commands.default_permissions(manage_guild=True)
     async def unsubscribe_from_sub(self, ctx, sub):
         # TODO should output current subs if sub is not provided
+
+        if sub not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+            await ctx.respond("This server is not subscriped to r/{0} {1}".format(sub, Emotes.SUPRISE))
+            return
         db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ",
                       (ctx.guild_id, sub))  # Delete the subscription out of the SQL
         await ctx.respond("This server is now unsubscribed from {0} {1}".format(sub, Emotes.SNEAKY))
