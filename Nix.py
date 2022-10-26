@@ -41,12 +41,14 @@ async def send_quote(ctx):
 @bot.slash_command(name='help', description="Displays the help page for NixBot")
 async def display_help(ctx):
     desc = "Note: depending on your server settings and role permissions," + \
-           " some of these commands may be hidden or disabled\n\n***Generic***\n" \
+           " some of these commands may be hidden or disabled\n\n**Generic**\n" \
            + "".join(sorted([command.mention + " : " + command.description + "\n"
                              for command in bot.walk_application_commands() if not command.cog])) \
-           + "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " + command.description + "\n"
-                                                                for command in bot.cogs[cog].walk_commands()]))
+           + "".join(["\n**" + cog + "**\n" + "".join(sorted([command.mention + " : " + command.description + "\n"
+                                                              for command in bot.cogs[cog].walk_commands()]))
                       for cog in bot.cogs])  # Holy hell
+    desc += "\n **Nix AI**\n> In addition to these commands, mentioning Nix in a " +\
+            "comment will allow it to reply to you using AI!"
     embed = discord.Embed(title="Help Page", description=desc,
                           colour=Colours.PRIMARY)
     await ctx.respond(embed=embed)
@@ -74,7 +76,7 @@ async def on_message(msg):
             "clever, and very friendly.\n\nHuman: Hello, who are you?\nNix: I am a phoenix made of fire. " +
             "How can I help you today?\nHuman: " + clean_prompt + "\nNix: ",
             temperature=0.9, max_tokens=150, top_p=1, frequency_penalty=0,
-            presence_penalty=0.6, stop=[" Human:", " Nix:"])
+            presence_penalty=0.6, stop=[" Human:", " Nix:"], user=msg.author.id)
         await msg.reply(response.choices[0].text.strip('\n'))
 
 
