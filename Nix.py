@@ -1,5 +1,6 @@
 import discord
 import os
+import openai
 import requests
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -15,8 +16,9 @@ TOKEN = os.getenv('TOKEN')  # Discord Token
 CLIENT_ID = os.getenv('CLIENT_ID')  # PRAW/Reddit API client ID
 SECRET_KEY = os.getenv('SECRET_KEY')  # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT')  # PRAW/Reddit API user agent
-API_KEY = os.getenv('API_KEY')  # X-API-Key for API-Ninjas
+NINJA_API_KEY = os.getenv('NINJA_API_KEY')  # X-API-Key for API-Ninjas
 DATABASE_URL = os.getenv('DATABASE_URL')  # PostgreSQL db
+AI_API_KEY = os.getenv('AI_API_KEY')  # OpenAI API key
 
 if not HEROKU:
     import testing.postgresql
@@ -33,6 +35,31 @@ bot = commands.Bot(intents=intents, command_prefix='%s',
                    description="Displays an AI-generated quote over an inspirational image")
 async def send_quote(ctx):
     await ctx.respond(requests.get("https://inspirobot.me/api?generate=true").text)
+
+
+@bot.slash_command(name='talk')
+async def talk(ctx, prompt):
+
+    await ctx.respond("You asked: " + prompt)
+    openai.api_key = AI_API_KEY
+    start_sequence = "\nNix:"
+    restart_sequence = "\nHuman: "
+
+    response = openai.Completion.create(
+        model="text-davinci-002",
+        prompt="The following is a conversation with a phoenix named Nix. The phoenix is helpful, creative, " +
+        "clever, and very friendly.\n\nHuman: Hello, who are you?\nNix: I am a phoenix made of fire. " +
+        "How can I help you today?\nHuman: " + prompt,
+        temperature=0.9,
+        max_tokens=150,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0.6,
+        stop=[" Human:", " Nix:"]
+    )
+    test = str(response.choices[0].text)
+    print(test)
+    await ctx.respond(test)
 
 
 @bot.slash_command(name='help', description="Displays the help page for NixBot")
