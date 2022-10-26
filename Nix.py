@@ -2,6 +2,7 @@ import discord
 import os
 import openai
 import requests
+import re
 from discord.ext import commands
 from dotenv import load_dotenv
 import functions.database as db
@@ -37,31 +38,6 @@ async def send_quote(ctx):
     await ctx.respond(requests.get("https://inspirobot.me/api?generate=true").text)
 
 
-@bot.slash_command(name='talk')
-async def talk(ctx, prompt):
-
-    await ctx.respond("You asked: " + prompt)
-    openai.api_key = AI_API_KEY
-    start_sequence = "\nNix:"
-    restart_sequence = "\nHuman: "
-
-    response = openai.Completion.create(
-        model="text-davinci-002",
-        prompt="The following is a conversation with a phoenix named Nix. The phoenix is helpful, creative, " +
-        "clever, and very friendly.\n\nHuman: Hello, who are you?\nNix: I am a phoenix made of fire. " +
-        "How can I help you today?\nHuman: " + prompt,
-        temperature=0.9,
-        max_tokens=150,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0.6,
-        stop=[" Human:", " Nix:"]
-    )
-    test = str(response.choices[0].text)
-    print(test)
-    await ctx.respond(test)
-
-
 @bot.slash_command(name='help', description="Displays the help page for NixBot")
 async def display_help(ctx):
     desc = "Note: depending on your server settings and role permissions," + \
@@ -74,6 +50,32 @@ async def display_help(ctx):
     embed = discord.Embed(title="Help Page", description=desc,
                           colour=Colours.PRIMARY)
     await ctx.respond(embed=embed)
+
+
+@bot.event
+async def on_message(msg):
+    """
+    Prints out an AI generated response to the message if it mentions Nix
+
+    Args:
+        msg (discord.Message): Message that triggered event
+    """
+    if (bot.user.mentioned_in(msg)):
+        openai.api_key = AI_API_KEY
+        start_sequence = "\nNix:"
+        restart_sequence = "\nHuman: "
+
+        clean_prompt = re.sub(" @", " ",
+                              re.sub("@" + bot.user.name, "", msg.clean_content))
+
+        response = openai.Completion.create(
+            model="text-davinci-002",
+            prompt="The following is a conversation with a phoenix named Nix. The phoenix is helpful, creative, " +
+            "clever, and very friendly.\n\nHuman: Hello, who are you?\nNix: I am a phoenix made of fire. " +
+            "How can I help you today?\nHuman: " + clean_prompt + "\nNix: ",
+            temperature=0.9, max_tokens=150, top_p=1, frequency_penalty=0,
+            presence_penalty=0.6, stop=[" Human:", " Nix:"])
+        await msg.reply(response.choices[0].text.strip('\n'))
 
 
 @bot.event
