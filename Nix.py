@@ -1,8 +1,6 @@
 import discord
 import os
-import openai
 import requests
-import re
 from discord.ext import commands
 from dotenv import load_dotenv
 import functions.database as db
@@ -52,32 +50,6 @@ async def display_help(ctx):
     embed = discord.Embed(title="Help Page", description=desc,
                           colour=Colours.PRIMARY)
     await ctx.respond(embed=embed)
-
-
-@bot.event
-async def on_message(msg):
-    """
-    Prints out an AI generated response to the message if it mentions Nix
-
-    Args:
-        msg (discord.Message): Message that triggered event
-    """
-    if (bot.user.mentioned_in(msg)):
-        openai.api_key = AI_API_KEY
-        start_sequence = "\nNix:"
-        restart_sequence = "\nHuman: "
-
-        clean_prompt = re.sub(" @", " ",
-                              re.sub("@" + bot.user.name, "", msg.clean_content))
-
-        response = openai.Completion.create(
-            model="text-davinci-002",
-            prompt="The following is a conversation with a phoenix named Nix. The phoenix is helpful, creative, " +
-            "clever, and very friendly.\n\nHuman: Hello, who are you?\nNix: I am a phoenix made of fire. " +
-            "How can I help you today?\nHuman: " + clean_prompt + "\nNix: ",
-            temperature=0.9, max_tokens=150, top_p=1, frequency_penalty=0,
-            presence_penalty=0.6, stop=[" Human:", " Nix:"], user=msg.author.id)
-        await msg.reply(response.choices[0].text.strip('\n'))
 
 
 @bot.event
@@ -137,7 +109,7 @@ async def on_ready():
 if __name__ == "__main__":
     if not HEROKU:
         db.populate()
-    cogs = ['birthdays', 'facts', 'counting', 'reddit']
+    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'nlp']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
     bot.run(TOKEN)
