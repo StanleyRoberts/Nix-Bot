@@ -17,7 +17,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')  # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT')  # PRAW/Reddit API user agent
 NINJA_API_KEY = os.getenv('NINJA_API_KEY')  # X-API-Key for API-Ninjas
 DATABASE_URL = os.getenv('DATABASE_URL')  # PostgreSQL db
-AI_API_KEY = os.getenv('AI_API_KEY')  # OpenAI API key
+HF_API = os.getenv('HF_API')  # HuggingFace API key
+
 
 if not HEROKU:
     import testing.postgresql
