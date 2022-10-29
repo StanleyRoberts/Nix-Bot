@@ -18,7 +18,7 @@ class NLP(commands.Cog):
         Args:
             msg (discord.Message): Message that triggered event
         """
-        if (self.bot.user.mentioned_in(msg)):
+        if (self.bot.user.mentioned_in(msg) and msg.reference is None):
             clean_prompt = re.sub(" @", " ",
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
 
@@ -31,7 +31,7 @@ class NLP(commands.Cog):
                 "How can I help you today?\nHuman: " + clean_prompt + "\nNix: "
 
             data = json.dumps({"inputs": prompt, "parameters": {
-                              "return_full_text": False}})
+                              "return_full_text": False, "temperature": 0.9, "use_cache": False}})
             response = requests.request(
                 "POST", url, headers=headers, data=data)
 
