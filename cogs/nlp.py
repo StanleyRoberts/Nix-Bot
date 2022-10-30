@@ -34,12 +34,13 @@ class NLP(commands.Cog):
             response = requests.request(
                 "POST", url, headers=headers, data=data)
 
-            text = json.loads(response.content.decode('utf-8'))
+            text = json.loads(response.content.decode(
+                'utf-8'))[0]['generated_text']
             print("generated text: " + text)
 
             # strip non-Nix messages
             trim = re.sub(
-                "Nix:", "", text[0]['generated_text'][len(prompt):].split('Human: ')[0])
+                "Nix:", "", text[len(prompt):].split('Human: ')[0])
 
             await msg.reply(trim if not any(ele in trim for ele in ['.', '!', '?']) else "".join(
                 (re.findall('.*?[.!?]', trim))))  # strip dangling sentences
