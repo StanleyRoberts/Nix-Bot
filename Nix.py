@@ -3,6 +3,7 @@ import os
 import requests
 from discord.ext import commands
 from dotenv import load_dotenv
+
 import functions.database as db
 from functions.style import Colours
 

@@ -3,6 +3,7 @@ import random
 from discord.ext import commands, tasks
 import asyncpraw as praw
 import asyncprawcore as prawcore
+
 import functions.database as db
 from functions.style import Emotes, Colours, TIME
 from Nix import CLIENT_ID, SECRET_KEY, USER_AGENT

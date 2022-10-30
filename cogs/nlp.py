@@ -1,7 +1,7 @@
-from discord.ext import commands
 import requests
 import json
 import re
+from discord.ext import commands
 
 from Nix import HF_API
 
@@ -36,14 +36,14 @@ class NLP(commands.Cog):
 
             text = json.loads(response.content.decode(
                 'utf-8'))[0]['generated_text']
-            print("generated text: " + text)
+            print("\n\ngenerated text: " + text)
 
             # strip non-Nix messages
             trim = re.sub(
                 "Nix:", "", text[len(prompt):].split('Human: ')[0])
 
-            await msg.reply(trim if not any(ele in trim for ele in ['.', '!', '?']) else "".join(
-                (re.findall('.*?[.!?]', trim))))  # strip dangling sentences
+            await msg.reply(trim if not any(ele in trim for ele in ['.', '!', '?', ')']) else "".join(
+                (re.findall('.*?[.!?)]', trim))))  # strip dangling sentences
 
 
 def setup(bot):
