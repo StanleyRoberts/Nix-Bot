@@ -24,7 +24,6 @@ class NLP(commands.Cog):
 
             url = "https://api-inference.huggingface.co/models/bigscience/bloom"
             headers = {"Authorization": f"Bearer {HF_API}"}
-            print(clean_prompt)
 
             prompt = "The following is a conversation with a phoenix named Nix. The phoenix is helpful, creative, " +\
                 "clever, and very friendly.\n\nHuman: Hello, who are you?\nNix: I am a phoenix made of fire. " +\
@@ -35,11 +34,15 @@ class NLP(commands.Cog):
             response = requests.request(
                 "POST", url, headers=headers, data=data)
 
-            trim = json.loads(response.content.decode(
-                'utf-8'))[0]['generated_text'][len(prompt):].split('Human: ')[0]
+            text = json.loads(response.content.decode('utf-8'))
+            print("generated text: " + text)
+
+            # strip non-Nix messages
+            trim = re.sub(
+                "Nix:", "", text[0]['generated_text'][len(prompt):].split('Human: ')[0])
 
             await msg.reply(trim if not any(ele in trim for ele in ['.', '!', '?']) else "".join(
-                (re.findall('.*?[.!?]', trim))))
+                (re.findall('.*?[.!?]', trim))))  # strip dangling sentences
 
 
 def setup(bot):
