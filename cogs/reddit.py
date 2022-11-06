@@ -79,8 +79,12 @@ class Reddit(commands.Cog):
             "SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
             # Go through the SQL and post the requested post in the chosen channel
-            await (await self.bot.fetch_channel(entry[2])).send("Daily post (" + entry[1] + ")\n" +
-                                                                (await self.get_reddit_post(entry[1], "day")))
+            try:
+                await (await self.bot.fetch_channel(entry[2])).send("Daily post (" + entry[1] + ")\n" +
+                                                                    (await self.get_reddit_post(entry[1], "day")))
+            except discord.errors.Forbidden:
+                # silently fail if no perms, TODO setup logging channel
+                pass
 
     @staticmethod
     async def get_reddit_post(self, subreddit, time):
