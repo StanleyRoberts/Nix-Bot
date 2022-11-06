@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands, tasks
-import datetime as dt
+
 import functions.database as db
+from functions.style import Emotes, TIME
 
 
 class Birthdays(commands.Cog):
@@ -14,8 +15,7 @@ class Birthdays(commands.Cog):
     async def set_counting_channel(self, ctx, channel: discord.TextChannel):
         db.single_SQL(
             "UPDATE Guilds SET BirthdayChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
-        await ctx.respond("<:NixDrinking:1026494037043187713> Birthday channel set to {0}"
-                          .format(channel.mention), ephemeral=True)
+        await ctx.respond("Birthday channel set to {0} {1}".format(channel.mention, Emotes.DRINKING), ephemeral=True)
 
     @commands.slash_command(name='birthday', description="Set your birthday")
     async def set_birthday(self, ctx,
@@ -27,10 +27,10 @@ class Birthdays(commands.Cog):
         db.single_SQL("INSERT INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s) ON CONFLICT " +
                       "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
                       (ctx.guild.id, ctx.author.id, month + str(day), month + str(day)))
-        await ctx.respond(ctx.author.mention + " your birthday is set to {0} {1} <:NixUwU:1026494034371420250>"
-                          .format(day, month))
+        await ctx.respond(ctx.author.mention + " your birthday is set to {0} {1} {3}"
+                          .format(day, month, Emotes.UWU))
 
-    @tasks.loop(time=dt.time(hour=9))  # 1 behind curr time
+    @tasks.loop(time=TIME)  # 1 behind curr time
     async def daily_bday(self):
         """
         Called daily to check for, and congratulate birthdays to birthday channel
@@ -44,7 +44,7 @@ class Birthdays(commands.Cog):
             if guild[0]:
                 await (await self.bot.fetch_channel(guild[0]))\
                     .send("Happy Birthday to: " + users +
-                          "!\nHope you have a brilliant day <:NixHeart:1026494038825779331>")
+                          "!\nHope you have a brilliant day {0}".format(Emotes.HEART))
 
 
 def setup(bot):

@@ -1,10 +1,10 @@
 import discord
-from discord.ext import commands, tasks
-import datetime as dt
-import functions.database as db
 import requests
 import json
+from discord.ext import commands, tasks
 
+import functions.database as db
+from functions.style import Emotes, TIME
 from Nix import API_KEY
 
 
@@ -19,12 +19,13 @@ class Facts(commands.Cog):
 
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
     @discord.commands.default_permissions(manage_guild=True)
-    async def set_fact_channel(self, ctx, channel: discord.TextChannel):
-        # TODO channel option should default to current context
+    async def set_fact_channel(self, ctx, channel: discord.Option(discord.TextChannel, required=False)):
+        if not channel:
+            channel = ctx.channel
         db.single_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s",
                       (channel.id, ctx.guild_id))
-        await ctx.respond("<:NixDrinking:1026494037043187713> Facts channel set to {0}"
-                          .format(channel.mention), ephemeral=True)
+        await ctx.respond("Facts channel set to {0} {1}"
+                          .format(channel.mention, Emotes.DRINKING), ephemeral=True)
 
     @commands.slash_command(name='stop_facts',
                             description="Disables daily facts (run set_fact_channel to enable again)")
@@ -32,9 +33,9 @@ class Facts(commands.Cog):
     async def toggle_facts(self, ctx):
         db.single_SQL(
             "UPDATE Guilds SET FactChannelID=NULL WHERE ID=%s", (ctx.guild_id,))
-        await ctx.respond("<:NixNoEmotion:1026494031670300773> Stopping daily facts", ephemeral=True)
+        await ctx.respond("Stopping daily facts {0}".format(Emotes.NOEMOTION), ephemeral=True)
 
-    @tasks.loop(time=dt.time(hour=9))
+    @tasks.loop(time=TIME)
     async def daily_fact(self):
         """
         Called daily to print facts to fact channel
@@ -43,7 +44,7 @@ class Facts(commands.Cog):
         fact = self.get_fact()
         for factID in guilds:
             if factID[0]:
-                await (await self.bot.fetch_channel(factID[0])).send(fact)
+                await (await self.bot.fetch_channel(factID[0])).send("Daily fact: " + fact)
 
     @staticmethod
     def get_fact():
