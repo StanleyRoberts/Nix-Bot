@@ -87,7 +87,7 @@ class Reddit(commands.Cog):
                 pass
 
     @staticmethod
-    async def get_reddit_post(self, subreddit, time):
+    async def get_reddit_post(subreddit, time):
         """
         Gets a random post (out of top 100) from a subreddit
 
@@ -101,7 +101,7 @@ class Reddit(commands.Cog):
         response = "Unknown error searching for subreddit {0} {1}".format(
             Emotes.WTF, subreddit)
         try:
-            subr = await self.reddit.subreddit(subreddit)
+            subr = await Reddit.reddit.subreddit(subreddit)
             subm = random.choice([post async for post in subr.top(time_filter=time, limit=100)])
             link = subm.selftext if subm.is_self else subm.url
             response = "***" + subm.title + "***\n" + link
