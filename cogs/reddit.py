@@ -9,11 +9,12 @@ from Nix import CLIENT_ID, SECRET_KEY, USER_AGENT
 
 
 class Reddit(commands.Cog):
+    reddit = praw.Reddit(client_id=CLIENT_ID,
+                         client_secret=SECRET_KEY,
+                         user_agent=USER_AGENT,)
+
     def __init__(self, bot):
         self.bot = bot
-        self.reddit = praw.Reddit(client_id=CLIENT_ID,
-                                  client_secret=SECRET_KEY,
-                                  user_agent=USER_AGENT,)
         self.daily_post.start()
 
     @commands.slash_command(name='reddit', description="Displays a random top reddit post from the given subreddit")
