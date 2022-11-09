@@ -49,7 +49,7 @@ class Reddit(commands.Cog):
         if not sub:
             await self.getSubs(ctx)
             return
-        if sub not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        if (sub,) not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             await ctx.respond("This server is not subscribed to r/{0} {1}".format(sub, Emotes.SUPRISE))
         else:
             db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ",
