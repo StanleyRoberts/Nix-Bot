@@ -1,7 +1,6 @@
-# flyctl launch added from .gitignore
-**\.venv
-**\.env
-**\test.*
-**\__pycache__
-**\hide
-**\.vscode
+.venv
+.env
+test.*
+__pycache__
+hide
+.vscode
