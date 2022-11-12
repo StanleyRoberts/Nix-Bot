@@ -34,7 +34,7 @@ bot = commands.Bot(intents=intents, command_prefix='%s',
 async def send_quote(ctx):
     await ctx.respond(requests.get("https://inspirobot.me/api?generate=true").text)
 
-
+"""
 @bot.slash_command(name='help', description="Displays the help page for NixBot")
 async def display_help(ctx):
     desc = "Note: depending on your server settings and role permissions," + \
@@ -47,6 +47,7 @@ async def display_help(ctx):
     embed = discord.Embed(title="Help Page", description=desc,
                           colour=Colours.PRIMARY)
     await ctx.respond(embed=embed)
+"""
 
 
 @bot.event
@@ -106,7 +107,7 @@ async def on_ready():
 if __name__ == "__main__":
     if not HEROKU:
         db.populate()
-    cogs = ['birthdays', 'facts', 'counting', 'reddit']
+    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'help']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
     bot.run(TOKEN)
