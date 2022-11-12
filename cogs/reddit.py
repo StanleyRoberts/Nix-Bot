@@ -9,11 +9,12 @@ from Nix import CLIENT_ID, SECRET_KEY, USER_AGENT
 
 
 class Reddit(commands.Cog):
+    reddit = praw.Reddit(client_id=CLIENT_ID,
+                         client_secret=SECRET_KEY,
+                         user_agent=USER_AGENT,)
+
     def __init__(self, bot):
         self.bot = bot
-        self.reddit = praw.Reddit(client_id=CLIENT_ID,
-                                  client_secret=SECRET_KEY,
-                                  user_agent=USER_AGENT,)
         self.daily_post.start()
 
     @commands.slash_command(name='reddit', description="Displays a random top reddit post from the given subreddit")
@@ -48,7 +49,7 @@ class Reddit(commands.Cog):
         if not sub:
             await self.getSubs(ctx)
             return
-        if sub not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        if (sub,) not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             await ctx.respond("This server is not subscribed to r/{0} {1}".format(sub, Emotes.SUPRISE))
         else:
             db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ",
@@ -79,11 +80,15 @@ class Reddit(commands.Cog):
             "SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
             # Go through the SQL and post the requested post in the chosen channel
-            await (await self.bot.fetch_channel(entry[2])).send("Daily post (" + entry[1] + ")\n" +
-                                                                (await self.get_reddit_post(entry[1], "day")))
+            try:
+                await (await self.bot.fetch_channel(entry[2])).send("Daily post (" + entry[1] + ")\n" +
+                                                                    (await self.get_reddit_post(entry[1], "day")))
+            except discord.errors.Forbidden:
+                # silently fail if no perms, TODO setup logging channel
+                pass
 
     @staticmethod
-    async def get_reddit_post(self, subreddit, time):
+    async def get_reddit_post(subreddit, time):
         """
         Gets a random post (out of top 100) from a subreddit
 
@@ -97,7 +102,7 @@ class Reddit(commands.Cog):
         response = "Unknown error searching for subreddit {0} {1}".format(
             Emotes.WTF, subreddit)
         try:
-            subr = await self.reddit.subreddit(subreddit)
+            subr = await Reddit.reddit.subreddit(subreddit)
             subm = random.choice([post async for post in subr.top(time_filter=time, limit=100)])
             link = subm.selftext if subm.is_self else subm.url
             response = "***" + subm.title + "***\n" + link

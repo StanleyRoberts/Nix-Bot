@@ -7,8 +7,8 @@ import functions.database as db
 from functions.style import Colours
 
 
-HEROKU = os.getenv('HEROKU')
-if not HEROKU:
+LIVE = os.getenv('LIVE')
+if not LIVE:
     load_dotenv()
 
 TOKEN = os.getenv('TOKEN')  # Discord Token
@@ -18,7 +18,7 @@ USER_AGENT = os.getenv('USER_AGENT')  # PRAW/Reddit API user agent
 API_KEY = os.getenv('API_KEY')  # X-API-Key for API-Ninjas
 DATABASE_URL = os.getenv('DATABASE_URL')  # PostgreSQL db
 
-if not HEROKU:
+if not LIVE:
     import testing.postgresql
     postgres = testing.postgresql.Postgresql()
     DATABASE_URL = postgres.url()
@@ -105,7 +105,7 @@ async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
 
 if __name__ == "__main__":
-    if not HEROKU:
+    if not LIVE:
         db.populate()
     cogs = ['birthdays', 'facts', 'counting', 'reddit', 'help']
     for cog in cogs:
