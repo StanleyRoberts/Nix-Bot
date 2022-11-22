@@ -1,6 +1,5 @@
 import discord
 import os
-import requests
 from discord.ext import commands
 from dotenv import load_dotenv
 import functions.database as db
@@ -26,28 +25,7 @@ if not LIVE:
 intents = discord.Intents(messages=True, message_content=True,
                           guilds=True, members=True)
 bot = commands.Bot(intents=intents, command_prefix='%s',
-                   activity=discord.Game(name="/help"))
-
-
-@bot.slash_command(name='quote',
-                   description="Displays an AI-generated quote over an inspirational image")
-async def send_quote(ctx):
-    await ctx.respond(requests.get("https://inspirobot.me/api?generate=true").text)
-
-"""
-@bot.slash_command(name='help', description="Displays the help page for NixBot")
-async def display_help(ctx):
-    desc = "Note: depending on your server settings and role permissions," + \
-           " some of these commands may be hidden or disabled\n\n***Generic***\n" \
-           + "".join(sorted([command.mention + " : " + command.description + "\n"
-                             for command in bot.walk_application_commands() if not command.cog])) \
-           + "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " + command.description + "\n"
-                                                                for command in bot.cogs[cog].walk_commands()]))
-                      for cog in bot.cogs])  # Holy hell
-    embed = discord.Embed(title="Help Page", description=desc,
-                          colour=Colours.PRIMARY)
-    await ctx.respond(embed=embed)
-"""
+                   activity=discord.Game(name="with your mom"))
 
 
 @bot.event
@@ -107,7 +85,7 @@ async def on_ready():
 if __name__ == "__main__":
     if not LIVE:
         db.populate()
-    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'help']
+    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'help', 'misc']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
     bot.run(TOKEN)
