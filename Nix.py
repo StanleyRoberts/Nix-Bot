@@ -29,7 +29,7 @@ bot = commands.Bot(intents=intents, command_prefix='%s',
 
 
 @bot.event
-async def on_guild_join(guild):
+async def on_guild_join(guild: discord.Guild) -> None:
     """
     Called on Nix joining guild to setup database entries
 
@@ -37,12 +37,12 @@ async def on_guild_join(guild):
         guild (discord.Guild): Guild that triggered the event
     """
     db.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, " +
-                  "FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID)"
+                  "FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID)" +
                   " VALUES (%s, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
 
 
 @bot.event
-async def on_guild_remove(guild):
+async def on_guild_remove(guild: discord.Guild) -> None:
     """
     Called when Nix leaves (or is kicked from) a guild to delete database entries
 
@@ -55,7 +55,7 @@ async def on_guild_remove(guild):
 
 
 @bot.event
-async def on_guild_channel_delete(channel):
+async def on_guild_channel_delete(channel: discord.TextChannel) -> None:
     """
     Called when guild channel is deleted, to delete hanging database entries
 
@@ -67,7 +67,7 @@ async def on_guild_channel_delete(channel):
 
 
 @bot.event
-async def on_member_remove(member):
+async def on_member_remove(member: discord.Member) -> None:
     """
     Called when member leaves guild, to delete database entries
 
@@ -79,7 +79,7 @@ async def on_member_remove(member):
 
 
 @bot.event
-async def on_ready():
+async def on_ready() -> None:
     print('We have logged in as {0.user}'.format(bot))
 
 if __name__ == "__main__":

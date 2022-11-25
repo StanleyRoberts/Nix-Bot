@@ -8,7 +8,10 @@
       ],
     "python.formatting.provider": "autopep8",
     "python.formatting.autopep8Args": [
-        "--select=E,W"
-      ],
+      "--select=E,W",
+      "--max-line-length",
+      "119",
+      "--experimental"
+    ],
     "editor.formatOnSave": true
 }

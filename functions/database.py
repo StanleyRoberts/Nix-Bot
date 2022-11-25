@@ -7,7 +7,7 @@ class KeyViolation(Exception):
     pass
 
 
-def single_SQL(query, values=None):
+def single_SQL(query: str, values: tuple[str, ...] = None) -> list[tuple[any, ...]]:
     """
     Opens a connection, submits a single SQL query to the database then cleans up
 
@@ -36,7 +36,7 @@ def single_SQL(query, values=None):
     return val
 
 
-def populate():
+def populate() -> None:
     """
     Sets up test database, and adds testing server as an entry
     """
