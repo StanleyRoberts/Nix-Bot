@@ -42,9 +42,13 @@ class Birthdays(commands.Cog):
         for guild in val:
             users = " ".join([(await self.bot.fetch_user(int(user))).mention for user in guild[1].split(" ")])
             if guild[0]:
-                await (await self.bot.fetch_channel(guild[0]))\
-                    .send("Happy Birthday to: " + users +
-                          "!\nHope you have a brilliant day {0}".format(Emotes.HEART))
+                try:
+                    await (await self.bot.fetch_channel(guild[0]))\
+                        .send("Happy Birthday to: " + users +
+                              "!\nHope you have a brilliant day {0}".format(Emotes.HEART))
+                except discord.errors.Forbidden:
+                    # silently fail if no perms, TODO setup logging channel
+                    pass
 
 
 def setup(bot):
