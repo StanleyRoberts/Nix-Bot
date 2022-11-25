@@ -21,71 +21,42 @@ class Help(commands.Cog):
 
     @commands.slash_command(name='testinghelp', description="Testing for a better help function")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
-        desc = "Note: depending on your server settings and role permissions," + \
-            " some of these commands may be hidden or disabled\n\n" \
-            + "".join(sorted([command.mention + " : " + command.description + "\n"
-                             for command in self.bot.walk_application_commands() if not command.cog]))
-        embeted = discord.Embed(title="Help Page", description=desc,
-                                colour=Colours.PRIMARY)
-        await ctx.interaction.response.send_message(embed=embeted, view=Buttons(self.bot.cogs))
+        view = Buttons(self.bot.cogs)
+        await ctx.interaction.response.send_message(embed=view.build_embed(), view=view)
 
 
 class Buttons(discord.ui.View):
     def __init__(self, cogs: typing.Mapping[str, discord.Cog]) -> None:
         super().__init__()
         self.index = 0
-        self.cogs = [cogs[cog] for cog in cogs]
+        self.pages = ["Front"] + [cogs[cog] for cog in cogs]
+
+    def build_embed(self):
+        self.index = self.index % len(self.pages)
+        page = self.pages[self.index]
+
+        compass = "|".join([" {0} ".format(page.qualified_name) if page != self.pages[self.index]
+                            else "** {0} **".format(page.qualified_name) for page in self.pages[1:]]) + "\n"
+        if page == "Front":
+            desc = compass + "\nNote: depending on your server settings and role permissions, " +\
+                "some of these commands may be hidden or disabled"
+        else:
+            desc = compass + "".join("\n***" + page.qualified_name + "***:\n" + ""
+                                     .join(sorted([command.mention + " : " + command.description + "\n"
+                                                   for command in page.walk_commands()])))
+
+        return discord.Embed(title="Help Page", description=desc,
+                             colour=Colours.PRIMARY)
 
     @discord.ui.button(label="<-", style=discord.ButtonStyle.primary)
-    async def backward_Callback(self, _, interaction: discord.Interaction) -> None:
-        cog = self.backwardsCog()
-        desc = self.pageIndex() + "\n" \
-            + await self.helpermessage_view(cog)
-        embeted = discord.Embed(title="Help Page", description=desc,
-                                colour=Colours.PRIMARY)
-        await interaction.response.edit_message(embed=embeted, view=self)
-
-    @discord.ui.button(label="Frontpage", style=discord.ButtonStyle.primary)
-    async def home_callback(self, _, interaction: discord.Interaction) -> None:
-        desc = "Note: depending on your server settings and role permissions," +\
-               " some of these commands may be hidden or disabled"
-        self.index = 0
-        embeted = discord.Embed(title="Help Page", description=desc,
-                                colour=Colours.PRIMARY)
-        await interaction.response.edit_message(embed=embeted, view=self)
+    async def backward_callback(self, _, interaction: discord.Interaction) -> None:
+        self.index -= 1
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
     @discord.ui.button(label="->", style=discord.ButtonStyle.primary)
-    async def forward_Callback(self, _, interaction: discord.Interaction) -> None:
-        cog = self.forwardsCog()
-        desc = self.pageIndex() + "\n" \
-            + await self.helpermessage_view(cog)
-        embeted = discord.Embed(title="Help Page", description=desc,
-                                colour=Colours.PRIMARY)
-        await interaction.response.edit_message(embed=embeted, view=self)
-
-    async def helpermessage_view(self, cog: discord.Cog) -> str:
-        text = "".join("\n***" + cog.qualified_name + "***:\n" + ""
-                       .join(sorted([command.mention + " : " + command.description + "\n"
-                                     for command in cog.walk_commands()])))
-        return text
-
-    def backwardsCog(self):
-        self.index = (self.index - 1) % len(self.cogs)
-        return self.cogs[self.index]
-
-    def forwardsCog(self):
-        self.index = (self.index + 1) % len(self.cogs)
-        return self.cogs[self.index]
-
-    def pageIndex(self):
-        desc = ""
-        for cog in self.cogs:
-            if cog.qualified_name != self.cogs[self.index].qualified_name:
-                desc += " {0} ".format(cog.qualified_name)
-            else:
-                desc += "** {0} **".format(cog.qualified_name)
-            desc += "|"
-        return desc
+    async def forward_callback(self, _, interaction: discord.Interaction) -> None:
+        self.index += 1
+        await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
 
 def setup(bot: discord.Bot) -> None:
