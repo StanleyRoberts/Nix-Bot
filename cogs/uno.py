@@ -4,7 +4,7 @@ import random
 from discord.ui import Button, View
 
 
-def allCards():                                      # Sets all available cards
+def allCards():  # Sets all available cards
     deck = []
     colors = ['green', 'red', 'yellow', 'blue']
     values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'Draw 2', 'SKIP']
@@ -28,9 +28,14 @@ def shuffleCards(deck):
 shuffleCards(deck)
 
 
+def playerTurn():  # needs to be looked at!!
+    players = [player1, player2, player3]
+
+
 def dropDeck():
     shuffleCards(deck)
-    currentCard = deck[1]
+    startCard = deck[1]
+    currentCard = ""
 
 
 dropDeck()
@@ -55,7 +60,7 @@ player2Hand = playerHand()
 player3Hand = playerHand()
 
 
-def playerTurn():             # ahh yes
+def playerTurn():
     turns = [1, 2, 3]
 
 
@@ -90,20 +95,18 @@ class MyView(discord.ui.View):
         player2 = 2
         player3 = 3
 
+    async def followUp(self, channelID, player1, player2, player3):
+        await (await self.bot.fetch_channel(channelID)).send('Press "Start Game" to play', view=MyView())
+
+
+class MyView(discord.ui.View):  # Create a class called MyView that subclasses discord.ui.View
+    # Create a button with the label "😎 Click me!" with color Blurple
     @discord.ui.button(label="Start Game", style=discord.ButtonStyle.green)
-    async def button_callback(self, button, interaction,):
-        playerHand()
-        player1Hand = playerHand()
-        player2Hand = playerHand()
-        player3Hand = playerHand()
-        await interaction.response.send_message("Your cards:\n" +
-                                                self.player1.mention + ": " + str(player1Hand) + "\n" +
-                                                self.player2.mention + ": " + str(player2Hand) + "\n" +
-                                                self.player3.mention + ": " + str(player3Hand))
+    async def button_callback(self, button, interaction, player1, player2, player3):
         random.shuffle(deck)
-        currentCard = deck[1]
-        # fix next time 'send_message' -> API
-        await interaction.send_message('Current card is: ' + currentCard)
+        startCard = deck[1]
+        await interaction.response.send_message("It is " + player1.mention + "'s turn")
+        await interaction.response.send_message('The current card is: ' + str(startCard))
 
 
 def setup(bot):
