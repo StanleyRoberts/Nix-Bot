@@ -8,10 +8,6 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.slash_command(name='testing', description="just testing")
-    async def button(self, ctx):
-        await ctx.respond("Look at this button", view=Buttons())
-
     @commands.slash_command(name='help', description="Displays the help page for NixBot")
     async def display_help(self, ctx):
         desc = "Note: depending on your server settings and role permissions," + \
@@ -40,16 +36,14 @@ class Buttons(discord.ui.View):
         self.index = 0
         self.cogs = [cogs[cog] for cog in cogs]
 
-    @discord.ui.button(label="Backwards", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="<-", style=discord.ButtonStyle.primary)
     async def backward_Callback(self, _, interaction):
-        if (self.index - 1 < 0):
-            self.index = len(self.cogs)
-        self.index -= 1
-        cog = self.cogs[self.index]
-        desc = await self.helpermessage_view(cog)
+        cog = self.backwardsCog()
+        desc = self.pageIndex() + "\n" \
+            + await self.helpermessage_view(cog)
         embeted = discord.Embed(title="Help Page", description=desc,
                                 colour=Colours.PRIMARY)
-        await interaction.response.edit_message(embed=embeted)
+        await interaction.response.edit_message(embed=embeted, view=self)
 
     @discord.ui.button(label="Frontpage", style=discord.ButtonStyle.primary)
     async def home_callback(self, _, interaction):
@@ -58,24 +52,40 @@ class Buttons(discord.ui.View):
         self.index = 0
         embeted = discord.Embed(title="Help Page", description=desc,
                                 colour=Colours.PRIMARY)
-        await interaction.response.edit_message(embed=embeted)
+        await interaction.response.edit_message(embed=embeted, view=self)
 
-    @discord.ui.button(label="Forwards", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="->", style=discord.ButtonStyle.primary)
     async def forward_Callback(self, _, interaction):
-        if (self.index + 1 == len(self.cogs)):
-            self.index = -1
-        self.index += 1
-        cog = self.cogs[self.index]
-        desc = await self.helpermessage_view(cog)
+        cog = self.forwardsCog()
+        desc = self.pageIndex() + "\n" \
+            + await self.helpermessage_view(cog)
         embeted = discord.Embed(title="Help Page", description=desc,
                                 colour=Colours.PRIMARY)
-        await interaction.response.edit_message(embed=embeted)
+        await interaction.response.edit_message(embed=embeted, view=self)
 
     async def helpermessage_view(self, cog):
         text = "".join("\n***" + cog.qualified_name + "***:\n" + ""
                        .join(sorted([command.mention + " : " + command.description + "\n"
                                      for command in cog.walk_commands()])))
         return text
+
+    def backwardsCog(self):
+        self.index = (self.index - 1) % len(self.cogs)
+        return self.cogs[self.index]
+
+    def forwardsCog(self):
+        self.index = (self.index + 1) % len(self.cogs)
+        return self.cogs[self.index]
+
+    def pageIndex(self):
+        desc = ""
+        for cog in self.cogs:
+            if cog.qualified_name != self.cogs[self.index].qualified_name:
+                desc += " {0} ".format(cog.qualified_name)
+            else:
+                desc += "** {0} **".format(cog.qualified_name)
+            desc += "|"
+        return desc
 
 
 def setup(bot):
