@@ -25,8 +25,9 @@ class ChangeSubModal(discord.ui.Modal):
 
     async def callback(self, interaction):
         newsub = self.children[0].value
-        await interaction.response.edit_message(content=(await Reddit.get_reddit_post(newsub, self.time)),
-                                                view=PostViewer(newsub, self.time))
+        await interaction.message.edit(content=(await Reddit.get_reddit_post(newsub, self.time)),
+                                       view=PostViewer(newsub, self.time))
+        await interaction.response.defer()
 
 
 class PostViewer(discord.ui.View):
@@ -46,13 +47,15 @@ class PostViewer(discord.ui.View):
     @discord.ui.button(label="New Post", style=discord.ButtonStyle.primary,
                        emoji=PartialEmoji.from_str(Emotes.BLEP))
     async def refresh_callback(self, _, interaction):
-        await interaction.response.edit_message(content=(await Reddit.get_reddit_post(self.sub, self.time)),
-                                                view=PostViewer(self.sub, self.time))
+        await interaction.message.edit(content=(await Reddit.get_reddit_post(self.sub, self.time)),
+                                       view=PostViewer(self.sub, self.time))
+        await interaction.response.defer()
 
     @discord.ui.button(label="Change Subreddit", style=discord.ButtonStyle.secondary,
                        emoji=PartialEmoji.from_str(Emotes.HUG))
     async def change_sub_callback(self, _, interaction):
-        await interaction.response.send_modal(ChangeSubModal(title="Change Subreddit", time=self.time))
+        await interaction.response.send_modal(ChangeSubModal(title="Change Subreddit",
+                                                             time=self.time))
 
 
 class Reddit(commands.Cog):
