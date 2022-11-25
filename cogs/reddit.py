@@ -13,28 +13,27 @@ class Reddit(commands.Cog):
                          client_secret=SECRET_KEY,
                          user_agent=USER_AGENT,)
 
-    def __init__(self, bot):
+    def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
         self.daily_post.start()
 
     @commands.slash_command(name='reddit', description="Displays a random top reddit post from the given subreddit")
-    async def send_reddit_post(self, ctx, subreddit,
+    async def send_reddit_post(self, ctx: discord.ApplicationContext, subreddit: str,
                                time: discord.Option(str, default="day",
-                                                    choices=[
-                                                        "month", "hour", "week", "all", "day", "year"],
-                                                    description="Time period to search for top posts")):
+                                                    choices=["month", "hour", "week", "all", "day", "year"],
+                                                    description="Time period to search for top posts")) -> None:
         await ctx.respond(await self.get_reddit_post(subreddit, time))
 
     @commands.slash_command(name='subscribe', description="Subscribe to a subreddit to get daily posts from it")
     @discord.commands.default_permissions(manage_guild=True)
-    async def subscribe_to_sub(self, ctx, sub, channel: discord.Option(discord.TextChannel, required=False)):
+    async def subscribe_to_sub(self, ctx: discord.ApplicationContext, sub: str,
+                               channel: discord.Option(discord.TextChannel, required=False)) -> None:
         if not channel:
             channel = ctx.channel
         try:
-            # Needed to check if subreddit exists
             [post async for post in (await self.reddit.subreddit(sub)).top(time_filter="day", limit=1)][0]
             db.single_SQL("INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
-                          (ctx.guild_id, sub, channel.id))  # Add subscription to SQL
+                          (ctx.guild_id, sub, channel.id))
             await ctx.respond("This server is now subscribed to {0} {1}".format(sub, Emotes.HUG))
 
         except prawcore.exceptions.AsyncPrawcoreException:  # Can´t find subreddit exception
@@ -45,7 +44,7 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
-    async def unsubscribe_from_sub(self, ctx, sub: discord.Option(required=False)):
+    async def unsubscribe_from_sub(self, ctx: discord.ApplicationContext, sub: discord.Option(required=False)) -> None:
         if not sub:
             await self.getSubs(ctx)
             return
@@ -57,9 +56,8 @@ class Reddit(commands.Cog):
             await ctx.respond("This server is now unsubscribed from {0} {1}".format(sub, Emotes.SNEAKY))
 
     @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
-    async def get_subs(self, ctx):
-        subscriptions = db.single_SQL(
-            "SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
+    async def get_subs(self, ctx: discord.ApplicationContext) -> None:
+        subscriptions = db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
 
         desc = "You have not subscribed to any subreddits yet\nGet started with {0}!".format(
             self.bot.get_application_command("subscribe").mention)
@@ -72,14 +70,12 @@ class Reddit(commands.Cog):
         await ctx.respond(embed=embed)
 
     @tasks.loop(time=TIME)
-    async def daily_post(self):
+    async def daily_post(self) -> None:
         """
         Called daily to print random post from subbed sub to linked discord channel
         """
-        subs = db.single_SQL(
-            "SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
+        subs = db.single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
-            # Go through the SQL and post the requested post in the chosen channel
             try:
                 await (await self.bot.fetch_channel(entry[2])).send("Daily post (" + entry[1] + ")\n" +
                                                                     (await self.get_reddit_post(entry[1], "day")))
@@ -88,7 +84,7 @@ class Reddit(commands.Cog):
                 pass
 
     @staticmethod
-    async def get_reddit_post(subreddit, time):
+    async def get_reddit_post(subreddit: str, time: str) -> str:
         """
         Gets a random post (out of top 100) from a subreddit
 
@@ -118,5 +114,5 @@ class Reddit(commands.Cog):
         return response
 
 
-def setup(bot):
+def setup(bot: discord.Bot) -> None:
     bot.add_cog(Reddit(bot))
