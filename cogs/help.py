@@ -8,7 +8,7 @@ class Help(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
 
-    @commands.slash_command(name='help', description="Displays the help page for NixBot")
+    @commands.slash_command(name='all_commands', description="Displays the help page for NixBot")
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
         desc = "Note: depending on your server settings and role permissions," +\
             " some of these commands may be hidden or disabled\n\n" +\
@@ -19,7 +19,7 @@ class Help(commands.Cog):
                               colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(name='testinghelp', description="Testing for a better help function")
+    @commands.slash_command(name='help', description="Testing for a better help function")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
         view = Buttons(self.bot.cogs)
         await ctx.interaction.response.send_message(embed=view.build_embed(), view=view)
