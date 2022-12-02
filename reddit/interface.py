@@ -38,7 +38,11 @@ class RedditInterface:
                          client_secret=SECRET_KEY,
                          user_agent=USER_AGENT)
 
-    @ staticmethod
+    @staticmethod
+    async def valid_sub(subreddit) -> bool:
+        return not isinstance(RedditInterface.get_post(subreddit, "all"), ErrPost)
+
+    @staticmethod
     async def get_post(subreddit, time) -> NewPost:
         """
         Gets a random post (out of top 50) from a subreddit

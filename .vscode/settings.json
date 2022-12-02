@@ -1,14 +1,17 @@
 {
-    "python.linting.pycodestyleEnabled": true,
-    "python.linting.enabled": true,
-    "editor.tabSize": 4,
-    "editor.insertSpaces": true,
-    "python.linting.pycodestyleArgs": [
-        "--max-line-length=119"
-      ],
-    "python.formatting.provider": "autopep8",
-    "python.formatting.autopep8Args": [
-        "--select=E,W"
-      ],
-    "editor.formatOnSave": true
+  "python.linting.pycodestyleEnabled": true,
+  "python.linting.enabled": true,
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "python.linting.pycodestyleArgs": [
+      "--max-line-length=119"
+    ],
+  "python.formatting.provider": "autopep8",
+  "python.formatting.autopep8Args": [
+    "--select=E,W",
+    "--max-line-length",
+    "119",
+    "--experimental"
+  ],
+  "editor.formatOnSave": true
 }

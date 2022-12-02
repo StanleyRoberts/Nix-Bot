@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands, tasks
-import asyncprawcore as prawcore  # TODO remove
 import functions.database as db
 from functions.style import Emotes, Colours, TIME
 import reddit.ui_kit as ui
@@ -26,16 +25,14 @@ class Reddit(commands.Cog):
     async def subscribe_to_sub(self, ctx, sub, channel: discord.Option(discord.TextChannel, required=False)):
         if not channel:
             channel = ctx.channel
-        try:
-            # TODO move this into reddit.interface
-            [post async for post in (await self.reddit.subreddit(sub)).top(time_filter="day", limit=1)][0]
+
+        if not RedditInterface.valid_sub(sub):
+            await ctx.respond("The subreddit {0} is not available {1}}".format(sub, Emotes.EVIL))
+        elif (sub.lower(),) in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+            await ctx.respond("This server is already subscribed to {0} {1}".format(sub.lower(), Emotes.SUPRISE))
+        else:
             db.single_SQL("INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
                           (ctx.guild_id, sub, channel.id))
-            await ctx.respond("This server is now subscribed to {0} {1}".format(sub, Emotes.HUG))
-        except prawcore.exceptions.AsyncPrawcoreException:  # TODO move this into reddit.interface
-            await ctx.respond("The subreddit {0} is not available {1}}".format(sub, Emotes.EVIL))
-        except db.KeyViolation:  # TODO rework this
-            await ctx.respond("This server is already subscribed to {0} {1}".format(sub, Emotes.SUPRISE))
 
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
@@ -43,7 +40,7 @@ class Reddit(commands.Cog):
         if not sub:
             await self.getSubs(ctx)
             return
-        if (sub,) not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        if (sub.lower(),) not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             await ctx.respond("This server is not subscribed to r/{0} {1}".format(sub, Emotes.SUPRISE))
         else:
             db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub))
