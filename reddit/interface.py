@@ -39,7 +39,7 @@ class RedditInterface:
                          user_agent=USER_AGENT)
 
     @staticmethod
-    async def valid_sub(subreddit: discord.Subreddit) -> bool:
+    async def valid_sub(subreddit: str) -> bool:
         return not isinstance(await RedditInterface.get_post(subreddit, "all"), ErrPost)
 
     @staticmethod
