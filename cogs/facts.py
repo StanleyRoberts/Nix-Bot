@@ -45,10 +45,9 @@ class Facts(commands.Cog):
         for factID in guilds:
             if factID[0]:
                 try:
-                    await (await self.bot.fetch_channel(factID[0])).send("Daily fact: " + fact)
+                    await (await self.bot.fetch_channel(factID[0])).send("__Daily fact__\n" + fact)
                 except discord.errors.Forbidden:
-                    # silently fail if no perms, TODO setup logging channel
-                    pass
+                    pass  # silently fail if no perms, TODO setup logging channel
 
     @staticmethod
     def get_fact():

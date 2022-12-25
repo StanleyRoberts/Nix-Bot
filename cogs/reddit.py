@@ -26,13 +26,14 @@ class Reddit(commands.Cog):
         if not channel:
             channel = ctx.channel
 
-        if not RedditInterface.valid_sub(sub):
+        if not await RedditInterface.valid_sub(sub):
             await ctx.respond("The subreddit {0} is not available {1}}".format(sub, Emotes.EVIL))
         elif (sub.lower(),) in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             await ctx.respond("This server is already subscribed to {0} {1}".format(sub.lower(), Emotes.SUPRISE))
         else:
             db.single_SQL("INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
                           (ctx.guild_id, sub, channel.id))
+            await ctx.respond("This server is now subscribed to {0} {1}".format(sub, Emotes.HUG))
 
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
@@ -69,11 +70,10 @@ class Reddit(commands.Cog):
         for entry in subs:
             try:
                 post = await RedditInterface.get_post(entry[1], "day")
-                await (await self.bot.fetch_channel(entry[2])).send("Daily post (" + entry[1] + ")\n" +
+                await (await self.bot.fetch_channel(entry[2])).send("__Daily post__\n" +
                                                                     post.text, files=post.img)
             except discord.errors.Forbidden:
-                # silently fail if no perms, TODO setup logging channel
-                pass
+                pass  # silently fail if no perms, TODO setup logging channel
 
 
 def setup(bot):

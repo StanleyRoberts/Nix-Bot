@@ -40,7 +40,7 @@ class RedditInterface:
 
     @staticmethod
     async def valid_sub(subreddit) -> bool:
-        return not isinstance(RedditInterface.get_post(subreddit, "all"), ErrPost)
+        return not isinstance(await RedditInterface.get_post(subreddit, "all"), ErrPost)
 
     @staticmethod
     async def get_post(subreddit, time) -> NewPost:
