@@ -11,7 +11,7 @@ class NLP(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener("on_message")
-    async def NLP(self, msg):
+    async def NLP(self, msg: str):
         """
         Prints out an AI generated response to the message if it mentions Nix
 
