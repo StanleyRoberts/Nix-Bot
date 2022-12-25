@@ -26,19 +26,20 @@ class NLP(commands.Cog):
             headers = {"Authorization": f"Bearer {HF_API}"}
 
             prompt = "The following is a conversation with a phoenix named Nix. The phoenix is helpful, creative, " +\
-                "clever, and very friendly.\n\nHuman: Hello, who are you?\nNix: I am a phoenix made of fire. " +\
+                "clever, and very friendly.\n\nHuman: Hello, who are you?\nNix: I am Nix, a phoenix made of fire. " +\
                 "How can I help you today?\nHuman: " + clean_prompt + "\nNix: "
 
             data = json.dumps({"inputs": prompt, "parameters": {
-                              "return_full_text": False, "temperature": 0.9,
-                              "use_cache": False, "repetition_penalty": 20}})
+                              "return_full_text": False, "temperature": 0.8,
+                              "use_cache": False, "repetition_penalty": 25,
+                              "max_new_tokens": 30}})
             response = requests.request("POST", url, headers=headers, data=data)
 
             text = json.loads(response.content.decode('utf-8'))[0]['generated_text']
             print("\n\ngenerated text: " + text)
 
             # strip non-Nix messages
-            trim = re.sub("Nix:", "", text[len(prompt):].split('Human: ')[0])
+            trim = re.sub("Nix:", "", text[len(prompt):].split('Human: ')[0].split('\n')[0])
 
             await msg.reply(trim if not any(ele in trim for ele in ['.', '!', '?', ')']) else "".join(
                 (re.findall('.*?[.!?)]', trim))))  # strip dangling sentences
