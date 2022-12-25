@@ -7,10 +7,6 @@ from reddit.interface import RedditInterface
 
 
 class Reddit(commands.Cog):
-    reddit = praw.Reddit(client_id=CLIENT_ID,
-                         client_secret=SECRET_KEY,
-                         user_agent=USER_AGENT,)
-
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
         self.daily_post.start()
