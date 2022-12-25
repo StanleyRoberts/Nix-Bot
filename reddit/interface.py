@@ -27,7 +27,7 @@ class NewPost:
 
 
 class ErrPost(NewPost):
-    def __init__(self, err_msg):
+    def __init__(self, err_msg: str):
         self.img = []
         self._url = None
         self.text = err_msg
@@ -39,7 +39,7 @@ class RedditInterface:
                          user_agent=USER_AGENT)
 
     @staticmethod
-    async def valid_sub(subreddit) -> bool:
+    async def valid_sub(subreddit: discord.Subreddit) -> bool:
         return not isinstance(await RedditInterface.get_post(subreddit, "all"), ErrPost)
 
     @staticmethod

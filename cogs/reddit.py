@@ -7,12 +7,16 @@ from reddit.interface import RedditInterface
 
 
 class Reddit(commands.Cog):
-    def __init__(self, bot):
+    reddit = praw.Reddit(client_id=CLIENT_ID,
+                         client_secret=SECRET_KEY,
+                         user_agent=USER_AGENT,)
+
+    def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
         self.daily_post.start()
 
     @commands.slash_command(name='reddit', description="Displays a random top reddit post from the given subreddit")
-    async def send_reddit_post(self, ctx, subreddit,
+    async def send_reddit_post(self, ctx: discord.ApplicationContext, subreddit: str,
                                time: discord.Option(str, default="day",
                                                     choices=["month", "hour", "week", "all", "day", "year"],
                                                     description="Time period to search for top posts")):
@@ -22,7 +26,8 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='subscribe', description="Subscribe to a subreddit to get daily posts from it")
     @discord.commands.default_permissions(manage_guild=True)
-    async def subscribe_to_sub(self, ctx, sub, channel: discord.Option(discord.TextChannel, required=False)):
+    async def subscribe_to_sub(self, ctx: discord.ApplicationContext, sub: str,
+                               channel: discord.Option(discord.TextChannel, required=False)) -> None:
         if not channel:
             channel = ctx.channel
 
@@ -37,7 +42,7 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
-    async def unsubscribe_from_sub(self, ctx, sub: discord.Option(required=False)):
+    async def unsubscribe_from_sub(self, ctx: discord.ApplicationContext, sub: discord.Option(required=False)) -> None:
         if not sub:
             await self.getSubs(ctx)
             return
@@ -48,7 +53,7 @@ class Reddit(commands.Cog):
             await ctx.respond("This server is now unsubscribed from {0} {1}".format(sub, Emotes.SNEAKY))
 
     @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
-    async def get_subs(self, ctx):
+    async def get_subs(self, ctx: discord.ApplicationContext) -> None:
         subscriptions = db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
 
         desc = "You have not subscribed to any subreddits yet\nGet started with {0}!".format(
@@ -62,7 +67,7 @@ class Reddit(commands.Cog):
         await ctx.respond(embed=embed)
 
     @tasks.loop(time=TIME)
-    async def daily_post(self):
+    async def daily_post(self) -> None:
         """
         Called daily to print random post from subbed sub to linked discord channel
         """
@@ -76,5 +81,5 @@ class Reddit(commands.Cog):
                 pass  # silently fail if no perms, TODO setup logging channel
 
 
-def setup(bot):
+def setup(bot: discord.Bot) -> None:
     bot.add_cog(Reddit(bot))
