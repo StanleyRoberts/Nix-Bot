@@ -30,8 +30,8 @@ class Misc(commands.Cog):
 
     @commands.slash_command(name='help', description="Display the help page for Nix")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
-        view = Help_Nav(self.bot.cogs)
-        await ctx.interaction.response.send_message(embed=view.build_embed(), view=view)
+        await ctx.interaction.response.send_message(embed=view.build_embed(),
+                                                    view=Help_Nav(self.bot.cogs))
 
     @commands.Cog.listener("on_message")
     async def NLP(self, msg: discord.Message):
