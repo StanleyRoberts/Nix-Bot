@@ -30,8 +30,9 @@ class Misc(commands.Cog):
 
     @commands.slash_command(name='help', description="Display the help page for Nix")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
+        view = Help_Nav(self.bot.cogs)
         await ctx.interaction.response.send_message(embed=view.build_embed(),
-                                                    view=Help_Nav(self.bot.cogs))
+                                                    view=view)
 
     @commands.Cog.listener("on_message")
     async def NLP(self, msg: discord.Message):
@@ -84,12 +85,12 @@ class Help_Nav(discord.ui.View):
         return discord.Embed(title="Help Page", description=desc,
                              colour=Colours.PRIMARY)
 
-    @discord.ui.button(label="<-", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
     async def backward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(label="->", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
     async def forward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
