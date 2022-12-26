@@ -27,7 +27,7 @@ class Birthdays(commands.Cog):
         db.single_SQL("INSERT INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s) ON CONFLICT " +
                       "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
                       (ctx.guild.id, ctx.author.id, month + str(day), month + str(day)))
-        await ctx.respond(ctx.author.mention + " your birthday is set to {0} {1} {3}"
+        await ctx.respond(ctx.author.mention + " your birthday is set to {0} {1} {2}"
                           .format(day, month, Emotes.UWU))
 
     @tasks.loop(time=TIME)  # 1 behind curr time

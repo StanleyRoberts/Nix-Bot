@@ -40,7 +40,7 @@ class Reddit(commands.Cog):
     @discord.commands.default_permissions(manage_guild=True)
     async def unsubscribe_from_sub(self, ctx: discord.ApplicationContext, sub: discord.Option(required=False)) -> None:
         if not sub:
-            await self.getSubs(ctx)
+            await self.get_subs(ctx)
             return
         if (sub.lower(),) not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             await ctx.respond("This server is not subscribed to r/{0} {1}".format(sub, Emotes.SUPRISE))
