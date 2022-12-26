@@ -1,8 +1,12 @@
 from discord.ext import commands
 import discord
 import requests
-from functions.style import Colours
 import typing
+import json
+import re
+
+from functions.style import Colours
+from Nix import HF_API
 
 
 class Misc(commands.Cog):
@@ -13,7 +17,7 @@ class Misc(commands.Cog):
     async def send_quote(self, ctx: discord.ApplicationContext) -> None:
         await ctx.respond(requests.get("https://inspirobot.me/api?generate=true").text)
 
-    @commands.slash_command(name='all_commands', description="Displays the help page for NixBot")
+    @commands.slash_command(name='all_commands', description="Displays all of Nix's commands")
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
         desc = "Note: depending on your server settings and role permissions," +\
             " some of these commands may be hidden or disabled\n\n" +\
@@ -24,10 +28,37 @@ class Misc(commands.Cog):
                               colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(name='help', description="Testing for a better help function")
+    @commands.slash_command(name='help', description="Display the help page for Nix")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
         view = Help_Nav(self.bot.cogs)
         await ctx.interaction.response.send_message(embed=view.build_embed(), view=view)
+
+    @commands.Cog.listener("on_message")
+    async def NLP(self, msg: discord.Message):
+        """
+        Prints out an AI generated response to the message if it mentions Nix
+
+        Args:
+            msg (discord.Message): Message that triggered event
+        """
+        if (self.bot.user.mentioned_in(msg) and msg.reference is None):
+            clean_prompt = re.sub(" @", " ",
+                                  re.sub("@" + self.bot.user.name, "", msg.clean_content))
+
+            url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
+            headers = {"Authorization": f"Bearer {HF_API}"}
+
+            prompt = {"past_user_inputs": ["What is your name?", "Who are you?"],
+                      "generated_responses": ["My name is Nix", "I am Nix, a phoenix made of flames"],
+                      "text": clean_prompt}
+
+            data = json.dumps({"inputs": prompt, "parameters": {
+                              "return_full_text": False, "temperature": 0.8,
+                              "use_cache": False}})
+            response = requests.request("POST", url, headers=headers, data=data)
+
+            text = json.loads(response.content.decode('utf-8'))
+            await msg.reply(text['generated_text'])
 
 
 class Help_Nav(discord.ui.View):
