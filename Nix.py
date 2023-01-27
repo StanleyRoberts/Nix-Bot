@@ -2,22 +2,23 @@ import discord
 import os
 from discord.ext import commands
 from dotenv import load_dotenv
+
 import functions.database as db
 from functions.style import Colours
 
-
-LIVE = os.getenv('LIVE')
-if not LIVE:
+if __debug__:
     load_dotenv()
 
 TOKEN = os.getenv('TOKEN')  # Discord Token
 CLIENT_ID = os.getenv('CLIENT_ID')  # PRAW/Reddit API client ID
 SECRET_KEY = os.getenv('SECRET_KEY')  # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT')  # PRAW/Reddit API user agent
-API_KEY = os.getenv('API_KEY')  # X-API-Key for API-Ninjas
+NINJA_API_KEY = os.getenv('NINJA_API_KEY')  # X-API-Key for API-Ninjas
 DATABASE_URL = os.getenv('DATABASE_URL')  # PostgreSQL db
+HF_API = os.getenv('HF_API')  # HuggingFace API key
 
-if not LIVE:
+
+if __debug__:
     import testing.postgresql
     postgres = testing.postgresql.Postgresql()
     DATABASE_URL = postgres.url()
@@ -25,7 +26,7 @@ if not LIVE:
 intents = discord.Intents(messages=True, message_content=True,
                           guilds=True, members=True)
 bot = commands.Bot(intents=intents, command_prefix='%s',
-                   activity=discord.Game(name="with your mom"))
+                   activity=discord.Game(name="/help"))
 
 
 @bot.event
@@ -83,9 +84,9 @@ async def on_ready() -> None:
     print('We have logged in as {0.user}'.format(bot))
 
 if __name__ == "__main__":
-    if not LIVE:
+    if __debug__:
         db.populate()
-    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'help', 'misc']
+    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'misc']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
     bot.run(TOKEN)

@@ -1,4 +1,5 @@
 import discord
+import datetime as dt
 from discord.ext import commands, tasks
 import datetime as dt
 import functions.database as db
@@ -26,7 +27,7 @@ class Birthdays(commands.Cog):
         db.single_SQL("INSERT INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s) ON CONFLICT " +
                       "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
                       (ctx.guild.id, ctx.author.id, month + str(day), month + str(day)))
-        await ctx.respond(ctx.author.mention + " your birthday is set to {0} {1} {3}"
+        await ctx.respond(ctx.author.mention + " your birthday is set to {0} {1} {2}"
                           .format(day, month, Emotes.UWU))
 
     @tasks.loop(time=TIME)  # 1 behind curr time
@@ -41,9 +42,13 @@ class Birthdays(commands.Cog):
         for guild in val:
             users = " ".join([(await self.bot.fetch_user(int(user))).mention for user in guild[1].split(" ")])
             if guild[0]:
-                await (await self.bot.fetch_channel(guild[0]))\
-                    .send("Happy Birthday to: " + users +
-                          "!\nHope you have a brilliant day {0}".format(Emotes.HEART))
+                try:
+                    await (await self.bot.fetch_channel(guild[0]))\
+                        .send("Happy Birthday to: " + users +
+                              "!\nHope you have a brilliant day {0}".format(Emotes.HEART))
+                except discord.errors.Forbidden:
+                    # silently fail if no perms, TODO setup logging channel
+                    pass
 
 
 def setup(bot: discord.Bot) -> None:

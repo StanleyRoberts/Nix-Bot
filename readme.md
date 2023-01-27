@@ -11,7 +11,7 @@ And install the requirements (on your virtual env) with: `pip install -r require
 
 For running locally/testing, you will also need a `.env` file (or another way to set environment variables for the app), which establishes private keys/tokens to be used within the app. If you are not one of the original authors for this project you will have to create this yourself with your own keys/tokens as required (the variables retrieved with `os.getenv` dictate the environment variables to set). These environment variables also need to be set to the live keys/tokens on whichever hosting service/machine you use for live deployment.
 
-Running the project locally (i.e. not on Heroku) runs a testing build, with a fresh testing database however you will need [PostgreSQL](https://www.postgresql.org/download/) installed on your machine and on your `PATH`.
+Running the project locally (i.e. not on Fly.io) runs a testing build, with a fresh testing database however you will need [PostgreSQL](https://www.postgresql.org/download/) installed on your machine and on your `PATH`.
 
 ## Continuous Development
 
@@ -20,4 +20,4 @@ If you would like to run this app yourself, it should work by deploying to Fly.i
 
 While developing you can quickly modify the `requirements.txt` by running `pip freeze > requirements.txt`. The Dockerfile can be updated with `docker build -t nix .`. The requirements and Dockerfile **must** be up to date before deploying any changes to Fly.io.
 
-To run the code on Fly.io you will need to copy the values in your `.env` into the Fly.io configuration variables (and make any necessary adjustments to reflect your live app), you will also need to setup a PostgreSQL server to interact with whose connection URL should be specified in an environment variable.
+To run the code on Fly.io you will need to copy the values in your `.env` into the Fly.io configuration variables (and make any necessary key changes to reflect your live app), you will also need to setup a PostgreSQL server to interact with whose connection URL should be specified in an environment variable.

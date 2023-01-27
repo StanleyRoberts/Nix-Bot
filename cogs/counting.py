@@ -11,8 +11,8 @@ class Counting(commands.Cog):
         self.bot = bot
         self.lock = asyncio.Lock()
 
-    @commands.Cog.listener()
-    async def on_message(self, msg: discord.Message) -> None:
+    @commands.Cog.listener("on_message")
+    async def count(self, msg):
         """
         Triggered on all messages, used to check for counting game
 

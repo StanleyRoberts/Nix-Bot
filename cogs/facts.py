@@ -5,7 +5,7 @@ from discord.ext import commands, tasks
 
 import functions.database as db
 from functions.style import Emotes, TIME
-from Nix import API_KEY
+from Nix import NINJA_API_KEY
 
 
 class Facts(commands.Cog):
@@ -43,7 +43,10 @@ class Facts(commands.Cog):
         fact = self.get_fact()
         for factID in guilds:
             if factID[0]:
-                await (await self.bot.fetch_channel(factID[0])).send("Daily fact: " + fact)
+                try:
+                    await (await self.bot.fetch_channel(factID[0])).send("__Daily fact__\n" + fact)
+                except discord.errors.Forbidden:
+                    pass  # silently fail if no perms, TODO setup logging channel
 
     @staticmethod
     def get_fact() -> str:
@@ -54,7 +57,7 @@ class Facts(commands.Cog):
             string: Random fact
         """
         api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
-        response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
+        response = requests.get(api_url, headers={'X-Api-Key': NINJA_API_KEY})
         message = "Error: " + str(response.status_code) + "\n" + response.text
         if response.status_code == requests.codes.ok:
             cjson = json.loads(response.text)
