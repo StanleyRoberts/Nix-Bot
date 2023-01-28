@@ -86,7 +86,7 @@ async def on_ready() -> None:
 if __name__ == "__main__":
     if __debug__:
         db.populate()
-    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'misc']
+    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'charlatan', 'misc']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
     bot.run(TOKEN)
