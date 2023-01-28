@@ -46,7 +46,8 @@ class Charlatan(commands.Cog):
     @commands.slash_command(name='charlatan', description="Play a game of Charlatan")
     async def start_game(self, ctx: discord.ApplicationContext):
         user = ctx.author.mention
-        await ctx.respond(embed=CharlatanView.make_embed([user]), view=CharlatanView([user]))
+        view = CharlatanView(set([user]))
+        await ctx.respond(embed=view.make_embed(), view=view)
 
 
 class CharlatanView(discord.ui.View):
@@ -55,16 +56,16 @@ class CharlatanView(discord.ui.View):
         super().__init__(timeout=300)
         self.users = users
 
-    @staticmethod
-    def make_embed(users):
-        desc = "Playing right now: \n{}".format("\n".join(users))
+    def make_embed(self):
+        desc = "Playing right now: \n{}".format("\n".join(self.users))
         return discord.Embed(title="Charlatan", description=desc,
                              colour=Colours.PRIMARY)
 
     @discord.ui.button(label="join", style=discord.ButtonStyle.primary)
     async def join_button(self, _, interaction: discord.Interaction) -> None:
-        self.users.append(interaction.user.mention)
-        await interaction.response.edit_message(embed=self.make_embed(self.users), view=CharlatanView(self.users))
+        self.users.add(interaction.user.mention)
+        view = CharlatanView(self.users)
+        await interaction.response.edit_message(embed=view.make_embed(), view=view)
 
     @discord.ui.button(label="rules", style=discord.ButtonStyle.primary)
     async def rules(self, _, interaction: discord.Interaction) -> None:
