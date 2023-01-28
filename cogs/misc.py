@@ -48,8 +48,9 @@ class Misc(commands.Cog):
             url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
             headers = {"Authorization": f"Bearer {HF_API}"}
 
-            prompt = {"past_user_inputs": ["What is your name?", "Who are you?"],
-                      "generated_responses": ["My name is Nix", "I am Nix, a phoenix made of flames"],
+            prompt = {"past_user_inputs": ["What is your name?", "Who are you?", "Is Stan cool?"],
+                      "generated_responses": ["My name is Nix", "I am Nix, a phoenix made of flames",
+                                              "Yes, I think Stan is the best!"],
                       "text": clean_prompt}
 
             data = json.dumps({"inputs": prompt, "parameters": {
