@@ -38,7 +38,7 @@ class Charlatan(commands.Cog):
     @commands.slash_command(name='charlatan', description="Play a game of Charlatan")
     async def start_game(self, ctx: discord.ApplicationContext):
         user = ctx.author
-        view = CharlatanLobby(set([user]))
+        view = CharlatanLobby({user: 0})
         await ctx.respond(embed=view.make_embed(), view=view)
 
 
@@ -83,7 +83,7 @@ class WordSelection(discord.ui.Modal):
         self.users = users
 
     async def callback(self, interaction):
-        view = CharlatanLobby(set(self.users), self.children[0].value.split('\n'))
+        view = CharlatanLobby({self.users: 0}, self.children[0].value.split('\n'))
         await interaction.message.edit(embed=view.make_embed(), view=view)
 
 
@@ -94,38 +94,40 @@ class CharlatanLobby(discord.ui.View):
         self.wordlist = wordlist
 
     def make_embed(self):
-        desc = "Playing right now: \n{}".format("\n".join([user.mention for user in self.users]))
+        print(self.users)
+        desc = "Playing now:\n " + "\n".join(str(key.mention) + " : " + str(
+            self.users[key]) for key in self.users.keys())
         return discord.Embed(title="Charlatan", description=desc,
                              colour=Colours.PRIMARY)
 
-    @discord.ui.button(label="Word List", row=0, style=discord.ButtonStyle.secondary)
+    @ discord.ui.button(label="Word List", row=0, style=discord.ButtonStyle.secondary)
     async def wordlist_callback(self, _, interaction):
         await interaction.response.send_modal(WordSelection(title="Word List", users=self.users))
 
-    @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
+    @ discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
     async def join_callback(self, _, interaction: discord.Interaction) -> None:
-        self.users.add(interaction.user)
+        self.users.add({interaction.user: 0})
         view = CharlatanLobby(self.users)
         await interaction.response.edit_message(embed=view.make_embed(), view=view)
 
-    @discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
+    @ discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
     async def rules_callback(self, _, interaction: discord.Interaction) -> None:
         await interaction.response.send_message(ephemeral=True, embed=discord.Embed(description=RULES))
 
-    @discord.ui.button(label="Start Game", row=1, style=discord.ButtonStyle.primary)
+    @ discord.ui.button(label="Start Game", row=1, style=discord.ButtonStyle.primary)
     async def start_callback(self, _, interaction: discord.Interaction):
-        await interaction.response.defer()
         wordlist = self.wordlist[:12]  # For the case of the wordlist having more than 12 words
         word = random.choice(wordlist)
-        charlatan = random.choice(list(self.users))
+        charlatan = random.choice(list(self.users.keys()))
         words = "\n".join([i if (i is not word) else "**" + i + "**" for i in wordlist])
-        for user in list(self.users):
-            await user.send(words) if not user == charlatan else\
-                await user.send("You are the charlatan: \n" + "\n".join(wordlist))
+        for key in self.users.keys():
+            await key.send(words) if not key == charlatan else \
+                await key.send("You are the charlatan: \n" + "\n".join(wordlist))
 
         view = CharlatanGame(self.users, interaction.channel)
         message = await interaction.channel.send(content="game starting...", view=view)
         await view.start_timer(message)
+        await interaction.message.delete()
 
 
 def setup(bot: discord.Bot) -> None:
