@@ -4,6 +4,7 @@ from functions.style import Emotes
 import discord
 from functions.style import Colours
 import random
+import asyncio
 '''
 #TODO-List:
 -prep: players, choose word (own list or given list)
@@ -36,11 +37,41 @@ class Charlatan(commands.Cog):
     @commands.slash_command(name='charlatan', description="Play a game of Charlatan")
     async def start_game(self, ctx: discord.ApplicationContext):
         user = ctx.author
-        view = CharlatanView(set([user]))
+        view = CharlatanLobby(set([user]))
         await ctx.respond(embed=view.make_embed(), view=view)
 
 
-class WordList(discord.ui.Modal):
+class CharlatanGame(discord.ui.View):
+    def __init__(self, players, channel):
+        self.players = {player: [0, 0] for player in players}
+        self.channel = channel
+        super().__init__(timeout=None)
+        for i in range(0, len(self.players)):
+            self.add_button(i)
+
+    def add_button(self, i):
+        button = discord.ui.Button(label=i)
+        button.custom_id = str(i)
+
+        async def cast_vote(interaction: discord.Interaction):
+            if self.players[interaction.user][0] == 0:
+                self.players[list(self.players)[int(button.custom_id)]][1] += 1
+                self.players[interaction.user][0] = 1
+        button.callback = cast_vote
+        self.add_item(button)
+
+    async def start_timer(self, message):
+        seconds = 5
+        message = await message.edit(content="Vote for a Charlatan:\n" + "\n".join([str(list(self.players)[i].mention) + ": " + str(i) for i in range(0, len(self.players))]))
+        while True:
+            seconds -= 1
+            if seconds == 0:
+                print(self.players)
+                break
+            await asyncio.sleep(1)
+
+
+class WordSelection(discord.ui.Modal):
     def __init__(self, title, users):
         super().__init__(title=title)
         self.add_item(discord.ui.InputText(label="Add 12 words for game here:",
@@ -49,11 +80,11 @@ class WordList(discord.ui.Modal):
         self.users = users
 
     async def callback(self, interaction):
-        view = CharlatanView(set(self.users), self.children[0].value.split('\n'))
+        view = CharlatanLobby(set(self.users), self.children[0].value.split('\n'))
         await interaction.message.edit(embed=view.make_embed(), view=view)
 
 
-class CharlatanView(discord.ui.View):
+class CharlatanLobby(discord.ui.View):
     def __init__(self, users, wordlist=DEFAULT_WORDLIST.split("\n")):
         super().__init__(timeout=300)
         self.users = users
@@ -66,12 +97,12 @@ class CharlatanView(discord.ui.View):
 
     @discord.ui.button(label="Word List", row=0, style=discord.ButtonStyle.secondary)
     async def wordlist_callback(self, _, interaction):
-        await interaction.response.send_modal(WordList(title="Word List", users=self.users))
+        await interaction.response.send_modal(WordSelection(title="Word List", users=self.users))
 
     @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
     async def join_callback(self, _, interaction: discord.Interaction) -> None:
         self.users.add(interaction.user)
-        view = CharlatanView(self.users)
+        view = CharlatanLobby(self.users)
         await interaction.response.edit_message(embed=view.make_embed(), view=view)
 
     @discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
@@ -87,6 +118,10 @@ class CharlatanView(discord.ui.View):
         words = "\n".join([i if (i is not word) else "**" + i + "**" for i in wordlist])
         for user in list(self.users):
             await user.send(words) if not user == charlatan else await user.send("You are the charlatan: \n" + "\n".join(wordlist))
+
+        view = CharlatanGame(self.users, interaction.channel)
+        message = await interaction.channel.send(content="game starting...", view=view)
+        await view.start_timer(message)
 
 
 def setup(bot: discord.Bot) -> None:
