@@ -79,7 +79,7 @@ class WordSelection(discord.ui.Modal):
         super().__init__(title=title)
         self.add_item(discord.ui.InputText(label="Add 12 words for game here:",
                                            style=discord.InputTextStyle.long,
-                                           placeholder=DEFAULT_WORDLIST))
+                                           placeholder=DEFAULT_WORDLIST[:97] + "..."))
         self.users = users
 
     async def callback(self, interaction):
@@ -106,7 +106,7 @@ class CharlatanLobby(discord.ui.View):
 
     @ discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
     async def join_callback(self, _, interaction: discord.Interaction) -> None:
-        self.users.add({interaction.user: 0})
+        self.users.update({interaction.user: 0})
         view = CharlatanLobby(self.users)
         await interaction.response.edit_message(embed=view.make_embed(), view=view)
 
