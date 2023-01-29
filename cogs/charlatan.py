@@ -36,7 +36,7 @@ class Charlatan(commands.Cog):
     @commands.slash_command(name='charlatan', description="Play a game of Charlatan")
     async def start_game(self, ctx: discord.ApplicationContext):
         user = ctx.author
-        view = CharlatanView(set([user]))
+        view = CharlatanView({user: 0})
         await ctx.respond(embed=view.make_embed(), view=view)
 
 
@@ -49,7 +49,7 @@ class WordList(discord.ui.Modal):
         self.users = users
 
     async def callback(self, interaction):
-        view = CharlatanView(set(self.users), self.children[0].value.split('\n'))
+        view = CharlatanView({self.users: 0}, self.children[0].value.split('\n'))
         await interaction.message.edit(embed=view.make_embed(), view=view)
 
 
@@ -60,7 +60,9 @@ class CharlatanView(discord.ui.View):
         self.wordlist = wordlist
 
     def make_embed(self):
-        desc = "Playing right now: \n{}".format("\n".join([user.mention for user in self.users]))
+        print(self.users)
+        desc = "Playing now:\n " + "\n".join(str(key.mention) + " : " + str(
+            self.users[key]) for key in self.users.keys())
         return discord.Embed(title="Charlatan", description=desc,
                              colour=Colours.PRIMARY)
 
@@ -70,7 +72,7 @@ class CharlatanView(discord.ui.View):
 
     @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
     async def join_callback(self, _, interaction: discord.Interaction) -> None:
-        self.users.add(interaction.user)
+        self.users.add({interaction.user: 0})
         view = CharlatanView(self.users)
         await interaction.response.edit_message(embed=view.make_embed(), view=view)
 
@@ -80,13 +82,13 @@ class CharlatanView(discord.ui.View):
 
     @discord.ui.button(label="Start Game", row=1, style=discord.ButtonStyle.primary)
     async def start_callback(self, _, interaction: discord.Interaction):
-        await interaction.response.defer()
         wordlist = self.wordlist[:12]  # For the case of the wordlist having more than 12 words
         word = random.choice(wordlist)
-        charlatan = random.choice(list(self.users))
+        charlatan = random.choice(list(self.users.keys()))
         words = "\n".join([i if (i is not word) else "**" + i + "**" for i in wordlist])
-        for user in list(self.users):
-            await user.send(words) if not user == charlatan else await user.send("You are the charlatan: \n" + "\n".join(wordlist))
+        for key in self.users.keys():
+            await key.send(words) if not key == charlatan else await key.send("You are the charlatan: \n" + "\n".join(wordlist))
+        await interaction.message.delete()
 
 
 def setup(bot: discord.Bot) -> None:
