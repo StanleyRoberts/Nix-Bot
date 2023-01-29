@@ -17,7 +17,7 @@ DEFAULT_WORDLIST = """Indiana Jones\nDr Who\nSpiderman\nDarth Vader\nSherlock Ho
 Superman\nBatman\nJames Bond\nDracula\nHomer Simpson\nFrankenstein
 Robin Hood\nSuper Mario\nTarzan\nDumbledore"""
 
-RULE_EXPLANATION = """ ```__Charlatan Rules__
+RULES = """__Charlatan Rules__
 Every player is given the same list of words with the same word marked, except the *Charlatan* who gets an unmarked list of words.
 
 Each player takens it in turn to say a word related to the marked word (the *Charlatan* must try and guess a relevant word).
@@ -25,9 +25,10 @@ Each player takens it in turn to say a word related to the marked word (the *Cha
 A small amount of discussion time is permitted to try and identify the *Charlatan*.
 
 After discussion the players must vote on who they think is a *Charlatan*:
-- if they fail to eliminate the *Charlatan* they lose and the *Charlatan* scores 2pts.
-- if they eliminate the *Charlatan*, the *Charlatan* gets to guess the marked word. If they are correct the *Charlatan* gets 1pt and the other players get zero
-- if they eliminate the *Charlatan* and the *Chalartan* incorrectly guesses the marked word, the other players each get 1pt``` """
+> - if they fail to eliminate the *Charlatan* they lose and the *Charlatan* scores 2pts.
+> - if they eliminate the *Charlatan*, the *Charlatan* gets to guess the marked word. If the *Charlatan* is correct they get 1pt and the other players get zero
+> - if they eliminate the *Charlatan* and the *Chalartan* incorrectly guesses the marked word,
+the other players each get 1pt"""
 
 
 class Charlatan(commands.Cog):
@@ -43,7 +44,8 @@ class Charlatan(commands.Cog):
 
 class CharlatanGame(discord.ui.View):
     def __init__(self, players, channel):
-        self.players = {player: [0, 0] for player in players}
+        # {player: [has_voted, times_voted_for]}
+        self.players = {player: [False, 0] for player in players}
         self.channel = channel
         super().__init__(timeout=None)
         for i in range(0, len(self.players)):
@@ -54,15 +56,16 @@ class CharlatanGame(discord.ui.View):
         button.custom_id = str(i)
 
         async def cast_vote(interaction: discord.Interaction):
-            if self.players[interaction.user][0] == 0:
+            if self.players[interaction.user][0] is False:
                 self.players[list(self.players)[int(button.custom_id)]][1] += 1
-                self.players[interaction.user][0] = 1
+                self.players[interaction.user][0] = True
         button.callback = cast_vote
         self.add_item(button)
 
     async def start_timer(self, message):
         seconds = 5
-        message = await message.edit(content="Vote for a Charlatan:\n" + "\n".join([str(list(self.players)[i].mention) + ": " + str(i) for i in range(0, len(self.players))]))
+        message = await message.edit(content="Vote for a Charlatan:\n" + "\n".join(
+            [str(list(self.players)[i].mention) + ": " + str(i) for i in range(0, len(self.players))]))
         while True:
             seconds -= 1
             if seconds == 0:
@@ -107,7 +110,7 @@ class CharlatanLobby(discord.ui.View):
 
     @discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
     async def rules_callback(self, _, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message(ephemeral=True, content=RULE_EXPLANATION)
+        await interaction.response.send_message(ephemeral=True, embed=discord.Embed(description=RULES))
 
     @discord.ui.button(label="Start Game", row=1, style=discord.ButtonStyle.primary)
     async def start_callback(self, _, interaction: discord.Interaction):
@@ -117,7 +120,8 @@ class CharlatanLobby(discord.ui.View):
         charlatan = random.choice(list(self.users))
         words = "\n".join([i if (i is not word) else "**" + i + "**" for i in wordlist])
         for user in list(self.users):
-            await user.send(words) if not user == charlatan else await user.send("You are the charlatan: \n" + "\n".join(wordlist))
+            await user.send(words) if not user == charlatan else\
+                await user.send("You are the charlatan: \n" + "\n".join(wordlist))
 
         view = CharlatanGame(self.users, interaction.channel)
         message = await interaction.channel.send(content="game starting...", view=view)
