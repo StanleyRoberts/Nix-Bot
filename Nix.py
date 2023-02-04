@@ -1,10 +1,11 @@
-import discord
 import os
+import signal
+import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-
+import asyncio
 import functions.database as db
-from functions.style import Colours
+
 
 if __debug__:
     load_dotenv()
@@ -19,8 +20,9 @@ HF_API = os.getenv('HF_API')  # HuggingFace API key
 
 
 if __debug__:
-    import testing.postgresql
-    postgres = testing.postgresql.Postgresql()
+    import testing.postgresql as tp
+    from reddit.interface import RedditInterface
+    postgres = tp.Postgresql()
     DATABASE_URL = postgres.url()
 
 intents = discord.Intents(messages=True, message_content=True,
@@ -83,10 +85,24 @@ async def on_member_remove(member: discord.Member) -> None:
 async def on_ready() -> None:
     print('We have logged in as {0.user}'.format(bot))
 
+
 if __name__ == "__main__":
     if __debug__:
         db.populate()
     cogs = ['birthdays', 'facts', 'counting', 'reddit', 'misc']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
-    bot.run(TOKEN)
+
+    try:
+        bot.run(TOKEN)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # \/ necessary because Postgres.stop() on pypi version of testing.postgres is broken
+        super(tp.Postgresql, postgres).terminate()
+        super(tp.Postgresql, postgres).cleanup()
+        # ^ idk why these two cant be replaced with Database.stop() but cba to figure it out
+        asyncio.run(RedditInterface.reddit.close())
+        # this still produces a database leak error but ive spent too much time
+        # on this already and i dont think it actually causes any leaks
+        print("closed process")
