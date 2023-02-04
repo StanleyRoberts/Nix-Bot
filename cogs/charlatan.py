@@ -5,6 +5,7 @@ import discord
 from functions.style import Colours
 import random
 import asyncio
+
 '''
 #TODO-List:
 -prep: players, choose word (own list or given list)
@@ -59,6 +60,7 @@ class CharlatanGame(discord.ui.View):
             if self.players[interaction.user][0] is False:
                 self.players[list(self.players)[int(button.custom_id)]][1] += 1
                 self.players[interaction.user][0] = True
+            # TODO write a message when someone clicks on a second user
         button.callback = cast_vote
         self.add_item(button)
 
@@ -69,9 +71,11 @@ class CharlatanGame(discord.ui.View):
         while True:
             seconds -= 1
             if seconds == 0:
-                print(self.players)
                 break
             await asyncio.sleep(1)
+
+    def count_votes(self):
+        return sorted(self.players.items(), key=lambda x: x[1][1])[len(self.players) - 1][0]
 
 
 class WordSelection(discord.ui.Modal):
@@ -94,7 +98,6 @@ class CharlatanLobby(discord.ui.View):
         self.wordlist = wordlist
 
     def make_embed(self):
-        print(self.users)
         desc = "Playing now:\n " + "\n".join(str(key.mention) + " : " + str(
             self.users[key]) for key in self.users.keys())
         return discord.Embed(title="Charlatan", description=desc,
@@ -127,7 +130,56 @@ class CharlatanLobby(discord.ui.View):
         view = CharlatanGame(self.users, interaction.channel)
         message = await interaction.channel.send(content="game starting...", view=view)
         await view.start_timer(message)
-        await interaction.message.delete()
+        voted_player = view.count_votes()
+        if voted_player != charlatan:
+            interaction.channel.send(content="You did not find the charlatan, it was {}".format(charlatan.mention))
+            self.users[charlatan] += 2
+        else:
+            # The Charlatan got guessed so he can choose the word
+            view = CharlatanChoice(chosenword=word, wordlist=wordlist)
+            await charlatan.send(
+                "Which of the word do you think is correct?",
+                view=view)
+            seconds = 10
+            while True:
+                seconds -= 1
+                if seconds == 0:
+                    break
+                await asyncio.sleep(1)
+            if view.correctGuess:
+                await interaction.channel.send(content="You")
+                self.users[charlatan] += 1
+            else:
+                # The Charlatan did not get it correct (1 Point for anyone but the Charlatan)
+            await interaction.message.delete()
+
+
+class CharlatanChoice(discord.ui.View):
+    def __init__(self, chosenword, wordlist):
+        super().__init__(timeout=300)
+        self.wordlist = wordlist
+        self.chosenword = chosenword
+        self.correctGuess = False
+        for i in range(0, len(self.wordlist)):
+            self.add_button(i, False if self.wordlist[i] is not self.chosenword else True)
+
+    def add_button(self, i, correct_button):
+        button = discord.ui.Button(label=self.wordlist[i])
+        button.custom_id = str(self.wordlist[i])
+        print(button.custom_id)
+
+        async def word_guess(interaction: discord.Interaction):
+            if correct_button:
+                response = "You guessed the correct word good job. It was \"{}\" {}".format(
+                    self.chosenword, Emotes.HUG)
+                self.correctGuess = True
+            else:
+                response = "You did not guess the correct word. It was \"{}\" {}".format(
+                    self.chosenword, Emotes.CRYING)
+            self.children = [button]
+            await self.message.edit(content=response, view=self)
+        button.callback = word_guess
+        self.add_item(button)
 
 
 def setup(bot: discord.Bot) -> None:
