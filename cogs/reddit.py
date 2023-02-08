@@ -4,6 +4,7 @@ import functions.database as db
 from functions.style import Emotes, Colours, TIME
 import reddit.ui_kit as ui
 from reddit.interface import RedditInterface
+import datetime
 
 
 class Reddit(commands.Cog):
@@ -64,6 +65,7 @@ class Reddit(commands.Cog):
 
     @tasks.loop(time=TIME)
     async def daily_post(self) -> None:
+        print(str(datetime.datetime.now()) + ": Reddit loop started")
         """
         Called daily to print random post from subbed sub to linked discord channel
         """
@@ -71,9 +73,11 @@ class Reddit(commands.Cog):
         for entry in subs:
             try:
                 post = await RedditInterface.get_post(entry[1], "day")
+                print(str(datetime.datetime.now()) + ": Reddit post send")
                 await (await self.bot.fetch_channel(entry[2])).send("__Daily post__\n" +
                                                                     post.text, files=post.img)
             except discord.errors.Forbidden:
+                print(str(datetime.datetime.now()) + ": Reddit post failed")
                 pass  # silently fail if no perms, TODO setup logging channel
 
 

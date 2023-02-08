@@ -2,10 +2,10 @@ import discord
 import requests
 import json
 from discord.ext import commands, tasks
-
 import functions.database as db
 from functions.style import Emotes, TIME
 from Nix import NINJA_API_KEY
+import datetime
 
 
 class Facts(commands.Cog):
@@ -36,6 +36,7 @@ class Facts(commands.Cog):
 
     @tasks.loop(time=TIME)
     async def daily_fact(self) -> None:
+        print(str(datetime.datetime.now()) + ": Fact loop started")
         """
         Called daily to print facts to fact channel
         """
@@ -44,8 +45,10 @@ class Facts(commands.Cog):
         for factID in guilds:
             if factID[0]:
                 try:
+                    print(str(datetime.datetime.now()) + ": Fact send")
                     await (await self.bot.fetch_channel(factID[0])).send("__Daily fact__\n" + fact)
                 except discord.errors.Forbidden:
+                    print(str(datetime.datetime.now()) + ": Fact failed")
                     pass  # silently fail if no perms, TODO setup logging channel
 
     @staticmethod
