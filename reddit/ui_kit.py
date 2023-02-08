@@ -1,29 +1,6 @@
 import discord
 from discord.partial_emoji import PartialEmoji
 from functions.style import Emotes
-from reddit.interface import RedditInterface
-
-
-class ChangeSubModal(discord.ui.Modal):
-    """
-    Modal text box to change subreddit for reddit PostViewer
-
-    Args:
-        title (str): the modal title
-        time (str): the time period for reddit posts
-    """
-
-    def __init__(self, title, time):
-        super().__init__(title=title)
-        self.add_item(discord.ui.InputText(label="Subreddit"))
-        self.time = time
-
-    async def callback(self, interaction):
-        await interaction.response.defer()
-        newsub = self.children[0].value
-        post = await RedditInterface.get_post(newsub, self.time)
-        await interaction.message.edit(content=post.text, files=post.img, attachments=[],
-                                       view=PostViewer(newsub, self.time))
 
 
 class PostViewer(discord.ui.View):
@@ -35,21 +12,43 @@ class PostViewer(discord.ui.View):
         time (str): the time period to show posts from
     """
 
-    def __init__(self, sub, time):
+    def __init__(self, reddit):
         super().__init__(timeout=300)
-        self.sub = sub
-        self.time = time
+        self.reddit = reddit
 
     @discord.ui.button(label="New Post", style=discord.ButtonStyle.primary,
                        emoji=PartialEmoji.from_str(Emotes.BLEP))
     async def refresh_callback(self, _, interaction: discord.Interaction):
         await interaction.response.defer()
-        post = await RedditInterface.get_post(self.sub, self.time)
+        post = await self.reddit.get_post()
         await interaction.message.edit(content=post.text, files=post.img, attachments=[],
-                                       view=PostViewer(self.sub, self.time))
+                                       view=self)
 
     @discord.ui.button(label="Change Subreddit", style=discord.ButtonStyle.secondary,
                        emoji=PartialEmoji.from_str(Emotes.HUG))
     async def change_sub_callback(self, _, interaction):
         await interaction.response.send_modal(ChangeSubModal(title="Change Subreddit",
-                                                             time=self.time))
+                                                             caller=self))
+
+
+class ChangeSubModal(discord.ui.Modal):
+    """
+    Modal text box to change subreddit for reddit PostViewer
+
+    Args:
+        title (str): the modal title
+        time (str): the time period for reddit posts
+    """
+
+    def __init__(self, title: str, caller: PostViewer) -> None:
+        super().__init__(title=title)
+        self.add_item(discord.ui.InputText(label="Subreddit"))
+        self.caller = caller
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+        newsub = self.children[0].value
+        await self.caller.reddit.set_subreddit(newsub)
+        post = await self.caller.reddit.get_post()
+        await interaction.message.edit(content=post.text, files=post.img, attachments=[],
+                                       view=self.caller)
