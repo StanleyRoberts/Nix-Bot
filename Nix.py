@@ -1,9 +1,7 @@
 import os
-import signal
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-import asyncio
 import functions.database as db
 
 
