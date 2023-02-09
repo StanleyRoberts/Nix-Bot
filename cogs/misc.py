@@ -8,6 +8,11 @@ import re
 from functions.style import Colours
 from Nix import HF_API
 
+USER_QS = ["Who are you?", "Is Stan cool?", "What is your favourite server?", "Where do you live?"]
+NIX_AS = ["I am Nix, a phoenix made of flames", "Yes, I think Stan is the best!",
+          "I love the Watching Racoons server the most!",
+          "I live in a volcano with my friends: DJ the Dragon and Sammy the Firebird."]
+
 
 class Misc(commands.Cog):
     def __init__(self, bot) -> None:
@@ -49,13 +54,14 @@ class Misc(commands.Cog):
             url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
             headers = {"Authorization": f"Bearer {HF_API}"}
 
-            prompt = {"past_user_inputs": ["What is your name?", "Who are you?"],
-                      "generated_responses": ["My name is Nix", "I am Nix, a phoenix made of flames"],
+            prompt = {"past_user_inputs": USER_QS,
+                      "generated_responses": NIX_AS,
                       "text": clean_prompt}
 
-            data = json.dumps({"inputs": prompt, "parameters": {
-                              "return_full_text": False, "temperature": 0.8,
-                              "use_cache": False}})
+            data = json.dumps({"inputs": prompt,
+                               "parameters": {"return_full_text": False},
+                               "options": {"use_cache": False}
+                               })
             response = requests.request("POST", url, headers=headers, data=data)
 
             text = json.loads(response.content.decode('utf-8'))
