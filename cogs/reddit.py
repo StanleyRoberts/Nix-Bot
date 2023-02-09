@@ -29,7 +29,7 @@ class Reddit(commands.Cog):
             channel = ctx.channel
 
         if not await RedditInterface.valid_sub(sub):
-            await ctx.respond("The subreddit {0} is not available {1}}".format(sub, Emotes.EVIL))
+            await ctx.respond("The subreddit {0} is not available {1}".format(sub, Emotes.EVIL))
         elif (sub.lower(),) in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             await ctx.respond("This server is already subscribed to {0} {1}".format(sub.lower(), Emotes.SUPRISE))
         else:
