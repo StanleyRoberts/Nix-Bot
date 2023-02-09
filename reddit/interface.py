@@ -128,3 +128,6 @@ class RedditInterface:
         return await Post("**" + subm.title + "**\t*(r/" + subm.subreddit.display_name + ")*\n" +
                           (subm.selftext if subm.is_self else ""),
                           None if subm.is_self else subm.url).load_img()
+
+    async def on_timeout(self) -> None:
+        self.reddit.close()
