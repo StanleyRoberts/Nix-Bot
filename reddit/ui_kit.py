@@ -8,8 +8,7 @@ class PostViewer(discord.ui.View):
     Manages the PostViewer context, which interactively displays reddit posts
 
     Args:
-        sub (str): the subreddit to show posts from
-        time (str): the time period to show posts from
+        reddit (asyncpraw.Reddit): Reddit instance
     """
 
     def __init__(self, reddit):
@@ -37,7 +36,7 @@ class ChangeSubModal(discord.ui.Modal):
 
     Args:
         title (str): the modal title
-        time (str): the time period for reddit posts
+        caller (PostViewer): the calling View
     """
 
     def __init__(self, title: str, caller: PostViewer) -> None:
