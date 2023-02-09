@@ -83,7 +83,7 @@ async def on_member_remove(member: discord.Member) -> None:
 
 @bot.event
 async def on_ready() -> None:
-    print('We have logged in as {0.user}'.format(bot))
+    print('Logged in as {0}'.format(bot.user))
 
 
 if __name__ == "__main__":
