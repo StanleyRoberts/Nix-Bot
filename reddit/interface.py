@@ -23,7 +23,7 @@ class Post:
         self.img = []
 
     async def load_img(self) -> None:
-        if self.url and re.search(r"\.(png|jpg|gif|jpeg)$", self._url):
+        if self._url and re.search(r"\.(png|jpg|gif|jpeg)$", self._url):
             async with aiohttp.ClientSession() as session:
                 async with session.get(self._url) as resp:
                     self.img = [discord.File(io.BytesIO(await resp.read()), self._url)]
@@ -100,11 +100,11 @@ class RedditInterface:
                 self.cache = [post async for post in self.sub.top(time_filter=self.time, limit=num)]
                 self.error_response = None
             except prawcore.exceptions.Redirect:
-                self.error_response = "{0} Subreddit \'".format(Emotes.WTF) + subreddit + "\' not found"
+                self.error_response = "{0} Subreddit \'{1}\' not found".format(Emotes.WTF, subreddit)
             except prawcore.exceptions.NotFound:
-                self.error_response = "{0} Subreddit \'".format(Emotes.WTF) + subreddit + "\' banned"
+                self.error_response = "{0} Subreddit \'{1}\' banned".format(Emotes.WTF, subreddit)
             except prawcore.exceptions.Forbidden:
-                self.error_response = "{0} Subreddit \'".format(Emotes.WTF) + subreddit + "\' private"
+                self.error_response = "{0} Subreddit \'{1}\' private".format(Emotes.WTF, subreddit)
 
             random.shuffle(self.cache)
         return self.error_response is None
