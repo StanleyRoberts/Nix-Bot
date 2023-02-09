@@ -102,7 +102,6 @@ if __name__ == "__main__":
         super(tp.Postgresql, postgres).terminate()
         super(tp.Postgresql, postgres).cleanup()
         # ^ idk why these two cant be replaced with Database.stop() but cba to figure it out
-        asyncio.run(RedditInterface.reddit.close())
         # this still produces a database leak error but ive spent too much time
         # on this already and i dont think it actually causes any leaks
         print("closed process")
