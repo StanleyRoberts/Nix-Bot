@@ -36,7 +36,6 @@ class Facts(commands.Cog):
 
     @tasks.loop(time=TIME)
     async def daily_fact(self) -> None:
-        print(str(datetime.datetime.now()) + ": Fact loop started")
         """
         Called daily to print facts to fact channel
         """
@@ -45,10 +44,8 @@ class Facts(commands.Cog):
         for factID in guilds:
             if factID[0]:
                 try:
-                    print(str(datetime.datetime.now()) + ": Fact send")
                     await (await self.bot.fetch_channel(factID[0])).send("__Daily fact__\n" + fact)
                 except discord.errors.Forbidden:
-                    print(str(datetime.datetime.now()) + ": Fact failed")
                     pass  # silently fail if no perms, TODO setup logging channel
 
     @staticmethod

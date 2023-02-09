@@ -1,7 +1,14 @@
 # NixBot
 
-Nix is a multi-purpose discord bot we created for our server, the _Watching Raccoons_.  
-Nix provides many functions, as a provider for many other API's such as random quotes, facts, or reddit posts as well as tracking birthdays and the counting game.
+Nix is a multi-purpose discord bot we created for our server, the _Watching Raccoons_.
+Nix is a personable bot providing many functions, such as random quotes, facts, or reddit posts as well as tracking birthdays and the counting game.
+
+### Features 
+- **Fun**: Commands such as /reddit can browse reddits posts, getting memes, videos or textposts. The command /quote will display an AI-generated quote over an inspirational image.
+- **Subscriptions**: Nix provides the ability to subscribe to facts or subreddits, sending a fact/post to your server every day!
+- **Birthday tracking**: Users can input their birthdays, and Nix will send a birthday message for them to a specified channel. Let your server celebrate birthdays together!
+- **Counting game**: Nix can also keep track of the classic discord counting game, no need for a seperate bot!
+- **Personality**: Nix's trademark feature. Nix has a range of custom themed emoji and responses and can even use AI models to reply to messages he is tagged in!
 
 ## Setup
 

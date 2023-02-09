@@ -17,9 +17,9 @@ class Reddit(commands.Cog):
                                time: discord.Option(str, default="day",
                                                     choices=["month", "hour", "week", "all", "day", "year"],
                                                     description="Time period to search for top posts")):
-        post = await RedditInterface.get_post(subreddit, time)
-        await ctx.interaction.response.send_message(content=post.text, files=post.img,
-                                                    view=ui.PostViewer(subreddit, time))
+        reddit = RedditInterface(subreddit, time)
+        post = await reddit.get_post()
+        await ctx.interaction.response.send_message(content=post.text, files=post.img, view=ui.PostViewer(reddit))
 
     @commands.slash_command(name='subscribe', description="Subscribe to a subreddit to get daily posts from it")
     @discord.commands.default_permissions(manage_guild=True)
@@ -29,7 +29,7 @@ class Reddit(commands.Cog):
             channel = ctx.channel
 
         if not await RedditInterface.valid_sub(sub):
-            await ctx.respond("The subreddit {0} is not available {1}}".format(sub, Emotes.EVIL))
+            await ctx.respond("The subreddit {0} is not available {1}".format(sub, Emotes.EVIL))
         elif (sub.lower(),) in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             await ctx.respond("This server is already subscribed to {0} {1}".format(sub.lower(), Emotes.SUPRISE))
         else:
@@ -65,19 +65,16 @@ class Reddit(commands.Cog):
 
     @tasks.loop(time=TIME)
     async def daily_post(self) -> None:
-        print(str(datetime.datetime.now()) + ": Reddit loop started")
         """
         Called daily to print random post from subbed sub to linked discord channel
         """
         subs = db.single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
             try:
-                post = await RedditInterface.get_post(entry[1], "day")
-                print(str(datetime.datetime.now()) + ": Reddit post send")
+                post = await RedditInterface.single_post(entry[1], "day")
                 await (await self.bot.fetch_channel(entry[2])).send("__Daily post__\n" +
                                                                     post.text, files=post.img)
             except discord.errors.Forbidden:
-                print(str(datetime.datetime.now()) + ": Reddit post failed")
                 pass  # silently fail if no perms, TODO setup logging channel
 
 
