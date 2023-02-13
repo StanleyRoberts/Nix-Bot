@@ -4,7 +4,6 @@ import functions.database as db
 from functions.style import Emotes, Colours, TIME
 import reddit.ui_kit as ui
 from reddit.interface import RedditInterface
-import datetime
 
 
 class Reddit(commands.Cog):

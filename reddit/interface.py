@@ -84,7 +84,7 @@ class RedditInterface:
         """
         reddit = RedditInterface(subreddit, time)
         post = await reddit.get_post()
-        reddit.close()
+        await reddit.reddit.close()
         return post
 
     async def set_subreddit(self, subreddit: str, num: int = 15) -> Post:
