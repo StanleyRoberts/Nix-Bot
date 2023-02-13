@@ -62,10 +62,13 @@ class RedditInterface:
             bool: returns True if the sub exists, and False otherwise
         """
         try:
-            temp = await RedditInterface.reddit.subreddit(subreddit)
+            interface = RedditInterface(subreddit)
+            temp = await interface.reddit.subreddit(subreddit)
             [post async for post in temp.top("day", 1)]
         except prawcore.exceptions.AsyncPrawcoreException:
+            await interface.reddit.close()
             return False
+        await interface.reddit.close()
         return True
 
     @staticmethod
@@ -79,7 +82,7 @@ class RedditInterface:
         Returns:
             Post: Top post found
         """
-        reddit = RedditInterface(subreddit, time, 1)
+        reddit = RedditInterface(subreddit, time)
         return await reddit.get_post()
 
     async def set_subreddit(self, subreddit: str, num: int = 15) -> Post:
@@ -131,3 +134,4 @@ class RedditInterface:
 
     async def on_timeout(self) -> None:
         self.reddit.close()
+        return super().on_timeout()
