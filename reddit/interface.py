@@ -65,11 +65,11 @@ class RedditInterface:
             interface = RedditInterface(subreddit)
             temp = await interface.reddit.subreddit(subreddit)
             [post async for post in temp.top("day", 1)]
+            return True
         except prawcore.exceptions.AsyncPrawcoreException:
-            await interface.reddit.close()
             return False
-        await interface.reddit.close()
-        return True
+        finally:
+            await interface.reddit.close()
 
     @staticmethod
     async def single_post(subreddit: str, time: str) -> Post:
@@ -83,7 +83,9 @@ class RedditInterface:
             Post: Top post found
         """
         reddit = RedditInterface(subreddit, time)
-        return await reddit.get_post()
+        post = await reddit.get_post()
+        reddit.close()
+        return post
 
     async def set_subreddit(self, subreddit: str, num: int = 15) -> Post:
         """Sets interface to point to new subreddit
