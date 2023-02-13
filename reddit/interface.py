@@ -62,11 +62,14 @@ class RedditInterface:
             bool: returns True if the sub exists, and False otherwise
         """
         try:
-            temp = await RedditInterface.reddit.subreddit(subreddit)
+            interface = RedditInterface(subreddit)
+            temp = await interface.reddit.subreddit(subreddit)
             [post async for post in temp.top("day", 1)]
+            return True
         except prawcore.exceptions.AsyncPrawcoreException:
             return False
-        return True
+        finally:
+            await interface.reddit.close()
 
     @staticmethod
     async def single_post(subreddit: str, time: str) -> Post:
@@ -79,8 +82,10 @@ class RedditInterface:
         Returns:
             Post: Top post found
         """
-        reddit = RedditInterface(subreddit, time, 1)
-        return await reddit.get_post()
+        reddit = RedditInterface(subreddit, time)
+        post = await reddit.get_post()
+        await reddit.reddit.close()
+        return post
 
     async def set_subreddit(self, subreddit: str, num: int = 15) -> Post:
         """Sets interface to point to new subreddit
@@ -129,5 +134,6 @@ class RedditInterface:
                           (subm.selftext if subm.is_self else ""),
                           None if subm.is_self else subm.url).load_img()
 
-    async def on_timeout(self) -> None:
+    async def on_timeout(self) -> bool:
         self.reddit.close()
+        return super().on_timeout()
