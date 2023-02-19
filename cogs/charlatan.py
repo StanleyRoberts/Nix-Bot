@@ -1,11 +1,9 @@
 from discord.ext import commands
 from discord.partial_emoji import PartialEmoji
-from functions.style import Emotes
+from functions.style import Emotes, Colours
 import discord
-from functions.style import Colours
 import random
-import asyncio
-
+import functions.charlatan_helpers as helper
 '''
 #TODO-List:
 -prep: players, choose word (own list or given list)
@@ -14,29 +12,9 @@ import asyncio
 -after: score of games(?), replay possible(start again without preparation)
 '''
 
-DEFAULT_WORDLIST = """Indiana Jones\nDr Who\nSpiderman\nDarth Vader\nSherlock Holmes\nGandalf
-Superman\nBatman\nJames Bond\nDracula\nHomer Simpson\nFrankenstein
-Robin Hood\nSuper Mario\nTarzan\nDumbledore"""
 
-RULES = """__Charlatan Rules__
-Every player is given the same list of words with the same word marked, \
-except the *Charlatan* who gets an unmarked list of words.
-
-Each player takens it in turn to say a word related to the marked word \
-(the *Charlatan* must try and guess a relevant word).
-
-A small amount of discussion time is permitted to try and identify the *Charlatan*.
-
-After discussion the players must vote on who they think is a *Charlatan*:
-> - if they fail to eliminate the *Charlatan* they lose and the *Charlatan* scores 2pts.
-> - if they eliminate the *Charlatan*, the *Charlatan* gets to guess the marked word. \
-If the *Charlatan* is correct they get 1pt and the other players get zero
-> - if they eliminate the *Charlatan* and the *Chalartan* incorrectly guesses the marked word,
-the other players each get 1pt"""
-
-
-class CharlatanGame(discord.ui.View):
-    """ View that manages the playing of the Charlatan game
+class PlayerVoting(discord.ui.View):
+    """ View that manages the voting of who the Charlatan is
 
     Args:
         players (dict[discord.User, int]): A mapping of players to their score
@@ -51,44 +29,31 @@ class CharlatanGame(discord.ui.View):
         for i in range(0, len(self.players)):
             self.add_button(i)
 
+    async def vote(self) -> discord.User:
+        """Waits and then returns the most voted player
+
+        Returns:
+            discord.User: The most voted player
+        """
+        return sorted(self.players.items(), key=lambda x: x[1][1])[::-1][0][0]  # TODO handle ties
+
     def add_button(self, i: int) -> None:
         """ Adds voting buttons to the view
 
         Args:
             i (int): Button label and unique ID
         """
-        button = discord.ui.Button(label=str(i), custom_id=i)
+        button = discord.ui.Button(label=str(i + 1), custom_id=str(i))
 
         async def cast_vote(interaction: discord.Interaction):
             if self.players[interaction.user][0] is False:
-                self.players[list(self.players)[int(button.custom_id)]][1] += 1
+                voted_player = list(self.players)[int(button.custom_id)]  # indexes into the dictionary
+                self.players[voted_player][1] += 1
                 self.players[interaction.user][0] = True
+                await interaction.response.send_message(ephemeral=True, content="You voted for {}".format(voted_player.display_name))
             # TODO write a message when someone clicks on a second user
         button.callback = cast_vote
         self.add_item(button)
-
-    async def start_timer(self, time: int) -> None:
-        """ Waits until time is up
-
-        Args:
-            time (int): amount of time to wait in seconds
-        """
-        seconds = time
-        # The entire function can be made static/standalone
-        while True:
-            seconds -= 1
-            if seconds == 0:
-                break
-            await asyncio.sleep(1)
-
-    def count_votes(self) -> discord.User:
-        """Returns the player with the highest number of votes
-
-        Returns:
-            discord.User: The user with the highest number of votes
-        """
-        # TODO handle ties
-        return sorted(self.players.items(), key=lambda x: x[1][1])[::-1][0]
 
 
 class WordSelection(discord.ui.Modal):
@@ -104,7 +69,7 @@ class WordSelection(discord.ui.Modal):
         super().__init__(title=title)
         self.add_item(discord.ui.InputText(label="Add 16 words for the game here:",
                                            style=discord.InputTextStyle.long,
-                                           placeholder=DEFAULT_WORDLIST[:97] + "..."))
+                                           placeholder=helper.DEFAULT_WORDLIST[:97] + "..."))
         self.users = users
 
     async def callback(self, interaction: discord.Interaction) -> None:
@@ -127,7 +92,8 @@ class CharlatanLobby(discord.ui.View):
         wordlist (list[str], optional): List of words to use for the game. Defaults to a wordlist of fantasy characters
     """
 
-    def __init__(self, users: dict[discord.User, int], wordlist: list[str] = DEFAULT_WORDLIST.split("\n")) -> None:
+    def __init__(self, users: dict[discord.User, int],
+                 wordlist: list[str] = helper.DEFAULT_WORDLIST.split("\n")) -> None:
         super().__init__(timeout=300)
         self.users = users
         self.wordlist = wordlist
@@ -140,8 +106,9 @@ class CharlatanLobby(discord.ui.View):
         """
         desc = "Playing now:\n " + "\n".join(str(key.mention) + " : " + str(
             self.users[key]) for key in self.users.keys())
-        return discord.Embed(title="Charlatan", description=desc,
-                             colour=Colours.PRIMARY)
+        self.embed = discord.Embed(title="Charlatan", description=desc,
+                                   colour=Colours.PRIMARY)
+        return self.embed
 
     @ discord.ui.button(label="Word List", row=0, style=discord.ButtonStyle.secondary)
     async def wordlist_callback(self, _, interaction: discord.Interaction) -> None:
@@ -158,62 +125,94 @@ class CharlatanLobby(discord.ui.View):
     @ discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
     async def rules_callback(self, _, interaction: discord.Interaction) -> None:
         """Callback to display the rules"""
-        await interaction.response.send_message(ephemeral=True, embed=discord.Embed(description=RULES))
+        await interaction.response.send_message(ephemeral=True, embed=discord.Embed(description=helper.RULES))
 
-    @ discord.ui.button(label="Start Game", row=1, style=discord.ButtonStyle.primary)
+    @ discord.ui.button(label="Confirm Lobby", row=1, style=discord.ButtonStyle.primary)
     async def start_callback(self, _, interaction: discord.Interaction) -> None:
         """Callback to start the game via the CharlatenGame view"""
-        # TODO none of this should be here, this should all be moved into a new function in CharlatanGame
-        wordlist = self.wordlist[:16]  # For the case of the wordlist having more than 12 words
-        view = CharlatanGameView(wordlist, self.users, interaction)
-        await interaction.channel.send(content="game starting...", view=view)
+        wordlist = self.wordlist[:16]  # For the case of the wordlist having more than 16 words
+        view = CharlatanGame(wordlist, self.users)
+        await interaction.response.send_message(view=view)
         await interaction.message.delete()
-        view.start()
 
 
-class CharlatanGameView(discord.ui.View):
-    def __init__(self, wordlist, players, interaction):
+class CharlatanGame(discord.ui.View):
+    def __init__(self, wordlist: list[str], players: dict[discord.User, int]):
+        super().__init__(timeout=300)
         self.wordlist = wordlist
         self.players = players
-        self.interaction = interaction
+        self.word = random.choice(self.wordlist)
+        self.charlatan = random.choice(list(self.players.keys()))
 
-    async def start(self):
-        self.interaction.channel.send(content="A game is ongoing")
-        word = random.choice(self.wordlist)
-        charlatan = random.choice(list(self.players.keys()))
-        words = "\n".join([i if (i is not word) else "**" + i + "**" for i in self.wordlist]
+    @discord.ui.button(label="Start Game", style=discord.ButtonStyle.primary)
+    async def start_game(self, _, interaction: discord.Interaction):
+        self.interaction = interaction
+        self.disable_all_items()
+        await self.message.edit(view=self)
+        await self.send_messages()
+        await helper.start_timer(20)
+        await self.post_voting(await self.voting())
+
+    async def send_messages(self):
+        words = "\n".join([i if (i is not self.word) else "**" + i + "**" for i in self.wordlist]
                           )  # Writes the words as a list and marks the chosen one
         for key in self.players.keys():  # Sends the wordlist to everyone (altered for Charlatan)
-            await key.send(words) if not key == charlatan else \
+            await key.send(words) if not key == self.charlatan else \
                 await key.send("You are the charlatan: \n" + "\n".join(self.wordlist))
-        view = CharlatanGame(self.players, self.interaction.channel)
+
+    async def voting(self) -> discord.User:
+        """Voting for the Charlatan
+
+        Returns:
+            discord.User: The most voted player
+        """
+        view = PlayerVoting(self.players, self.interaction.channel)
         message = await self.interaction.channel.send(content="game starting...", view=view)
         message = await message.edit(content="Vote for a Charlatan:\n" + "\n".join(
-            [str(list(self.players)[i].mention) + ": " + str(i) for i in range(0, len(self.players))]))
-        await CharlatanGame.start_timer(10)
-        correct_voting = self.check_voting_results()  # Checks if the vote was the Charlatan or not
-        self.post_voting(correct_voting, charlatan, word)
+            [str(list(self.players)[i].mention) + ": " + str(i + 1) for i in range(0, len(self.players))]))
+        await helper.start_timer(20)
+        await message.delete()
+        return await view.vote()
 
-    async def post_voting(self, correctVote, charlatan, word):
-        if not correctVote:
-            self.interaction.channel.send(
-                content="You did not find the charlatan, it was {}".format(charlatan.mention))
-            self.players[charlatan] += 2
+    async def post_voting(self, votedplayer: discord.User):
+        """Handles voting results
+
+        Args:
+            correctVote (bool): If the players have voted the correct person
+            votedplayer (discord.User): The most voted player
+        """
+        if votedplayer is not self.charlatan:
+            await self.interaction.channel.send(
+                content="You did not find the charlatan, it was {} {}".format(self.charlatan.mention, Emotes.CRYING))
+            self.players[self.charlatan] += 2
         else:
-            view = CharlatanChoice(chosenword=word, wordlist=self.wordlist)
-            await CharlatanGame.start_timer(20)
-            if view.correctGuess():
-                self.players[charlatan] += 1
+            view = CharlatanChoice(chosenword=self.word, wordlist=self.wordlist)
+            await self.charlatan.send(view=view)
+            await self.interaction.channel.send(content="You found the charlatan, it was {} {}".format(self.charlatan.mention, Emotes.HUG))
+            await helper.start_timer(20)
+            if view.correctGuess:
+                await self.interaction.channel.send(content="The Charlatan guessed the correct word {}".format(Emotes.WHOA))
+                self.players[self.charlatan] += 1
             else:
-                for player in self.players.keys():
-                    self.players[player] += 1 if player is not charlatan else None
+                await self.interaction.channel.send(content="The Charlatan did not guess the correct word {}".format(Emotes.CONFUSED))
+                for key in self.players.keys():
+                    self.players[key] += 1 if key is not self.charlatan else 0
+        self.clear_items()
+        desc = "\n".join(str(key.mention) + " : " + str(self.players[key]) for key in self.players.keys())
+        embed = (discord.Embed(title="Leaderboard", description=desc, colour=Colours.PRIMARY))
+        play_again_button = discord.ui.Button(label="Play again", style=discord.ButtonStyle.primary)
+        play_again_button.callback = self.play_again
+        lobby_button = discord.ui.Button(label="Back to the lobby", style=discord.ButtonStyle.secondary)
+        lobby_button.callback = self.back_to_lobby
+        self.add_item(play_again_button)
+        self.add_item(lobby_button)
+        await self.interaction.channel.send(embed=embed, view=self)
 
-    async def check_voting_results(self, view: CharlatanGame, charlatan) -> bool:
-        voted_player = view.count_votes()
-        if voted_player is charlatan:
-            return True
-        else:
-            return False
+    async def play_again(self, interaction: discord.Interaction):
+        await interaction.response.send_message(view=CharlatanGame(wordlist=self.wordlist, players=self.players))
+
+    async def back_to_lobby(self, interaction: discord.Interaction):
+        await interaction.response.send_message(view=CharlatanLobby({}))
 
 
 class CharlatanChoice(discord.ui.View):
@@ -243,7 +242,7 @@ class CharlatanChoice(discord.ui.View):
             correct_button (bool): Whether the word at postion 'i' is the secret word
         """
         button = discord.ui.Button(label=str(self.wordlist[i]),
-                                   custom_id=i)
+                                   custom_id=str(i))
 
         async def word_guess(_):
             """Callback for the added button"""
@@ -255,6 +254,7 @@ class CharlatanChoice(discord.ui.View):
                 response = "You did not guess the correct word. It was \"{}\" {}".format(
                     self.chosenword, Emotes.CRYING)
             self.children = [button]
+            button.disabled = True
             await self.message.edit(content=response, view=self)
         button.callback = word_guess
         self.add_item(button)
