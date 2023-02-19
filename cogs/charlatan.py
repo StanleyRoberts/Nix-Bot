@@ -64,10 +64,8 @@ class CharlatanGame(discord.ui.View):
         button.callback = cast_vote
         self.add_item(button)
 
-    async def start_timer(self, message):
-        seconds = 5
-        message = await message.edit(content="Vote for a Charlatan:\n" + "\n".join(
-            [str(list(self.players)[i].mention) + ": " + str(i) for i in range(0, len(self.players))]))
+    async def start_timer(self, timer):
+        seconds = timer
         while True:
             seconds -= 1
             if seconds == 0:
@@ -81,7 +79,7 @@ class CharlatanGame(discord.ui.View):
 class WordSelection(discord.ui.Modal):
     def __init__(self, title, users):
         super().__init__(title=title)
-        self.add_item(discord.ui.InputText(label="Add 12 words for game here:",
+        self.add_item(discord.ui.InputText(label="Add 16 words for the game here:",
                                            style=discord.InputTextStyle.long,
                                            placeholder=DEFAULT_WORDLIST[:97] + "..."))
         self.users = users
@@ -119,39 +117,56 @@ class CharlatanLobby(discord.ui.View):
 
     @ discord.ui.button(label="Start Game", row=1, style=discord.ButtonStyle.primary)
     async def start_callback(self, _, interaction: discord.Interaction):
-        wordlist = self.wordlist[:12]  # For the case of the wordlist having more than 12 words
-        word = random.choice(wordlist)
-        charlatan = random.choice(list(self.users.keys()))
-        words = "\n".join([i if (i is not word) else "**" + i + "**" for i in wordlist])
-        for key in self.users.keys():
-            await key.send(words) if not key == charlatan else \
-                await key.send("You are the charlatan: \n" + "\n".join(wordlist))
+        wordlist = self.wordlist[:16]  # For the case of the wordlist having more than 12 words
+        view = CharlatanGameView(wordlist, self.users, interaction)
+        await interaction.channel.send(content="game starting...", view=view)
+        await interaction.message.delete()
+        view.start()
 
-        view = CharlatanGame(self.users, interaction.channel)
-        message = await interaction.channel.send(content="game starting...", view=view)
-        await view.start_timer(message)
-        voted_player = view.count_votes()
-        if voted_player != charlatan:
-            interaction.channel.send(content="You did not find the charlatan, it was {}".format(charlatan.mention))
-            self.users[charlatan] += 2
+
+class CharlatanGameView(discord.ui.View):
+    def __init__(self, wordlist, players, interaction):
+        self.wordlist = wordlist
+        self.players = players
+        self.interaction = interaction
+
+    async def start(self):
+        self.interaction.channel.send(content="A game is ongoing")
+        word = random.choice(self.wordlist)
+        charlatan = random.choice(list(self.players.keys()))
+        words = "\n".join([i if (i is not word) else "**" + i + "**" for i in self.wordlist]
+                          )  # Writes the words as a list and marks the chosen one
+        for key in self.players.keys():  # Sends the wordlist to everyone (altered for Charlatan)
+            await key.send(words) if not key == charlatan else \
+                await key.send("You are the charlatan: \n" + "\n".join(self.wordlist))
+        view = CharlatanGame(self.players, self.interaction.channel)
+        message = await self.interaction.channel.send(content="game starting...", view=view)
+        message = await message.edit(content="Vote for a Charlatan:\n" + "\n".join(
+            [str(list(self.players)[i].mention) + ": " + str(i) for i in range(0, len(self.players))]))
+        await CharlatanGame.start_timer(10)
+        correct_voting = self.check_voting_results()  # Checks if the vote was the Charlatan or not
+        self.post_voting(correct_voting, charlatan, word)
+
+    async def post_voting(self, correctVote, charlatan, word):
+        if not correctVote:
+            self.interaction.channel.send(
+                content="You did not find the charlatan, it was {}".format(charlatan.mention))
+            self.players[charlatan] += 2
         else:
-            # The Charlatan got guessed so he can choose the word
-            view = CharlatanChoice(chosenword=word, wordlist=wordlist)
-            await charlatan.send(
-                "Which of the word do you think is correct?",
-                view=view)
-            seconds = 10
-            while True:
-                seconds -= 1
-                if seconds == 0:
-                    break
-                await asyncio.sleep(1)
-            if view.correctGuess:
-                await interaction.channel.send(content="You")
-                self.users[charlatan] += 1
+            view = CharlatanChoice(chosenword=word, wordlist=self.wordlist)
+            await CharlatanGame.start_timer(20)
+            if view.correctGuess():
+                self.players[charlatan] += 1
             else:
-                # The Charlatan did not get it correct (1 Point for anyone but the Charlatan)
-            await interaction.message.delete()
+                for player in self.players.keys():
+                    self.players[player] += 1 if player is not charlatan else None
+
+    async def check_voting_results(self, view: CharlatanGame, charlatan) -> bool:
+        voted_player = view.count_votes()
+        if voted_player is charlatan:
+            return True
+        else:
+            return False
 
 
 class CharlatanChoice(discord.ui.View):
