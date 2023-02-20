@@ -157,8 +157,9 @@ class CharlatanGame(discord.ui.View):
         words = "\n".join([i if (i is not self.word) else "**" + i + "**" for i in self.wordlist]
                           )  # Writes the words as a list and marks the chosen one
         for key in self.players.keys():  # Sends the wordlist to everyone (altered for Charlatan)
-            await key.send(words) if not key == self.charlatan else \
-                await key.send("You are the charlatan: \n" + "\n".join(self.wordlist))
+            desc = words if not key == self.charlatan else "\n".join(self.wordlist)
+            title = "You are a normal player" if not key == self.charlatan else "You are the Charlatan"
+            await key.send(embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY))
 
     async def voting(self) -> discord.User:
         """Voting for the Charlatan
