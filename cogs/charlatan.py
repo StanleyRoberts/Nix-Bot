@@ -184,12 +184,12 @@ class CharlatanGame(discord.ui.View):
         """
         if votedplayer is not self.charlatan:
             await self.interaction.channel.send(
-                content="You did not find the charlatan, it was {} {}".format(self.charlatan.mention, Emotes.CRYING))
+                content="The players did not find the charlatan, it was {} {}".format(self.charlatan.mention, Emotes.CRYING))
             self.players[self.charlatan] += 2
         else:
             view = CharlatanChoice(chosenword=self.word, wordlist=self.wordlist)
             await self.charlatan.send(view=view)
-            await self.interaction.channel.send(content="You found the charlatan, it was {} {}".format(self.charlatan.mention, Emotes.HUG))
+            await self.interaction.channel.send(content="The players have found the charlatan, it was {} {}".format(self.charlatan.mention, Emotes.HUG))
             await helper.start_timer(20)
             if view.correctGuess:
                 await self.interaction.channel.send(content="The Charlatan guessed the correct word {}".format(Emotes.WHOA))
