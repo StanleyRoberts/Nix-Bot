@@ -116,7 +116,6 @@ class RedditInterface:
                 logger.info("The subreddit {} was set for reddit.interface".format(subreddit))
                 self.error_response = None
             except prawcore.exceptions.Redirect:
-
                 logger.warning("Requested subreddit {} was not found".format(subreddit))
                 self.error_response = "{0} Subreddit \'{1}\' not found".format(Emotes.WTF, subreddit)
             except prawcore.exceptions.NotFound:
