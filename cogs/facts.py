@@ -71,6 +71,8 @@ class Facts(commands.Cog):
         if response.status_code == requests.codes.ok:
             cjson = json.loads(response.text)
             message = cjson[0]["fact"]
+        else:
+            logger.error("{0} Fact request failed: {1}".format(response.status_code, response.text))
         return message
 
 
