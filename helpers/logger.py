@@ -16,12 +16,14 @@ class Logger(object):
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(Logger, cls).__new__(cls)
-            cls.print_level = 2
+            cls.print_level = 0
             cls.debug_mode = True
             cls.command_bot = None
         return cls._instance
 
     def set_priority(self, priority: str):
+        self.print_level = 0
+        self.info("Logging level set to {0}".format(priority))
         self.print_level = Priority[priority].value
 
     def set_bot(self, discord_bot):

@@ -1,9 +1,10 @@
 import discord
+import sys
 from discord.ext import commands
 
 import helpers.database as db
 from helpers.env import TOKEN, shutdown_db
-from helpers.logger import Logger
+from helpers.logger import Logger, Priority
 
 
 intents = discord.Intents(messages=True, message_content=True,
@@ -13,7 +14,6 @@ bot = commands.Bot(intents=intents, command_prefix='%s',
 
 
 logger = Logger()
-logger.set_priority("DEBUG")
 logger.set_bot(bot)
 
 
@@ -75,6 +75,13 @@ async def on_ready() -> None:
 if __name__ == "__main__":
     if __debug__:
         db.populate()
+        try:
+            priority = Priority[sys.argv[1].upper()].name
+            logger.set_priority(priority)
+        except IndexError:
+            logger.info("No logging level set, defaulting to all")
+        except KeyError:
+            logger.info("Invalid logging level, defaulting to all")
     else:
         logger.debug_mode = False
         logger.set_priority("DEBUG")  # TODO change to warning

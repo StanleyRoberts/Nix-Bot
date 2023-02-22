@@ -120,6 +120,9 @@ class RedditInterface:
                 self.error_response = "{0} Subreddit \'{1}\' banned".format(Emotes.WTF, subreddit)
             except prawcore.exceptions.Forbidden:
                 self.error_response = "{0} Subreddit \'{1}\' private".format(Emotes.WTF, subreddit)
+            except prawcore.AsyncPrawcoreException as e:
+                logger.error("Failure getting subreddit <{0}>: {1}".format(subreddit, e.__class__.__name__))
+                self.error_response = "Unknown error, please try again later"
 
             random.shuffle(self.cache)
         return self.error_response is None
