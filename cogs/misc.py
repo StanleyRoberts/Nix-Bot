@@ -8,6 +8,7 @@ import re
 from helpers.style import Colours
 from helpers.env import HF_API
 from helpers.logger import Logger
+from helpers.style import Emotes
 
 logger = Logger()
 
@@ -70,6 +71,10 @@ class Misc(commands.Cog):
                                "options": {"use_cache": False}
                                })
             response = requests.request("POST", url, headers=headers, data=data)
+            if response.status_code != requests.codes.ok:
+                logger.error("{0} AI request failed: {1}".format(response.status_code, response.content))
+                msg.reply(
+                    "Uh-oh! I'm having trouble at the moment, please try again later {0}".format(Emotes.CONFUSED))
 
             text = json.loads(response.content.decode('utf-8'))
             await msg.reply(text['generated_text'])

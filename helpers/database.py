@@ -37,7 +37,7 @@ def single_SQL(query: str, values: tuple[str, ...] = None) -> list[tuple[any, ..
     except psycopg2.Error as e:
         logger.error("SQL Error: {0}".format(e.__class__.__name__))
     except psycopg2.Warning as e:
-        logger.error("SQL Warning: {0}".format(e.__class__.__name__))
+        logger.warning("SQL Warning: {0}".format(e.__class__.__name__))
     val = None
     if cur.description:
         val = cur.fetchall()

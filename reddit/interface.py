@@ -8,6 +8,9 @@ import re
 
 from helpers.style import Emotes
 from helpers.env import CLIENT_ID, SECRET_KEY, USER_AGENT
+from helpers.logger import Logger
+
+logger = Logger()
 
 
 class Post:
@@ -25,9 +28,12 @@ class Post:
 
     async def load_img(self) -> None:
         if self._url and re.search(r"\.(png|jpg|gif|jpeg)$", self._url):
-            async with aiohttp.ClientSession() as session:
-                async with session.get(self._url) as resp:
-                    self.img = [discord.File(io.BytesIO(await resp.read()), self._url)]
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(self._url) as resp:
+                        self.img = [discord.File(io.BytesIO(await resp.read()), self._url)]
+            except Exception as e:
+                logger.error("Failed to load image {0}".format(e.__class__.__name__))
         elif self._url:
             self.text = self._url
         return self
@@ -43,9 +49,12 @@ class RedditInterface:
     """
 
     def __init__(self, sub: str, time: str = "day") -> None:
-        self.reddit = praw.Reddit(client_id=CLIENT_ID,
-                                  client_secret=SECRET_KEY,
-                                  user_agent=USER_AGENT)
+        try:
+            self.reddit = praw.Reddit(client_id=CLIENT_ID,
+                                      client_secret=SECRET_KEY,
+                                      user_agent=USER_AGENT)
+        except prawcore.AsyncPrawcoreException:
+            logger.error("Failed to initialise PRAW reddit instance")
         self.cache = []
         self._nsub = sub
         self.time = time
