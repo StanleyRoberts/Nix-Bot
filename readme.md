@@ -16,7 +16,7 @@ The app requires [Python 3.10+](https://www.python.org/downloads/), and we also 
 Setup a virtual environment using: `python -m venv .venv`  
 And install the requirements (on your virtual env) with: `pip install -r requirements.txt`
 
-For running locally/testing, you will also need a `.env` file (or another way to set environment variables for the app), which establishes private keys/tokens to be used within the app. If you are not one of the original authors for this project you will have to create this yourself with your own keys/tokens as required (the variables retrieved with `os.getenv` dictate the environment variables to set). These environment variables also need to be set to the live keys/tokens on whichever hosting service/machine you use for live deployment.
+For running locally/testing, you will also need a `.env` file (or another way to set environment variables for the app), which establishes private keys/tokens to be used within the app. If you are not one of the original authors for this project you will have to create this yourself with your own keys/tokens as required (please examine the functions/env.py file to identify the variables that must be set). For live deployment the environment variables must be set on the hosting service/machine you use.
 
 Running the project locally (i.e. not on Fly.io) runs a testing build, with a fresh testing database however you will need [PostgreSQL](https://www.postgresql.org/download/) installed on your machine and on your `PATH`.
 
