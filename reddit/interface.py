@@ -8,6 +8,9 @@ import re
 
 from helpers.style import Emotes
 from helpers.env import CLIENT_ID, SECRET_KEY, USER_AGENT
+from helpers.logger import Logger
+
+logger = Logger()
 
 
 class Post:
@@ -104,12 +107,17 @@ class RedditInterface:
             try:
                 self.sub = await self.reddit.subreddit(subreddit)
                 self.cache = [post async for post in self.sub.top(time_filter=self.time, limit=num)]
+                logger.info("The subreddit {} was set for reddit.interface".format(subreddit))
                 self.error_response = None
             except prawcore.exceptions.Redirect:
+
+                logger.warning("Requested subreddit {} was not found".format(subreddit))
                 self.error_response = "{0} Subreddit \'{1}\' not found".format(Emotes.WTF, subreddit)
             except prawcore.exceptions.NotFound:
+                logger.warning("Requested subreddit {} is banned".format(subreddit))
                 self.error_response = "{0} Subreddit \'{1}\' banned".format(Emotes.WTF, subreddit)
             except prawcore.exceptions.Forbidden:
+                logger.warning("Requested subreddit {} is set to private".format(subreddit))
                 self.error_response = "{0} Subreddit \'{1}\' private".format(Emotes.WTF, subreddit)
 
             random.shuffle(self.cache)
@@ -123,6 +131,7 @@ class RedditInterface:
         Throws:
             IndexError: If cache is empty
         """
+
         if self.sub is None:
             self.sub = await self.set_subreddit(self._nsub)
         if self.error_response is not None:
@@ -130,6 +139,7 @@ class RedditInterface:
         try:
             subm = self.cache.pop()
         except IndexError:
+            logger.warning("The subreddit {} ran out of posts".format(self.sub))
             return Post("Whoops, you ran out of posts! Try a different sub {0}".format(Emotes.CONFUSED))
         return await Post("**" + subm.title + "**\t*(r/" + subm.subreddit.display_name + ")*\n" +
                           (subm.selftext if subm.is_self else ""),
