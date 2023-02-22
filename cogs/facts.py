@@ -2,7 +2,6 @@ import discord
 import requests
 import json
 from discord.ext import commands, tasks
-
 import functions.database as db
 from functions.style import Emotes, TIME
 from Nix import NINJA_API_KEY

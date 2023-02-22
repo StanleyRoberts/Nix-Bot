@@ -8,6 +8,11 @@ import re
 from functions.style import Colours
 from Nix import HF_API
 
+USER_QS = ["Who are you?", "Is Stan cool?", "What is your favourite server?", "Where do you live?"]
+NIX_AS = ["I am Nix, a phoenix made of flames", "Yes, I think Stan is the best!",
+          "I love the Watching Racoons server the most!",
+          "I live in a volcano with my friends: DJ the Dragon and Sammy the Firebird."]
+
 
 class Misc(commands.Cog):
     def __init__(self, bot) -> None:
@@ -32,7 +37,8 @@ class Misc(commands.Cog):
     @commands.slash_command(name='help', description="Display the help page for Nix")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
         view = Help_Nav(self.bot.cogs)
-        await ctx.interaction.response.send_message(embed=view.build_embed(), view=view)
+        await ctx.interaction.response.send_message(embed=view.build_embed(),
+                                                    view=view)
 
     @commands.Cog.listener("on_message")
     async def NLP(self, msg: discord.Message):
@@ -49,14 +55,14 @@ class Misc(commands.Cog):
             url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
             headers = {"Authorization": f"Bearer {HF_API}"}
 
-            prompt = {"past_user_inputs": ["What is your name?", "Who are you?", "Is Stan cool?"],
-                      "generated_responses": ["My name is Nix", "I am Nix, a phoenix made of flames",
-                                              "Yes, I think Stan is the best!"],
+            prompt = {"past_user_inputs": USER_QS,
+                      "generated_responses": NIX_AS,
                       "text": clean_prompt}
 
-            data = json.dumps({"inputs": prompt, "parameters": {
-                              "return_full_text": False, "temperature": 0.8,
-                              "use_cache": False}})
+            data = json.dumps({"inputs": prompt,
+                               "parameters": {"return_full_text": False},
+                               "options": {"use_cache": False}
+                               })
             response = requests.request("POST", url, headers=headers, data=data)
 
             text = json.loads(response.content.decode('utf-8'))
@@ -86,12 +92,12 @@ class Help_Nav(discord.ui.View):
         return discord.Embed(title="Help Page", description=desc,
                              colour=Colours.PRIMARY)
 
-    @discord.ui.button(label="<-", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
     async def backward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
 
-    @discord.ui.button(label="->", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
     async def forward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
