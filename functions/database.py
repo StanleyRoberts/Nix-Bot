@@ -1,6 +1,6 @@
 import psycopg2
 
-from Nix import DATABASE_URL
+from functions.env import DATABASE_URL
 
 
 class KeyViolation(Exception):

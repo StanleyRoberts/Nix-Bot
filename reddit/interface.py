@@ -1,12 +1,13 @@
-from Nix import CLIENT_ID, SECRET_KEY, USER_AGENT
 import asyncpraw as praw
 import asyncprawcore as prawcore
-from functions.style import Emotes
 import random
 import aiohttp
 import io
 import discord
 import re
+
+from functions.style import Emotes
+from functions.env import CLIENT_ID, SECRET_KEY, USER_AGENT
 
 
 class Post:

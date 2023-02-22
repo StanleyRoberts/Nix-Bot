@@ -1,32 +1,20 @@
-import os
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
+
 import functions.database as db
+from functions.env import TOKEN, shutdown_db
+from functions.logger import Logger
 
-
-if __debug__:
-    load_dotenv()
-
-TOKEN = os.getenv('TOKEN')  # Discord Token
-CLIENT_ID = os.getenv('CLIENT_ID')  # PRAW/Reddit API client ID
-SECRET_KEY = os.getenv('SECRET_KEY')  # PRAW/Reddit API secret key
-USER_AGENT = os.getenv('USER_AGENT')  # PRAW/Reddit API user agent
-NINJA_API_KEY = os.getenv('NINJA_API_KEY')  # X-API-Key for API-Ninjas
-DATABASE_URL = os.getenv('DATABASE_URL')  # PostgreSQL db
-HF_API = os.getenv('HF_API')  # HuggingFace API key
-
-
-if __debug__:
-    import testing.postgresql as tp
-    from reddit.interface import RedditInterface
-    postgres = tp.Postgresql()
-    DATABASE_URL = postgres.url()
 
 intents = discord.Intents(messages=True, message_content=True,
                           guilds=True, members=True)
 bot = commands.Bot(intents=intents, command_prefix='%s',
                    activity=discord.Game(name="/help"))
+
+
+logger = Logger()
+logger.set_priority("DEBUG")
+logger.set_bot(bot)
 
 
 @bot.event
@@ -81,12 +69,15 @@ async def on_member_remove(member: discord.Member) -> None:
 
 @bot.event
 async def on_ready() -> None:
-    print('Logged in as {0}'.format(bot.user))
+    logger.info('Logged in', member_id=bot.user.id)
 
 
 if __name__ == "__main__":
     if __debug__:
         db.populate()
+    else:
+        logger.debug_mode = False
+        logger.set_priority("WARNING")
     cogs = ['birthdays', 'facts', 'counting', 'reddit', 'misc']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
@@ -96,10 +87,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
-        # \/ necessary because Postgres.stop() on pypi version of testing.postgres is broken
-        super(tp.Postgresql, postgres).terminate()
-        super(tp.Postgresql, postgres).cleanup()
-        # ^ idk why these two cant be replaced with Database.stop() but cba to figure it out
-        # this still produces a database leak error but ive spent too much time
-        # on this already and i dont think it actually causes any leaks
-        print("closed process")
+        shutdown_db()
+        logger.info("Bot succesfully shutdown")

@@ -1,9 +1,13 @@
 import discord
 from discord.ext import commands, tasks
+
 import functions.database as db
 from functions.style import Emotes, Colours, TIME
 import reddit.ui_kit as ui
 from reddit.interface import RedditInterface
+from functions.logger import Logger
+
+logger = Logger()
 
 
 class Reddit(commands.Cog):
@@ -16,6 +20,7 @@ class Reddit(commands.Cog):
                                time: discord.Option(str, default="day",
                                                     choices=["month", "hour", "week", "all", "day", "year"],
                                                     description="Time period to search for top posts")):
+        logger.debug("Getting fact", member_id=ctx.user.id)
         reddit = RedditInterface(subreddit, time)
         post = await reddit.get_post()
         await ctx.interaction.response.send_message(content=post.text, files=post.img, view=ui.PostViewer(reddit))

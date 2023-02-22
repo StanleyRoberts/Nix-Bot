@@ -2,9 +2,13 @@ import discord
 import requests
 import json
 from discord.ext import commands, tasks
+
 import functions.database as db
 from functions.style import Emotes, TIME
-from Nix import NINJA_API_KEY
+from functions.env import NINJA_API_KEY
+from functions.logger import Logger
+
+logger = Logger()
 
 
 class Facts(commands.Cog):
@@ -14,6 +18,8 @@ class Facts(commands.Cog):
 
     @commands.slash_command(name='fact', description="Displays a random fact")
     async def send_fact(self, ctx: discord.ApplicationContext) -> None:
+        logger.debug("Getting fact", member_id=ctx.user.id)
+        await ctx.defer()
         await ctx.respond(self.get_fact())
 
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")

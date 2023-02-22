@@ -6,7 +6,7 @@ import json
 import re
 
 from functions.style import Colours
-from Nix import HF_API
+from functions.env import HF_API
 
 USER_QS = ["Who are you?", "Is Stan cool?", "What is your favourite server?", "Where do you live?"]
 NIX_AS = ["I am Nix, a phoenix made of flames", "Yes, I think Stan is the best!",
