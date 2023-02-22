@@ -1,11 +1,11 @@
 import discord
 from discord.ext import commands, tasks
 
-import functions.database as db
-from functions.style import Emotes, Colours, TIME
+import helpers.database as db
+from helpers.style import Emotes, Colours, TIME
 import reddit.ui_kit as ui
 from reddit.interface import RedditInterface
-from functions.logger import Logger
+from helpers.logger import Logger
 
 logger = Logger()
 
@@ -20,7 +20,7 @@ class Reddit(commands.Cog):
                                time: discord.Option(str, default="day",
                                                     choices=["month", "hour", "week", "all", "day", "year"],
                                                     description="Time period to search for top posts")):
-        logger.debug("Getting fact", member_id=ctx.user.id)
+        logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
         reddit = RedditInterface(subreddit, time)
         post = await reddit.get_post()
         await ctx.interaction.response.send_message(content=post.text, files=post.img, view=ui.PostViewer(reddit))
@@ -72,13 +72,18 @@ class Reddit(commands.Cog):
         """
         Called daily to print random post from subbed sub to linked discord channel
         """
+        logger.info("Starting daily reddit loop")
         subs = db.single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
+            logger.debug("Attempting to send reddit daily post <subreddit: {0}>".format(
+                subs[1]), guild_id=subs[0], channel_id=subs[2])
             try:
                 post = await RedditInterface.single_post(entry[1], "day")
                 await (await self.bot.fetch_channel(entry[2])).send("__Daily post__\n" +
                                                                     post.text, files=post.img)
             except discord.errors.Forbidden:
+                logger.warning("Permission failure for daily reddit post <subreddit: {0}>".format(
+                    subs[1]), guild_id=subs[0], channel_id=[2])
                 pass  # silently fail if no perms, TODO setup logging channel
 
 

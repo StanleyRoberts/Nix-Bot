@@ -1,6 +1,6 @@
 import psycopg2
 
-from functions.env import DATABASE_URL
+from helpers.env import DATABASE_URL
 
 
 class KeyViolation(Exception):

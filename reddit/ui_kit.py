@@ -1,7 +1,7 @@
 import discord
 from discord.partial_emoji import PartialEmoji
 
-from functions.style import Emotes
+from helpers.style import Emotes
 
 
 class PostViewer(discord.ui.View):

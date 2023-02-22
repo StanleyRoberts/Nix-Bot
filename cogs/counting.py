@@ -2,8 +2,8 @@ import discord
 import asyncio
 from discord.ext import commands
 
-import functions.database as db
-from functions.style import Emotes
+import helpers.database as db
+from helpers.style import Emotes
 
 
 class Counting(commands.Cog):

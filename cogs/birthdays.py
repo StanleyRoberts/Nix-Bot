@@ -3,8 +3,8 @@ import datetime as dt
 from discord.ext import commands, tasks
 import datetime as dt
 
-import functions.database as db
-from functions.style import Emotes, TIME
+import helpers.database as db
+from helpers.style import Emotes, TIME
 
 
 class Birthdays(commands.Cog):

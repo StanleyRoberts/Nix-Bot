@@ -1,9 +1,9 @@
 import discord
 from discord.ext import commands
 
-import functions.database as db
-from functions.env import TOKEN, shutdown_db
-from functions.logger import Logger
+import helpers.database as db
+from helpers.env import TOKEN, shutdown_db
+from helpers.logger import Logger
 
 
 intents = discord.Intents(messages=True, message_content=True,

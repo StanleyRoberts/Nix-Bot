@@ -6,8 +6,8 @@ import io
 import discord
 import re
 
-from functions.style import Emotes
-from functions.env import CLIENT_ID, SECRET_KEY, USER_AGENT
+from helpers.style import Emotes
+from helpers.env import CLIENT_ID, SECRET_KEY, USER_AGENT
 
 
 class Post:

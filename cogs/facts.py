@@ -3,10 +3,10 @@ import requests
 import json
 from discord.ext import commands, tasks
 
-import functions.database as db
-from functions.style import Emotes, TIME
-from functions.env import NINJA_API_KEY
-from functions.logger import Logger
+import helpers.database as db
+from helpers.style import Emotes, TIME
+from helpers.env import NINJA_API_KEY
+from helpers.logger import Logger
 
 logger = Logger()
 
@@ -18,7 +18,7 @@ class Facts(commands.Cog):
 
     @commands.slash_command(name='fact', description="Displays a random fact")
     async def send_fact(self, ctx: discord.ApplicationContext) -> None:
-        logger.debug("Getting fact", member_id=ctx.user.id)
+        logger.debug("Getting fact", member_id=ctx.user.id, guild_id=ctx.channel_id)
         await ctx.defer()
         await ctx.respond(self.get_fact())
 
