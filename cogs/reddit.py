@@ -80,7 +80,7 @@ class Reddit(commands.Cog):
         logger.info("Starting daily reddit loop")
         subs = db.single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
-            logger.debug("Attempting to send reddit daily post <subreddit: {0}>".format(
+            logger.info("Attempting to send reddit daily post <subreddit: {0}>".format(
                 subs[1]), guild_id=subs[0], channel_id=subs[2])
             try:
                 post = await RedditInterface.single_post(entry[1], "day")

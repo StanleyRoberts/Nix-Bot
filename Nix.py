@@ -77,7 +77,7 @@ if __name__ == "__main__":
         db.populate()
     else:
         logger.debug_mode = False
-        logger.set_priority("WARNING")
+        logger.set_priority("DEBUG")  # TODO change to warning
     cogs = ['birthdays', 'facts', 'counting', 'reddit', 'misc']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     try:
         bot.run(TOKEN)
     except KeyboardInterrupt:
-        pass
+        logger.warning("Keyboard interupt: Shutting down")
     finally:
         shutdown_db()
         logger.info("Bot succesfully shutdown")
