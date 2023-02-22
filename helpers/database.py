@@ -1,6 +1,9 @@
 import psycopg2
 
 from helpers.env import DATABASE_URL
+from helpers.logger import Logger
+
+logger = Logger()
 
 
 class KeyViolation(Exception):
@@ -21,12 +24,20 @@ def single_SQL(query: str, values: tuple[str, ...] = None) -> list[tuple[any, ..
     Returns:
         (list): Values returned from sql query as a list of tuples.
     """
-    con = psycopg2.connect(DATABASE_URL)
+    try:
+        con = psycopg2.connect(DATABASE_URL)
+    except psycopg2.Error:
+        logger.critical("Failed to connect to database")
     cur = con.cursor()
     try:
         cur.execute(query, values)
-    except psycopg2.errors.UniqueViolation:  # something is in the SQL twice
+    except psycopg2.errors.UniqueViolation:
+        logger.error("SQL Key contraint violated")
         raise KeyViolation("Key constraint violated")
+    except psycopg2.Error as e:
+        logger.error("SQL Error: {0}".format(e.__class__.__name__))
+    except psycopg2.Warning as e:
+        logger.error("SQL Warning: {0}".format(e.__class__.__name__))
     val = None
     if cur.description:
         val = cur.fetchall()
@@ -40,6 +51,7 @@ def populate() -> None:
     """
     Sets up test database, and adds testing server as an entry
     """
+    logger.info("Populating test database")
     con = psycopg2.connect(DATABASE_URL)
     cur = con.cursor()
     cur.execute("CREATE TABLE Guilds(ID BIGINT, CountingChannelID BIGINT, BirthdayChannelID BIGINT, " +
