@@ -84,14 +84,14 @@ class Reddit(commands.Cog):
         subs = db.single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
             logger.info("Attempting to send reddit daily post <subreddit: {0}>".format(
-                subs[1]), guild_id=subs[0], channel_id=subs[2])
+                entry[1]), guild_id=entry[0], channel_id=entry[2])
             try:
                 post = await RedditInterface.single_post(entry[1], "day")
                 await (await self.bot.fetch_channel(entry[2])).send("__Daily post__\n" +
                                                                     post.text, files=post.img)
             except discord.errors.Forbidden:
                 logger.warning("Permission failure for daily reddit post <subreddit: {0}>".format(
-                    subs[1]), guild_id=subs[0], channel_id=[2])
+                    entry[1]), guild_id=entry[0], channel_id=entry[2])
                 pass  # silently fail if no perms, TODO setup logging channel
 
 
