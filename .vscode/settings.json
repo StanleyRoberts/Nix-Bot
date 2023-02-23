@@ -4,8 +4,8 @@
   "editor.tabSize": 4,
   "editor.insertSpaces": true,
   "python.linting.pycodestyleArgs": [
-      "--max-line-length=119"
-    ],
+    "--max-line-length=119"
+  ],
   "python.formatting.provider": "autopep8",
   "python.formatting.autopep8Args": [
     "--select=E,W",

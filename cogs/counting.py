@@ -2,8 +2,11 @@ import discord
 import asyncio
 from discord.ext import commands
 
-import functions.database as db
-from functions.style import Emotes
+import helpers.database as db
+from helpers.style import Emotes
+from helpers.logger import Logger
+
+logger = Logger()
 
 
 class Counting(commands.Cog):
@@ -24,9 +27,12 @@ class Counting(commands.Cog):
                 values = db.single_SQL("SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, "
                                        "FailRoleID FROM Guilds WHERE ID=%s", (msg.guild.id,))
                 if (msg.channel.id == values[0][0]):
+                    logger.debug("Integer message detacted in counting channel")
                     if (int(msg.content) != values[0][1] + 1):
+                        logger.debug("Wrong number detected in counting channel")
                         await self.fail(msg, "Wrong number", values[0][4])
                     elif (msg.author.id == values[0][2]):
+                        logger.debug("Double-user-input detected in counting channel")
                         await self.fail(msg, "Same user entered two numbers", values[0][4])
                     else:
                         await msg.add_reaction(Emotes.BLEP)
@@ -38,6 +44,7 @@ class Counting(commands.Cog):
     @commands.slash_command(name='set_fail_role', description="Sets the role the given to users who fail at counting")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_fail_role(self, ctx: discord.ApplicationContext, role: discord.Role) -> None:
+        logger.info("fail_role set")
         db.single_SQL("UPDATE Guilds SET FailRoleID=%s WHERE ID=%s",
                       (role.id, ctx.guild_id))
         await ctx.respond("The fail role is set to {0} {1}"
@@ -46,6 +53,7 @@ class Counting(commands.Cog):
     @commands.slash_command(name='set_counting_channel', description="Sets the channel for the counting game")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_counting_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel) -> None:
+        logger.info("counting_channel set")
         db.single_SQL("UPDATE Guilds SET CountingChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
         await ctx.respond("Counting channel set to {0} {1}"
                           .format(channel.mention, Emotes.DRINKING), ephemeral=True)
@@ -84,6 +92,7 @@ class Counting(commands.Cog):
             try:
                 await msg.author.add_roles(msg.guild.get_role(roleID))
             except discord.errors.Forbidden:
+                logger.warning("Missing permission to assign fail_role")
                 await msg.channel.send("Whoops! I couldn't set the " +
                                        "{0} role {1} (I need 'Manage Roles' to do that)"
                                        ".\nI won't try again until you set a new fail role"

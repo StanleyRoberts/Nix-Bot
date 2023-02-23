@@ -1,12 +1,16 @@
-from Nix import CLIENT_ID, SECRET_KEY, USER_AGENT
 import asyncpraw as praw
 import asyncprawcore as prawcore
-from functions.style import Emotes
 import random
 import aiohttp
 import io
 import discord
 import re
+
+from helpers.style import Emotes
+from helpers.env import CLIENT_ID, SECRET_KEY, USER_AGENT
+from helpers.logger import Logger
+
+logger = Logger()
 
 
 class Post:
@@ -24,9 +28,12 @@ class Post:
 
     async def load_img(self) -> None:
         if self._url and re.search(r"\.(png|jpg|gif|jpeg)$", self._url):
-            async with aiohttp.ClientSession() as session:
-                async with session.get(self._url) as resp:
-                    self.img = [discord.File(io.BytesIO(await resp.read()), self._url)]
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(self._url) as resp:
+                        self.img = [discord.File(io.BytesIO(await resp.read()), self._url)]
+            except Exception as e:
+                logger.error("Failed to load image {0}".format(e.__class__.__name__))
         elif self._url:
             self.text = self._url
         return self
@@ -42,9 +49,12 @@ class RedditInterface:
     """
 
     def __init__(self, sub: str, time: str = "day") -> None:
-        self.reddit = praw.Reddit(client_id=CLIENT_ID,
-                                  client_secret=SECRET_KEY,
-                                  user_agent=USER_AGENT)
+        try:
+            self.reddit = praw.Reddit(client_id=CLIENT_ID,
+                                      client_secret=SECRET_KEY,
+                                      user_agent=USER_AGENT)
+        except prawcore.AsyncPrawcoreException:
+            logger.error("Failed to initialise PRAW reddit instance")
         self.cache = []
         self._nsub = sub
         self.time = time
@@ -103,13 +113,20 @@ class RedditInterface:
             try:
                 self.sub = await self.reddit.subreddit(subreddit)
                 self.cache = [post async for post in self.sub.top(time_filter=self.time, limit=num)]
+                logger.info("The subreddit {} was set for reddit.interface".format(subreddit))
                 self.error_response = None
             except prawcore.exceptions.Redirect:
+                logger.warning("Requested subreddit {} was not found".format(subreddit))
                 self.error_response = "{0} Subreddit \'{1}\' not found".format(Emotes.WTF, subreddit)
             except prawcore.exceptions.NotFound:
+                logger.warning("Requested subreddit {} is banned".format(subreddit))
                 self.error_response = "{0} Subreddit \'{1}\' banned".format(Emotes.WTF, subreddit)
             except prawcore.exceptions.Forbidden:
+                logger.warning("Requested subreddit {} is set to private".format(subreddit))
                 self.error_response = "{0} Subreddit \'{1}\' private".format(Emotes.WTF, subreddit)
+            except prawcore.AsyncPrawcoreException as e:
+                logger.error("Failure getting subreddit <{0}>: {1}".format(subreddit, e.__class__.__name__))
+                self.error_response = "Unknown error, please try again later"
 
             random.shuffle(self.cache)
         return self.error_response is None
@@ -122,6 +139,7 @@ class RedditInterface:
         Throws:
             IndexError: If cache is empty
         """
+
         if self.sub is None:
             self.sub = await self.set_subreddit(self._nsub)
         if self.error_response is not None:
@@ -129,6 +147,7 @@ class RedditInterface:
         try:
             subm = self.cache.pop()
         except IndexError:
+            logger.warning("The subreddit {} ran out of posts".format(self.sub))
             return Post("Whoops, you ran out of posts! Try a different sub {0}".format(Emotes.CONFUSED))
         return await Post("**" + subm.title + "**\t*(r/" + subm.subreddit.display_name + ")*\n" +
                           (subm.selftext if subm.is_self else ""),
