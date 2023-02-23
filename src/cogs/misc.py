@@ -5,10 +5,10 @@ import typing
 import json
 import re
 
-from helpers.style import Colours
-from helpers.env import HF_API
-from helpers.logger import Logger
-from helpers.style import Emotes
+from src.helpers.style import Colours
+from src.helpers.env import HF_API
+from src.helpers.logger import Logger
+from src.helpers.style import Emotes
 
 logger = Logger()
 

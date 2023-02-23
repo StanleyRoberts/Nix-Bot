@@ -1,8 +1,8 @@
 import discord
 from discord.partial_emoji import PartialEmoji
 
-from helpers.style import Emotes
-from helpers.logger import Logger
+from src.helpers.style import Emotes
+from src.helpers.logger import Logger
 
 logger = Logger()
 
