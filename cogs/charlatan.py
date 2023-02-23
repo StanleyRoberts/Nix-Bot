@@ -160,8 +160,9 @@ class CharlatanGame(discord.ui.View):
     async def send_dms(self):
         """Send dms to players and charlatan displaying wordlist
         """
-        info = "> This is the wordlist for this round: "
-        words = "\n".join([i if (i is not self.word) else "> **" + i + "**" for i in self.wordlist])
+        info = "> This is the wordlist for this round:\n"
+        words = "\n".join(["- " + i if (i is not self.word)
+                          else "- **" + i + "** [SECRET WORD]" for i in self.wordlist])
         for key in self.players.keys():  # Sends the wordlist to everyone (altered for Charlatan)
             desc = info + (words if not key == self.charlatan else "\n".join(self.wordlist))
             title = "You are a normal player" if not key == self.charlatan else "You are the Charlatan"
