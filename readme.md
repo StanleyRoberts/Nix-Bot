@@ -48,3 +48,5 @@ You can generate documentation for Nix using Sphinx. Simply install m2r2 and sph
 `.\docs\launch.cmd` from the top level project directory. To run this on Linux you may need a different launch script.
 
 This will launch an HTML documentation site at `localhost:8000/docs/_build/html/` populated via the Google docstrings in the code using sphinx-autodoc and the README using m2r2.
+
+Note that the slash commands do not appear in the documentation and produce a warning in the launch script output. This is ideal behaviour since the slash command functions should never be externally called and are simply callbacks for the discord slash commands.
