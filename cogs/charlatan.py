@@ -213,12 +213,12 @@ class CharlatanGame(discord.ui.View):
         if guess.correctGuess:
             await self.interaction.channel.send(content="The Charlatan guessed the correct word {}"
                                                 .format(Emotes.WHOA))
-            self.players[self.charlatan] += 1  # TODO lift this
+            self.players[self.charlatan] += 1
         else:
             await self.interaction.channel.send(content="The Charlatan did not guess the correct word {}"
                                                 .format(Emotes.CONFUSED))
             for key in self.players.keys():
-                self.players[key] += 1 if key is not self.charlatan else 0  # TODO lift this
+                self.players[key] += 1 if key is not self.charlatan else 0
 
     async def add_buttons(self):
         """Adds Play Again and Back to Lobby buttons to the interaction message
