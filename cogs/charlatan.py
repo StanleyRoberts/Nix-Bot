@@ -155,7 +155,8 @@ class CharlatanGame(discord.ui.View):
         await self.message.edit(view=self)
         await self.send_dms()
         await helper.start_timer(20)
-        await self.handle_results(await self.vote())
+        await self.score_players(await self.vote())
+        await self.add_buttons()
 
     async def send_dms(self):
         """Send dms to players and charlatan displaying wordlist
@@ -182,7 +183,7 @@ class CharlatanGame(discord.ui.View):
         await message.delete()
         return await view.vote()
 
-    async def player_score(self, voted_player: discord.User):
+    async def score_players(self, voted_player: discord.User):
         """Handles voting results for players
 
         Args:
