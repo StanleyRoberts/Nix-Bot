@@ -1,11 +1,11 @@
 import discord
 from discord.ext import commands, tasks
 
-import helpers.database as db
-from helpers.style import Emotes, Colours, TIME
-import reddit.ui_kit as ui
-from reddit.interface import RedditInterface
-from helpers.logger import Logger
+import src.helpers.database as db
+from src.helpers.style import Emotes, Colours, TIME
+import src.reddit.ui_kit as ui
+from src.reddit.interface import RedditInterface
+from src.helpers.logger import Logger
 
 logger = Logger()
 

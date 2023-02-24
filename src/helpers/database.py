@@ -1,7 +1,7 @@
 import psycopg2
 
-from helpers.env import DATABASE_URL
-from helpers.logger import Logger
+from src.helpers.env import DATABASE_URL
+from src.helpers.logger import Logger
 
 logger = Logger()
 
