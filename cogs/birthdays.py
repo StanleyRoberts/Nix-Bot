@@ -36,6 +36,17 @@ class Birthdays(commands.Cog):
                           .format(day, month, Emotes.UWU))
         logger.info("Birthday set", member_id=ctx.author.id)
 
+    @commands.slash_command(name='show_birthdays', description="Shows all tracked birthdays for the server")
+    @discord.commands.default_permissions(manage_guild=True)
+    async def show_birthdays(self, ctx: discord.ApplicationContext):
+        vals = db.single_SQL("SELECT UserID, Birthdate from Birthdays WHERE GuildID=%s", (ctx.guild_id,))
+        if vals:
+            out_str = "\n".join([(await self.bot.fetch_user(user[0])).mention + " : " + user[1] for user in vals])
+        else:
+            out_str = "No users have entered their birthday yet! Get started with " + self.set_birthday.mention
+        embed = discord.Embed(title="Birthday List", description=out_str)
+        await ctx.respond(embed=embed)
+
     @tasks.loop(time=TIME)  # 1 behind curr time
     async def daily_bday(self) -> None:
         """
