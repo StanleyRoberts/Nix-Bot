@@ -92,7 +92,7 @@ if __name__ == "__main__":
     try:
         bot.run(TOKEN)
     except KeyboardInterrupt:
-        logger.warning("Keyboard interupt: Shutting down")
+        logger.warning("Keyboard interrupt: Failed to shutdown")
     finally:
         shutdown_db()
         logger.info("Bot succesfully shutdown")

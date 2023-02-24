@@ -11,6 +11,10 @@ from helpers.logger import Logger
 logger = Logger()
 
 
+class HttpError(Exception):
+    pass
+
+
 class Facts(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
@@ -18,7 +22,12 @@ class Facts(commands.Cog):
 
     @commands.slash_command(name='fact', description="Displays a random fact")
     async def send_fact(self, ctx: discord.ApplicationContext) -> None:
-        await ctx.respond(self.get_fact())
+        try:
+            fact = self.get_fact()
+        except HttpError:
+            logger.error("Couldnt get fact for slash command")
+            return
+        await ctx.respond(fact)
         logger.debug("Getting fact", member_id=ctx.user.id, channel_id=ctx.channel_id)
 
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
@@ -47,7 +56,11 @@ class Facts(commands.Cog):
         """
         logger.info("Starting daily birthday loop")
         guilds = db.single_SQL("SELECT FactChannelID FROM Guilds")
-        fact = self.get_fact()
+        try:
+            fact = self.get_fact()
+        except HttpError:
+            logger.error("Couldn't get fact for daily facts")
+            return
         for factID in guilds:
             if factID[0]:
                 logger.debug("Attempting to send fact message", channel_id=factID[0])
@@ -68,11 +81,12 @@ class Facts(commands.Cog):
         api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
         response = requests.get(api_url, headers={'X-Api-Key': NINJA_API_KEY})
         message = "Error: " + str(response.status_code) + "\n" + response.text
+        cjson = json.loads(response.text)
         if response.status_code == requests.codes.ok:
-            cjson = json.loads(response.text)
             message = cjson[0]["fact"]
         else:
-            logger.error("{0} Fact request failed: {1}".format(response.status_code, response.text))
+            logger.error("{0} Error: {1} - Fact request failed".format(response.status_code, cjson["message"]))
+            raise HttpError("{0} Error: {1}".format(response.status_code, cjson["message"]))
         return message
 
 
