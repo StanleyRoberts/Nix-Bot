@@ -251,7 +251,7 @@ class CharlatanGame(discord.ui.View):
         lobby_button.callback = back_to_lobby
         self.add_item(lobby_button)
 
-        await self.message.edit_message(embed=embed, view=self)
+        await self.message.edit(embed=embed, view=self)
 
 
 class CharlatanChoice(discord.ui.View):
