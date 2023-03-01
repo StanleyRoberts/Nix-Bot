@@ -153,12 +153,12 @@ class CharlatanGame(discord.ui.View):
 
     @discord.ui.button(label="Start Game", style=discord.ButtonStyle.primary)
     async def start_game(self, _, interaction: discord.Interaction):
-        self.interaction = interaction
+        channel = interaction.channel
         self.disable_all_items()
         await self.message.edit(view=self)
         await self.send_dms()
         await helper.start_timer(20)
-        await self.score_players(await self.vote())
+        await self.score_players(await self.vote(channel), channel)
         await self.add_buttons()
 
     async def send_dms(self):
@@ -172,54 +172,60 @@ class CharlatanGame(discord.ui.View):
             title = "You are a normal player" if not key == self.charlatan else "You are the Charlatan"
             await key.send(embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY))
 
-    async def vote(self) -> discord.User:
+    async def vote(self, channel: discord.TextChannel) -> discord.User:
         """Begins voting for the Charlatan
+
+        Args:
+            channel (discord.TextChannel): Channel to vote using
 
         Returns:
             discord.User: The most voted player
         """
-        view = PlayerVoting(self.players, self.interaction.channel)
-        message = await self.interaction.channel.send(content="game starting...", view=view)
+        view = PlayerVoting(self.players, channel)
+        message = await channel.send(content="game starting...", view=view)
         message = await message.edit(content="Vote for a Charlatan:\n" + "\n".join(
             [str(list(self.players)[i].mention) + ": " + str(i + 1) for i in range(0, len(self.players))]))
         await helper.start_timer(PLAYER_VOTE_TIME)
         await message.delete()
         return await view.vote()
 
-    async def score_players(self, voted_player: discord.User):
+    async def score_players(self, voted_player: discord.User, channel: discord.TextChannel):
         """Handles voting results for players
 
         Args:
             voted_player (discord.User): The most voted player
+            channel (discord.TextChannel): Channel to send result message to
         """
         if voted_player is not self.charlatan:
-            await self.interaction.channel.send(
+            await channel.send(
                 content="The players did not find the charlatan, it was {} {}"
                         .format(self.charlatan.mention, Emotes.CRYING))
             self.players[self.charlatan] += 2
         else:
-            await self.interaction.channel.send(content="The players have found the charlatan, it was {} {}"
-                                                .format(self.charlatan.mention, Emotes.HUG))
-            await self.charlatan_guess()
+            await channel.send(content="The players have found the charlatan, it was {} {}"
+                               .format(self.charlatan.mention, Emotes.HUG))
+            await self.charlatan_guess(channel)
 
-    async def charlatan_guess(self):
-        """ Handles scoring for the charlatan voting for the secret word.
+    async def charlatan_guess(self, channel: discord.TextChannel):
+        """Handles scoring for the charlatan voting for the secret word.
 
         Sends a voting dm to the charlatan, and handles scoring and output messages for the result.
         Called if the Charlatan was discovered.
 
+        Args:
+            channel (discord.TextChannel): Channel to send result message to
         """
         guess = CharlatanChoice(chosen_word=self.word, word_list=self.wordlist)
         await self.charlatan.send(view=guess)
         await guess.start_timer()
 
         if guess.correctGuess:
-            await self.interaction.channel.send(content="The Charlatan guessed the correct word {}"
-                                                .format(Emotes.WHOA))
+            await channel.send(content="The Charlatan guessed the correct word {}"
+                               .format(Emotes.WHOA))
             self.players[self.charlatan] += 1
         else:
-            await self.interaction.channel.send(content="The Charlatan did not guess the correct word {}"
-                                                .format(Emotes.CONFUSED))
+            await channel.send(content="The Charlatan did not guess the correct word {}"
+                               .format(Emotes.CONFUSED))
             for key in self.players.keys():
                 self.players[key] += 1 if key is not self.charlatan else 0
         await self.add_buttons()
@@ -245,7 +251,7 @@ class CharlatanGame(discord.ui.View):
         lobby_button.callback = back_to_lobby
         self.add_item(lobby_button)
 
-        await self.interaction.response.edit_message(embed=embed, view=self)
+        await self.message.edit_message(embed=embed, view=self)
 
 
 class CharlatanChoice(discord.ui.View):
