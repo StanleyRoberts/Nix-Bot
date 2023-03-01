@@ -1,9 +1,9 @@
 from discord.ext import commands
 from discord.partial_emoji import PartialEmoji
-from functions.style import Emotes, Colours
+from helpers.style import Emotes, Colours
 import discord
 import random
-import functions.charlatan_helpers as helper
+import helpers.charlatan_helpers as helper
 '''
 #TODO-List:
 -prep: players, choose word (own list or given list)
@@ -25,8 +25,8 @@ class PlayerVoting(discord.ui.View):
     """
 
     def __init__(self, players: dict[discord.User, int], channel: discord.TextChannel) -> None:
-        # {player: [has_voted, times_voted_for]}
-        self.players = {player: [False, 0] for player in players}
+        # {player: [player_voted_for, times_voted_for]}
+        self.players = {player: [-1, 0] for player in players}
         self.channel = channel
         super().__init__(timeout=None)
         for i in range(0, len(self.players)):
@@ -50,13 +50,16 @@ class PlayerVoting(discord.ui.View):
         button = discord.ui.Button(label=str(i + 1), custom_id=str(i))
 
         async def cast_vote(interaction: discord.Interaction):
-            if self.players[interaction.user][0] is False:
+            if self.players[interaction.user][0] == -1:
                 voted_player = list(self.players)[int(button.custom_id)]  # indexes into the dictionary
                 self.players[voted_player][1] += 1
-                self.players[interaction.user][0] = True
+                self.players[interaction.user][0] += int(button.custom_id)
                 await interaction.response.send_message(ephemeral=True, content="You voted for {}"
                                                         .format(voted_player.display_name))
-            # TODO write a message when someone clicks on a second user
+            else:
+                self.players[list(self.players)[self.players[interaction.user][0]]][1] -= 1
+                await cast_vote(interaction)
+
         button.callback = cast_vote
         self.add_item(button)
 
@@ -208,7 +211,7 @@ class CharlatanGame(discord.ui.View):
         """
         guess = CharlatanChoice(chosen_word=self.word, word_list=self.wordlist)
         await self.charlatan.send(view=guess)
-        guess.start_timer()
+        await guess.start_timer()
 
         if guess.correctGuess:
             await self.interaction.channel.send(content="The Charlatan guessed the correct word {}"
@@ -219,6 +222,7 @@ class CharlatanGame(discord.ui.View):
                                                 .format(Emotes.CONFUSED))
             for key in self.players.keys():
                 self.players[key] += 1 if key is not self.charlatan else 0
+        await self.add_buttons()
 
     async def add_buttons(self):
         """Adds Play Again and Back to Lobby buttons to the interaction message
