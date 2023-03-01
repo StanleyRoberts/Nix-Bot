@@ -5,8 +5,12 @@ import typing
 import json
 import re
 
-from functions.style import Colours
-from Nix import HF_API
+from helpers.style import Colours
+from helpers.env import HF_API
+from helpers.logger import Logger
+from helpers.style import Emotes
+
+logger = Logger()
 
 USER_QS = ["Who are you?", "Is Stan cool?", "What is your favourite server?", "Where do you live?"]
 NIX_AS = ["I am Nix, a phoenix made of flames", "Yes, I think Stan is the best!",
@@ -22,6 +26,7 @@ class Misc(commands.Cog):
                             description="Displays an AI-generated quote over an inspirational image")
     async def send_quote(self, ctx: discord.ApplicationContext) -> None:
         await ctx.respond(requests.get("https://inspirobot.me/api?generate=true").text)
+        logger.info("Generating quote", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.slash_command(name='all_commands', description="Displays all of Nix's commands")
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
@@ -33,12 +38,14 @@ class Misc(commands.Cog):
         embed = discord.Embed(title="Help Page", description=desc,
                               colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
+        logger.info("Displaying long help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.slash_command(name='help', description="Display the help page for Nix")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
         view = Help_Nav(self.bot.cogs)
         await ctx.interaction.response.send_message(embed=view.build_embed(),
                                                     view=view)
+        logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.Cog.listener("on_message")
     async def NLP(self, msg: discord.Message):
@@ -49,6 +56,7 @@ class Misc(commands.Cog):
             msg (discord.Message): Message that triggered event
         """
         if (self.bot.user.mentioned_in(msg) and msg.reference is None):
+            logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
             clean_prompt = re.sub(" @", " ",
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
 
@@ -64,6 +72,10 @@ class Misc(commands.Cog):
                                "options": {"use_cache": False}
                                })
             response = requests.request("POST", url, headers=headers, data=data)
+            if response.status_code != requests.codes.ok:
+                logger.error("{0} AI request failed: {1}".format(response.status_code, response.content))
+                msg.reply(
+                    "Uh-oh! I'm having trouble at the moment, please try again later {0}".format(Emotes.CONFUSED))
 
             text = json.loads(response.content.decode('utf-8'))
             await msg.reply(text['generated_text'])
@@ -96,11 +108,13 @@ class Help_Nav(discord.ui.View):
     async def backward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
+        logger.debug("Back button pressed", member_id=interaction.user.id)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
     async def forward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
+        logger.debug("Next button pressed", member_id=interaction.user.id)
 
 
 def setup(bot: discord.Bot) -> None:
