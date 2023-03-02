@@ -1,4 +1,19 @@
 import asyncio
+import discord
+from helpers.style import Colours
+
+
+def make_embed(users: dict[discord.User, int], title: str) -> discord.Embed:
+    """Constructs an embed showing the current players in the lobby
+
+        Returns:
+            discord.Embed: The constructed embed
+        """
+    desc = "Playing now:\n " + "\n".join(str(key.mention) + " : " + str(
+        users[key]) for key in users.keys())
+    embed = discord.Embed(title=title, description=desc,
+                          colour=Colours.PRIMARY)
+    return embed
 
 
 async def start_timer(time: int) -> None:
