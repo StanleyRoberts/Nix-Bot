@@ -3,6 +3,8 @@ from datetime import datetime
 
 
 class Priority(Enum):
+    """Priority for logging message
+    """
     DEBUG = 0
     INFO = 1
     WARNING = 2
@@ -11,6 +13,11 @@ class Priority(Enum):
 
 
 class Logger(object):
+    """Logger singleton for creating log messages
+
+    Returns:
+        Logger: returns reference to global singleton logger
+    """
     _instance = None
 
     def __new__(cls):
@@ -22,26 +29,79 @@ class Logger(object):
         return cls._instance
 
     def set_priority(self, priority: str):
+        """Set logger to only display messages of te given priority and above
+
+        Args:
+            priority (str): chosen priority, acceptable values: 'debug', 'info', 'warning', 'error', 'critical'
+        """
         self.print_level = 0
         self.info("Logging level set to {0}".format(priority))
-        self.print_level = Priority[priority].value
+        try:
+            self.print_level = Priority[priority].value
+        except KeyError:
+            self.info("Invalid logging level, defaulting to all")
 
     def set_bot(self, discord_bot):
+        """Set bot to resolve ID values for logging messages (e.g. guild, channel, member ID)
+
+        Args:
+            discord_bot (discord.Bot): bot object to use to resolve ID values
+        """
         self.command_bot = discord_bot
 
     def debug(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
+        """Logs a DEBUG level message
+
+        Args:
+            message (str): Message to log
+            guild_id (int, optional): guild ID to link to log. Defaults to None.
+            member_id (int, optional): member ID to link to log. Defaults to None.
+            channel_id (int, optional): channel ID to link to log. Defaults to None.
+        """
         self._print_log(message, Priority.DEBUG, guild_id, member_id, channel_id)
 
     def info(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
+        """Logs a INFO level message
+
+        Args:
+            message (str): Message to log
+            guild_id (int, optional): guild ID to link to log. Defaults to None.
+            member_id (int, optional): member ID to link to log. Defaults to None.
+            channel_id (int, optional): channel ID to link to log. Defaults to None.
+        """
         self._print_log(message, Priority.INFO, guild_id, member_id, channel_id)
 
     def warning(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
+        """Logs a WARNING level message
+
+        Args:
+            message (str): Message to log
+            guild_id (int, optional): guild ID to link to log. Defaults to None.
+            member_id (int, optional): member ID to link to log. Defaults to None.
+            channel_id (int, optional): channel ID to link to log. Defaults to None.
+        """
         self._print_log(message, Priority.WARNING, guild_id, member_id, channel_id)
 
     def error(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
+        """Logs a ERROR level message
+
+        Args:
+            message (str): Message to log
+            guild_id (int, optional): guild ID to link to log. Defaults to None.
+            member_id (int, optional): member ID to link to log. Defaults to None.
+            channel_id (int, optional): channel ID to link to log. Defaults to None.
+        """
         self._print_log(message, Priority.ERROR, guild_id, member_id, channel_id)
 
     def critical(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
+        """Logs a CRITICAL level message
+
+        Args:
+            message (str): Message to log
+            guild_id (int, optional): guild ID to link to log. Defaults to None.
+            member_id (int, optional): member ID to link to log. Defaults to None.
+            channel_id (int, optional): channel ID to link to log. Defaults to None.
+        """
         self._print_log(message, Priority.CRITICAL, guild_id, member_id, channel_id)
 
     def _print_log(self,

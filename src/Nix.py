@@ -51,8 +51,7 @@ async def on_guild_channel_delete(channel: discord.TextChannel) -> None:
     Args:
         channel (discord.Channel): Channel that triggered the event
     """
-    db.single_SQL(
-        "DELETE FROM Subreddits WHERE SubredditChannelID=%s", (channel.id,))
+    db.single_SQL("DELETE FROM Subreddits WHERE SubredditChannelID=%s", (channel.id,))
 
 
 @bot.event
@@ -72,7 +71,7 @@ async def on_ready() -> None:
     logger.info('Logged in', member_id=bot.user.id)
 
 
-if __name__ == "__main__":
+def main():
     if __debug__:
         db.populate()
         try:
@@ -80,11 +79,10 @@ if __name__ == "__main__":
             logger.set_priority(priority)
         except IndexError:
             logger.info("No logging level set, defaulting to all")
-        except KeyError:
-            logger.info("Invalid logging level, defaulting to all")
     else:
         logger.debug_mode = False
-        logger.set_priority("DEBUG")  # TODO change to warning
+        logger.set_priority("WARNING")
+
     cogs = ['birthdays', 'facts', 'counting', 'reddit', 'misc']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
@@ -96,3 +94,7 @@ if __name__ == "__main__":
     finally:
         shutdown_db()
         logger.info("Bot succesfully shutdown")
+
+
+if __name__ == "__main__":
+    main()

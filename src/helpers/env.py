@@ -21,4 +21,4 @@ if __debug__:
 
 def shutdown_db():
     if __debug__:
-        super(tp.Postgresql, postgres).terminate(signal.SIGINT if os.name != 'nt' else None)
+        postgres.stop()
