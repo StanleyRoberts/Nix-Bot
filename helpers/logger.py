@@ -1,5 +1,6 @@
 from enum import Enum
 from datetime import datetime
+import inspect
 
 
 class Priority(Enum):
@@ -30,30 +31,36 @@ class Logger(object):
         self.command_bot = discord_bot
 
     def debug(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
-        self._print_log(message, Priority.DEBUG, guild_id, member_id, channel_id)
+        call_class = inspect.stack()[1][0].f_locals["self"].__class__.__name__
+        self._print_log(message, Priority.DEBUG, guild_id, member_id, channel_id, call_class)
 
     def info(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
-        self._print_log(message, Priority.INFO, guild_id, member_id, channel_id)
+        call_class = inspect.stack()[1][0].f_locals["self"].__class__.__name__
+        self._print_log(message, Priority.INFO, guild_id, member_id, channel_id, call_class)
 
     def warning(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
-        self._print_log(message, Priority.WARNING, guild_id, member_id, channel_id)
+        call_class = inspect.stack()[1][0].f_locals["self"].__class__.__name__
+        self._print_log(message, Priority.WARNING, guild_id, member_id, channel_id, call_class)
 
     def error(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
-        self._print_log(message, Priority.ERROR, guild_id, member_id, channel_id)
+        call_class = inspect.stack()[1][0].f_locals["self"].__class__.__name__
+        self._print_log(message, Priority.ERROR, guild_id, member_id, channel_id, call_class)
 
     def critical(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
-        self._print_log(message, Priority.CRITICAL, guild_id, member_id, channel_id)
+        call_class = inspect.stack()[1][0].f_locals["self"].__class__.__name__
+        self._print_log(message, Priority.CRITICAL, guild_id, member_id, channel_id, call_class)
 
     def _print_log(self,
                    message: str,
                    priority: Priority,
                    guild_id: int,
                    member_id: int,
-                   channel_id: int
+                   channel_id: int,
+                   call_class: str
                    ):
         if priority.value < self.print_level:
             return
-        log = "[" + priority.name + "]: " + message
+        log = "[" + priority.name + "] {" + call_class + "}: " + message
         if Logger.debug_mode:
             time = datetime.now().strftime("%H:%M:%S") + " "
             log = time + log
