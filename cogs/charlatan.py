@@ -52,19 +52,18 @@ class PlayerVoting(discord.ui.View):
         button = discord.ui.Button(label=str(i + 1), custom_id=str(i))
 
         async def cast_vote(interaction: discord.Interaction):
-            logger.debug("Player voted", member_id=interaction.user.id)
-            if self.players[interaction.user][0] == -1:
+            if self.players[interaction.user][0] != -1:
                 # TODO the voted player should probably be part of the callback,
                 # rather than relying on hackily storing data in the id
-                voted_player = list(self.players)[int(button.custom_id)]  # indexes into the dictionary
-                self.players[voted_player][1] += 1
-                self.players[interaction.user][0] += int(button.custom_id)  # TODO this cant be a good idea
-                await interaction.response.send_message(ephemeral=True, content="You voted for {}"
-                                                        .format(voted_player.display_name))
-            else:
-                self.players[list(self.players)[self.players[interaction.user][0]]
-                             ][1] -= 1  # TODO what is going on here?
-                await cast_vote(interaction)  # TODO recalling + passing around interaction necessary?
+
+                # Reset the previous vote
+                self.players[list(self.players)[self.players[interaction.user][0]]][1] -= 1
+                self.players[interaction.user][0] = -1
+            voted_player = list(self.players)[int(button.custom_id)]  # indexes into the dictionary
+            self.players[voted_player][1] += 1
+            self.players[interaction.user][0] += int(button.custom_id)  # TODO this cant be a good idea
+            await interaction.response.send_message(ephemeral=True, content="You voted for {}"
+                                                    .format(voted_player.display_name))
 
         button.callback = cast_vote
         self.add_item(button)
@@ -96,9 +95,7 @@ class WordSelection(discord.ui.Modal):
         """
         logger.debug("WordSelection complete, returning to lobby")
         view = CharlatanLobby(self.users, self.children[0].value.split('\n'))
-        # TODO if you change code, you need to make sure it doesnt break elsewhere
-        # this view no longer has a make_embed function \/ so now crashes
-        await interaction.message.edit(embed=view.make_embed(), view=view)
+        await interaction.message.edit(embed=helper.make_embed(self.users, "Charlatan"), view=view)
 
 
 class CharlatanLobby(discord.ui.View):
