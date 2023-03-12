@@ -3,9 +3,9 @@ import datetime as dt
 from discord.ext import commands, tasks
 import datetime as dt
 
-import src.helpers.database as db
-from src.helpers.style import Emotes, TIME
-from src.helpers.logger import Logger
+import helpers.database as db
+from helpers.style import Emotes, TIME
+from helpers.logger import Logger
 
 logger = Logger()
 

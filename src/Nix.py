@@ -2,9 +2,9 @@ import discord
 import sys
 from discord.ext import commands
 
-import src.helpers.database as db
-from src.helpers.env import TOKEN, shutdown_db
-from src.helpers.logger import Logger, Priority
+import helpers.database as db
+from helpers.env import TOKEN, shutdown_db
+from helpers.logger import Logger, Priority
 
 
 intents = discord.Intents(messages=True, message_content=True,

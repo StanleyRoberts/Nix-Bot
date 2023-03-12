@@ -2,9 +2,9 @@ import discord
 import asyncio
 from discord.ext import commands
 
-import src.helpers.database as db
-from src.helpers.style import Emotes
-from src.helpers.logger import Logger
+import helpers.database as db
+from helpers.style import Emotes
+from helpers.logger import Logger
 
 logger = Logger()
 

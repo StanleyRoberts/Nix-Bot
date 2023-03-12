@@ -3,10 +3,10 @@ import requests
 import json
 from discord.ext import commands, tasks
 
-import src.helpers.database as db
-from src.helpers.style import Emotes, TIME
-from src.helpers.env import NINJA_API_KEY
-from src.helpers.logger import Logger
+import helpers.database as db
+from helpers.style import Emotes, TIME
+from helpers.env import NINJA_API_KEY
+from helpers.logger import Logger
 
 logger = Logger()
 

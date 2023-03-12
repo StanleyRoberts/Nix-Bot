@@ -6,9 +6,9 @@ import io
 import discord
 import re
 
-from src.helpers.style import Emotes
-from src.helpers.env import CLIENT_ID, SECRET_KEY, USER_AGENT
-from src.helpers.logger import Logger
+from helpers.style import Emotes
+from helpers.env import CLIENT_ID, SECRET_KEY, USER_AGENT
+from helpers.logger import Logger
 
 logger = Logger()
 
