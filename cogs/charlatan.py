@@ -240,7 +240,9 @@ class CharlatanGame(discord.ui.View):
         async def play_again(interaction: discord.Interaction):
             logger.debug("Play Again button selected")
             # TODO \/ send message, is edit more coherent (error in Startbutton messageedit)?
-            await interaction.response.edit_message(view=CharlatanGame(wordlist=self.wordlist, players=self.players))
+            view = CharlatanGame(wordlist=self.wordlist, players=self.players)
+            view.message = await interaction.original_response()
+            await interaction.response.edit_message(view=view)
             play_again_button.disabled = True  # TODO add lock
         play_again_button.callback = play_again
         self.add_item(play_again_button)
@@ -250,8 +252,10 @@ class CharlatanGame(discord.ui.View):
 
         async def back_to_lobby(interaction: discord.Interaction):
             logger.debug("Return to Loby button selected")
-            await interaction.response.send_message(view=CharlatanLobby({interaction.user, 0}))
-            lobby_button.disabled = True  # TODO add lock
+            view = CharlatanLobby({interaction.user, 0})
+            view.message = await interaction.original_response()  # TODO error(NotFound: Unknown Webhook 404)
+            await interaction.response.edit_message(view=view)
+            play_again_button.disabled = True  # TODO add lock
         lobby_button.callback = back_to_lobby
         self.add_item(lobby_button)
         logger.debug("Lobby button added to items")
