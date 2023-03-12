@@ -53,7 +53,7 @@ class Misc(commands.Cog):
             clean_prompt = re.sub(" @", " ",
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
 
-            history = [{"role": "system", "content": "You are Nix, a friendly and kind phoenix."}]
+            history = []
             inspect = msg
             is_answer = False
             while inspect.reference is not None:
@@ -64,6 +64,7 @@ class Misc(commands.Cog):
                 else:
                     history.append({"role": "assistant", "content": inspect.clean_content})
                 is_answer = not is_answer
+            history = [{"role": "system", "content": "You are Nix, a friendly and kind phoenix."}] + history[::-1]
             history.append({"role": "user", "content": clean_prompt})
 
             logger.debug("Generating response with following message history: " + str(history))
