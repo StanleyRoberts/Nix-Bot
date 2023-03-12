@@ -15,6 +15,8 @@ Nix is a personable bot providing many functions, such as random quotes, facts, 
 
 We have spent a lot of time making Nix more exciting than your typical discord bot. Nix has a unique personality and style. It features custom emoji and is even able to reply to messages he is tagged in! We want Nix to be a part of your server as much as your other members are.
 
+Note: by default Nix does not remember past conversation it has with you, if you want it to remember things then reply to his messages and he will remember everything in that reply chain.
+
 ### Bugs + Suggestions
 
 Nix isnt perfect, it is a hobby project made for the specific use cases our server required. If you notice any bugs or have requests for Nix, please open an issue on the [GitHub](https://github.com/StanleyRoberts/Nix-Bot/issues) page and we will do our best to respond in a timely manner.
