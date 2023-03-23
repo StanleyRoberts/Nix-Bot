@@ -2,18 +2,24 @@ from discord.ext import commands
 import discord
 import requests
 import typing
+import json
 import re
-import aiohttp
 
 from helpers.style import Colours
+from helpers.env import HF_API
 from helpers.logger import Logger
 from helpers.style import Emotes
 
 logger = Logger()
 
+USER_QS = ["Who are you?", "Is Stan cool?", "What is your favourite server?", "Where do you live?"]
+NIX_AS = ["I am Nix, a phoenix made of flames", "Yes, I think Stan is the best!",
+          "I love the Watching Racoons server the most!",
+          "I live in a volcano with my friends: DJ the Dragon and Sammy the Firebird."]
+
 
 class Misc(commands.Cog):
-    def __init__(self, bot: discord.Bot) -> None:
+    def __init__(self, bot) -> None:
         self.bot = bot
 
     @commands.slash_command(name='quote', description="Displays an AI-generated quote over an inspirational image")
@@ -48,41 +54,30 @@ class Misc(commands.Cog):
         Args:
             msg (discord.Message): Message that triggered event
         """
-        if self.bot.user.mentioned_in(msg):
+        if (self.bot.user.mentioned_in(msg) and msg.reference is None):
             logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
             clean_prompt = re.sub(" @", " ",
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
 
-            history = []
-            inspect = msg
-            is_answer = False
-            while inspect.reference is not None:
-                inspect = self.bot.get_message(inspect.reference.message_id)
-                if is_answer:
-                    history.append({"role": "user", "content": re.sub(
-                        " @", " ", re.sub("@" + self.bot.user.name, "", inspect.clean_content))})
-                else:
-                    history.append({"role": "assistant", "content": inspect.clean_content})
-                is_answer = not is_answer
-            history = [{"role": "system", "content": "You are Nix, a friendly and kind phoenix."}] + history[::-1]
-            history.append({"role": "user", "content": clean_prompt})
+            url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
+            headers = {"Authorization": f"Bearer {HF_API}"}
 
-            logger.debug("Generating response with following message history: " + str(history))
+            prompt = {"past_user_inputs": USER_QS,
+                      "generated_responses": NIX_AS,
+                      "text": clean_prompt}
 
-            async with aiohttp.ClientSession() as session:
-                headers = {'Content-Type': "application/json"}
-                json = {
-                    "model": "gpt-3.5-turbo",
-                    "messages": history
-                }
-                async with session.post("https://chatgpt-api.shn.hk/v1/", headers=headers, json=json) as response:
-                    if not response.ok:
-                        logger.error("{0}-{1} AI request failed: {2}".format(response.status,
-                                     response.reason, response.content.read()))
-                        await msg.reply("Uh-oh! I'm having trouble at the moment, please try again later {0}"
-                                        .format(Emotes.CONFUSED))
-                    else:
-                        await msg.reply((await response.json())['choices'][0]['message']['content'])
+            data = json.dumps({"inputs": prompt,
+                               "parameters": {"return_full_text": False},
+                               "options": {"use_cache": False}
+                               })
+            response = requests.request("POST", url, headers=headers, data=data)
+            if response.status_code != requests.codes.ok:
+                logger.error("{0} AI request failed: {1}".format(response.status_code, response.content))
+                msg.reply(
+                    "Uh-oh! I'm having trouble at the moment, please try again later {0}".format(Emotes.CONFUSED))
+
+            text = json.loads(response.content.decode('utf-8'))
+            await msg.reply(text['generated_text'])
 
 
 class Help_Nav(discord.ui.View):
@@ -108,13 +103,13 @@ class Help_Nav(discord.ui.View):
         return discord.Embed(title="Help Page", description=desc,
                              colour=Colours.PRIMARY)
 
-    @ discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
     async def backward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
         logger.debug("Back button pressed", member_id=interaction.user.id)
 
-    @ discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
     async def forward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
