@@ -68,7 +68,7 @@ class Misc(commands.Cog):
                     history.append("You: " + re.sub(" @", " ",
                                    re.sub("@" + self.bot.user.name, "", inspect.clean_content)))
                 else:
-                    history.append({"Nix: " + inspect.clean_content})
+                    history.append("Nix: " + inspect.clean_content)
                 is_answer = not is_answer
             text = "Nix's Persona: Nix is a kind and friendly phoenix who lives in a volcano.\n<START>\n" +\
                 "\n".join(history[::-1]) + "You: " + clean_prompt + "\nNix: "
