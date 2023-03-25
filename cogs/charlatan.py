@@ -147,7 +147,7 @@ class CharlatanGame(discord.ui.View):
     @discord.ui.button(label="Start Game", style=discord.ButtonStyle.primary)
     async def start_game(self, _, interaction: discord.Interaction):
         channel = interaction.channel
-        interaction.response.defer()
+        await interaction.response.defer()
         self.clear_items()
         await self.message.edit(
             embed=discord.Embed(description="Game is ongoing", title="Charlatan", colour=Colours.PRIMARY), view=self)
@@ -241,9 +241,7 @@ class CharlatanGame(discord.ui.View):
             logger.debug("Play Again button selected")
             # TODO \/ send message, is edit more coherent (error in Startbutton messageedit)?
             view = CharlatanGame(wordlist=self.wordlist, players=self.players)
-            view.message = await interaction.original_response()
-            await interaction.response.edit_message(view=view)
-            play_again_button.disabled = True  # TODO add lock
+            await self.message.edit(view=view)
         play_again_button.callback = play_again
         self.add_item(play_again_button)
         logger.debug("Play Again button added to items")
@@ -252,15 +250,16 @@ class CharlatanGame(discord.ui.View):
 
         async def back_to_lobby(interaction: discord.Interaction):
             logger.debug("Return to Loby button selected")
-            view = CharlatanLobby({interaction.user, 0})
-            view.message = await interaction.original_response()  # TODO error(NotFound: Unknown Webhook 404)
-            await interaction.response.edit_message(view=view)
             play_again_button.disabled = True  # TODO add lock
+            await self.message.edit(view=self)
+            view = CharlatanLobby({interaction.user, 0})
+            view.message = await interaction.channel.send(view=view)  # TODO error(NotFound: Unknown Webhook 404)
         lobby_button.callback = back_to_lobby
         self.add_item(lobby_button)
         logger.debug("Lobby button added to items")
 
         await self.message.edit(view=self)
+        logger.debug("The items of the class CharlatanGame are {}".format(self.children))
         logger.debug("View was edited with Lobby and Play Again buttons")
 
 
