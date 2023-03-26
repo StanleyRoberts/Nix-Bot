@@ -68,7 +68,8 @@ class Misc(commands.Cog):
                          "parameters": {"return_full_text": False, "max_new_tokens": 50},
                          "options": {"use_cache": False, "wait_for_model": True}
                          }
-                async with session.post(url, data=json.dumps(input)) as req:
+                headers = {"Authorization": f"Bearer {HF_API}"}
+                async with session.post(url, data=json.dumps(input), headers=headers) as req:
                     if not req.ok:
                         logger.error("Error {0}: {1}".format(req.status, req.content))
                         await msg.reply("Sorry, I had trouble understanding. Please try again later {0}"
