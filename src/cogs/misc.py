@@ -1,4 +1,5 @@
 from discord.ext import commands
+from huggingface_hub.inference_api import InferenceApi
 import discord
 import requests
 import typing
@@ -11,11 +12,6 @@ from helpers.style import Emotes
 from helpers.env import HF_API
 
 logger = Logger()
-
-USER_QS = ["Who are you?", "What are you?", "Is Stan cool?", "What is your favourite server?", "Where do you live?"]
-NIX_AS = ["I am Nix!", "I am a phoenix!", "Yes, I think Stan is the best!",
-          "I love the Watching Racoons server the most!",
-          "I live in a volcano with my friends: DJ the Dragon and Sammy the Firebird."]
 
 
 class Misc(commands.Cog):
@@ -54,46 +50,25 @@ class Misc(commands.Cog):
         Args:
             msg (discord.Message): Message that triggered event
         """
-        if self.bot.user.mentioned_in(msg):
+        if self.bot.user.mentioned_in(msg) and msg.reference is None:
             logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
             clean_prompt = re.sub(" @", " ",
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
 
-            questions, answers = USER_QS, NIX_AS
-            inspect = msg
-            is_answer = False
-            while inspect.reference is not None:
-                inspect = self.bot.get_message(inspect.reference.message_id)
-                if is_answer:
-                    answers.append(re.sub(" @", " ",
-                                   re.sub("@" + self.bot.user.name, "", inspect.clean_content)))
-                else:
-                    questions.append(inspect.clean_content)
-                is_answer = not is_answer
+            text = "Nix's Persona: Nix is a kind and friendly phoenix who lives in a volcano.\n<START>\n" +\
+                "\nYou: " + clean_prompt + "\nNix: "
 
-            if len(questions) != len(answers):
-                logger.error("Questions and Answers array for NLP chained reply are not the same size")
-                return
+            logger.debug("Sending text: {0}".format(text))
 
-            url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
-            headers = {"Authorization": f"Bearer {HF_API}"}
-            prompt = {"past_user_inputs": questions,
-                      "generated_responses": answers,
-                      "text": clean_prompt}
+            inference = InferenceApi(repo_id="PygmalionAI/pygmalion-6b", token=HF_API, task="text-generation")
+            params = {"return_full_text": False}
+            generated = inference(text, params)  # TODO this needs to be made asyncronous
+            logger.debug("full gen: {0}".format(generated))
 
-            data = json.dumps({"inputs": prompt,
-                               "parameters": {"return_full_text": False},
-                               "options": {"use_cache": False}
-                               })
-            response = requests.request("POST", url, headers=headers, data=data)  # TODO this seems to always 503
-            if response.status_code != requests.codes.ok:
-                logger.error("{0} AI request failed: {1}".format(response.status_code, response.content))
-                await msg.reply("Uh-oh! I'm having trouble understanding at the moment, please try again later {0}"
-                                .format(Emotes.CONFUSED))
-                return
-
-            text = json.loads(response.content.decode('utf-8'))
-            await msg.reply(text['generated_text'])
+            response = generated[0]['generated_text'].split("\n")[0]
+            logger.info("response: {0}".format(response))
+            await msg.reply(response)
+            return
 
 
 class Help_Nav(discord.ui.View):
