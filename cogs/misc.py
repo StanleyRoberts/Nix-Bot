@@ -3,11 +3,13 @@ from huggingface_hub.inference_api import InferenceApi
 import discord
 import requests
 import typing
+import json
 import re
 import json
 import aiohttp
 
 from helpers.style import Colours
+from helpers.env import HF_API
 from helpers.logger import Logger
 from helpers.style import Emotes
 from helpers.env import HF_API
@@ -21,7 +23,7 @@ NIX_AS = ["I am Nix!", "I am a phoenix!", "Yes, I think Stan is the best!",
 
 
 class Misc(commands.Cog):
-    def __init__(self, bot: discord.Bot) -> None:
+    def __init__(self, bot) -> None:
         self.bot = bot
 
     @commands.slash_command(name='quote', description="Displays an AI-generated quote over an inspirational image")
@@ -108,13 +110,13 @@ class Help_Nav(discord.ui.View):
         return discord.Embed(title="Help Page", description=desc,
                              colour=Colours.PRIMARY)
 
-    @ discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
     async def backward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
         logger.debug("Back button pressed", member_id=interaction.user.id)
 
-    @ discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
     async def forward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
