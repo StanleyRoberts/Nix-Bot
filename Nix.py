@@ -85,7 +85,7 @@ if __name__ == "__main__":
     else:
         logger.debug_mode = False
         logger.set_priority("DEBUG")  # TODO change to warning
-    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'misc']
+    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'trivia', 'misc']
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
 
