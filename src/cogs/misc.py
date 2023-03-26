@@ -5,6 +5,7 @@ import requests
 import typing
 import re
 import json
+import aiohttp
 
 from helpers.style import Colours
 from helpers.logger import Logger
@@ -12,6 +13,11 @@ from helpers.style import Emotes
 from helpers.env import HF_API
 
 logger = Logger()
+
+USER_QS = ["Who are you?", "What are you?", "Is Stan cool?", "What is your favourite server?", "Where do you live?"]
+NIX_AS = ["I am Nix!", "I am a phoenix!", "Yes, I think Stan is the best!",
+          "I love the Watching Racoons server the most!",
+          "I live in a volcano with my friends: DJ the Dragon and Sammy the Firebird."]
 
 
 class Misc(commands.Cog):
@@ -43,7 +49,7 @@ class Misc(commands.Cog):
         logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.Cog.listener("on_message")
-    async def NLP(self, msg: discord.Message):
+    async def gen_response(self, msg: discord.Message):
         """
         Prints out an AI generated response to the message if it mentions Nix
 
@@ -58,17 +64,25 @@ class Misc(commands.Cog):
             text = "Nix's Persona: Nix is a kind and friendly phoenix who lives in a volcano.\n<START>\n" +\
                 "\nYou: " + clean_prompt + "\nNix: "
 
-            logger.debug("Sending text: {0}".format(text))
+            logger.debug("Sending text: {0}".format(repr(text)))
 
-            inference = InferenceApi(repo_id="PygmalionAI/pygmalion-6b", token=HF_API, task="text-generation")
-            params = {"return_full_text": False}
-            generated = inference(text, params)  # TODO this needs to be made asyncronous
-            logger.debug("full gen: {0}".format(generated))
-
-            response = generated[0]['generated_text'].split("\n")[0]
-            logger.info("response: {0}".format(response))
-            await msg.reply(response)
-            return
+            async with aiohttp.ClientSession() as session:
+                # we force pygmalion into text-gen to allow us to set Nix personality
+                url = "https://api-inference.huggingface.co/pipeline/text-generation/PygmalionAI/pygmalion-6b"
+                input = {"inputs": text,
+                         "parameters": {"return_full_text": False, "max_new_tokens": 50},
+                         "options": {"use_cache": False, "wait_for_model": True}
+                         }
+                async with session.post(url, data=json.dumps(input)) as req:
+                    if not req.ok:
+                        logger.error("Error {0}: {1}".format(req.status, req.content))
+                        await msg.reply("Sorry, I had trouble understanding. Please try again later {0}"
+                                        .format(Emotes.CONFUSED))
+                    else:
+                        response = (await req.json())[0]['generated_text'].split("\n")[0]
+                        response = re.sub("<USER>", msg.author.display_name, re.sub("<BOT>", "Nix", response))
+                        logger.info("response: {0}".format(response))
+                        await msg.reply(response)
 
 
 class Help_Nav(discord.ui.View):
