@@ -2,5 +2,5 @@
 .env
 test.*
 __pycache__
-hide
+docs
 .vscode
