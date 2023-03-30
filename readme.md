@@ -4,6 +4,7 @@
 
 Nix is a multi-purpose discord bot we created for our server, the _Watching Raccoons_.
 Nix is a personable bot providing many functions, such as random quotes, facts, or reddit posts as well as tracking birthdays and the counting game.
+[Add him to your server!](https://discord.com/api/oauth2/authorize?client_id=1025014989376978944&permissions=268435456&scope=applications.commands%20bot)
 
 ### Features 
 - **Fun**: Commands such as /reddit can browse reddits posts, getting memes, videos or textposts. The command /quote will display an AI-generated quote over an inspirational image with some humorous results.
