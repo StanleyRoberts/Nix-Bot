@@ -15,7 +15,8 @@ class Trivia(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
 
-    @commands.slash_command(name='trivia', description="Start a game of Trivia")
+    @commands.slash_command(name='trivia',
+                            description="Start a game of Trivia where the first person to get 5 points wins")
     async def testing(self, ctx: discord.ApplicationContext,
                       category: discord.Option(str, default="general",
                                                choices=["artliterature", "language",
@@ -39,31 +40,52 @@ class Trivia(commands.Cog):
 class TriviaGame(discord.ui.View):
     def __init__(self, players: dict[discord.User, int],
                  category: str, channel: discord.TextChannel):
-        super().__init__(timeout=None)
+        super().__init__(timeout=30)
         self.category = category
         self.players = players
         self.channel = channel
+        self.question, self.answer = TriviaGame.get_trivia(self.category)
         self.lock = asyncio.Lock()
-        self.question, self.answer = TriviaGame.get_trivia(category)
+        self.on_timeout()
 
     async def send_question(self):
-        await self.channel.send("Question: {}".format(self.question, Emotes.CONFUSED))
+        self.question, self.answer = TriviaGame.get_trivia(self.category)
+        self.message = await self.channel.send("Question: {}".format(self.question, Emotes.CONFUSED))
+        await self.message.add_reaction(Emotes.CONFUSED)
+
+    @commands.Cog.listener("on_raw_reaction_add")  # TODO make the on_reaction work
+    async def skip(self, package: discord.RawReactionActionEvent):  # reaction: discord.Reaction, user: discord.User
+        logger.debug("Reaction add detected")
+        if package.message_id == self.message.id:
+            if package.emoji == Emotes.CONFUSED and (len(self.players == 0) or package.member in self.players):
+                await self.send_question()
 
     async def guessing(self, msg: discord.Message):
+        """
+        Checks if a guess is correct; Gives out a point and makes a new question if it is
+        """
         async with self.lock:
             logger.debug("Message was detected")
             if msg.channel.id == self.channel.id:
                 logger.debug("Message detected during Trivia in Channel")
-                if get_close_matches(self.answer, [msg.content]) != []:
-                    logger.info("Correct answer in Trivia detected answer: {0}, msg: {1}"
-                                .format(self.answer, msg.content))
-                    if msg.author in self.players.keys():
-                        self.players[msg.author] += 1
-                    else:
-                        self.players.update({msg.author: 1})
-                    await msg.reply("This was the correct answer ({0}) {1}".format(self.answer, Emotes.BLEP))
-                    self.question, self.answer = self.get_trivia(self.category)
-                    await self.send_question()
+                if msg.content.isdigit():
+                    self.correct_answer(msg)
+                elif get_close_matches(self.answer, [msg.content]) != []:
+                    self.correct_answer(msg)
+
+    async def correct_answer(self, msg: discord.Message):
+        logger.info("Correct answer in Trivia detected answer: {0}, msg: {1}"
+                    .format(self.answer, msg.content))
+        if msg.author in self.players.keys():
+            self.players[msg.author] += 1
+        else:
+            self.players.update({msg.author: 1})
+        await msg.reply("This was the correct answer ({0}) {1}".format(self.answer, Emotes.BLEP))
+        if self.players[msg.author] == 5:
+            await self.channel.send("The winner of this game of Trivia is {}".format(msg.author.mention))
+            self.timeout = 0
+        else:
+            await self.send_question()
 
     @staticmethod
     def get_trivia(category: str):
@@ -77,6 +99,7 @@ class TriviaGame(discord.ui.View):
         if response.status_code == requests.codes.ok:
             logger.debug("Successful Trivia request")
             message = cjson['question'], cjson['answer']
+            print(cjson['answer'])
         return message
 
 
