@@ -1,5 +1,6 @@
 import discord
 import sys
+from os import listdir
 from discord.ext import commands
 
 import helpers.database as db
@@ -83,7 +84,7 @@ def main():
         logger.debug_mode = False
         logger.set_priority("WARNING")
 
-    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'misc']
+    cogs = [cog[:-3] for cog in listdir('./src/cogs') if cog[-3:] == ".py" and cog != "__init__.py"]
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
 
