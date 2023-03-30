@@ -4,7 +4,6 @@ import discord
 import requests
 import typing
 import re
-import json
 import aiohttp
 
 from helpers.style import Colours
@@ -59,26 +58,29 @@ class Misc(commands.Cog):
             text = "Nix's Persona: Nix is a kind and friendly phoenix who lives in a volcano.\n<START>\n" +\
                 "\nYou: " + clean_prompt + "\nNix: "
 
-            logger.debug("Sending text: {0}".format(repr(text)))
+            logger.debug("Sending text: {0}".format(repr(text)), channel_id=msg.channel.id, member_id=msg.author.id)
 
             async with aiohttp.ClientSession() as session:
                 # we force pygmalion into text-gen to allow us to set Nix personality
-                url = "https://api-inference.huggingface.co/pipeline/text-generation/PygmalionAI/pygmalion-6b"
+                url = "https://api-inference.huggingface.co/pipeline/text-generation/StanleyRoberts/Nix"
                 input = {"inputs": text,
                          "parameters": {"return_full_text": False, "max_new_tokens": 50},
                          "options": {"use_cache": False, "wait_for_model": True}
                          }
                 headers = {"Authorization": f"Bearer {HF_API}"}
-                async with session.post(url, data=json.dumps(input), headers=headers) as req:
-                    if not req.ok:
-                        logger.error("Error {0}: {1}".format(req.status, req.content))
-                        await msg.reply("Sorry, I had trouble understanding. Please try again later {0}"
-                                        .format(Emotes.CONFUSED))
-                    else:
-                        response = (await req.json())[0]['generated_text'].split("\n")[0]
-                        response = re.sub("<USER>", msg.author.display_name, re.sub("<BOT>", "Nix", response))
-                        logger.info("response: {0}".format(response))
-                        await msg.reply(response)
+                try:
+                    async with session.post(url, json=input, headers=headers) as req:
+                        if not req.ok:
+                            logger.error("Error {0}: {1}".format(req.status, await req.content.read(-1)))
+                            await msg.reply("Sorry, I had trouble understanding. Please try again later {0}"
+                                            .format(Emotes.CONFUSED))
+                        else:
+                            response = (await req.json())[0]['generated_text'].split("\n")[0]
+                            response = re.sub("<USER>", msg.author.display_name, re.sub("<BOT>", "Nix", response))
+                            logger.info("response: {0}".format(response))
+                            await msg.reply(response)
+                except TimeoutError:
+                    logger.error("AI request timed out", channel_id=msg.channel.id, member_id=msg.author.id)
 
 
 class Help_Nav(discord.ui.View):
