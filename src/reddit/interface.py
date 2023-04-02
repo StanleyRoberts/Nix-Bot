@@ -126,7 +126,7 @@ class RedditInterface:
                 self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' private"
             except prawcore.AsyncPrawcoreException as e:
                 logger.error(f"Failure getting subreddit <{subreddit}>: {e.__class__.__name__}")
-                self.error_response = "Unknown error, please try again later"
+                self.error_response = f"{Emotes.WTF} Unknown error, please try again later"
 
             random.shuffle(self.cache)
         return self.error_response is None
