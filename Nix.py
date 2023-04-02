@@ -8,7 +8,7 @@ from helpers.logger import Logger, Priority
 
 
 intents = discord.Intents(messages=True, message_content=True,
-                          guilds=True, members=True)
+                          guilds=True, members=True, reactions=True)
 bot = commands.Bot(intents=intents, command_prefix='%s',
                    activity=discord.Game(name="/help"))
 
