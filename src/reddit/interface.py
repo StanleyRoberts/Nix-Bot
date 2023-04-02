@@ -154,5 +154,5 @@ class RedditInterface:
                           None if subm.is_self else subm.url).load_img()
 
     async def on_timeout(self) -> bool:
-        self.reddit.close()
+        await self.reddit.close()
         return super().on_timeout()

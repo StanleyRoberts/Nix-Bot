@@ -1,5 +1,6 @@
 import discord
 import sys
+from os import listdir
 from discord.ext import commands
 
 import helpers.database as db
@@ -8,7 +9,7 @@ from helpers.logger import Logger, Priority
 
 
 intents = discord.Intents(messages=True, message_content=True,
-                          guilds=True, members=True, reactions=True)
+                          guilds=True, members=True)
 bot = commands.Bot(intents=intents, command_prefix='%s',
                    activity=discord.Game(name="/help"))
 
@@ -51,8 +52,7 @@ async def on_guild_channel_delete(channel: discord.TextChannel) -> None:
     Args:
         channel (discord.Channel): Channel that triggered the event
     """
-    db.single_SQL(
-        "DELETE FROM Subreddits WHERE SubredditChannelID=%s", (channel.id,))
+    db.single_SQL("DELETE FROM Subreddits WHERE SubredditChannelID=%s", (channel.id,))
 
 
 @bot.event
@@ -72,7 +72,7 @@ async def on_ready() -> None:
     logger.info('Logged in', member_id=bot.user.id)
 
 
-if __name__ == "__main__":
+def main():
     if __debug__:
         db.populate()
         try:
@@ -80,19 +80,22 @@ if __name__ == "__main__":
             logger.set_priority(priority)
         except IndexError:
             logger.info("No logging level set, defaulting to all")
-        except KeyError:
-            logger.info("Invalid logging level, defaulting to all")
     else:
         logger.debug_mode = False
-        logger.set_priority("DEBUG")  # TODO change to warning
-    cogs = ['birthdays', 'facts', 'counting', 'reddit', 'trivia', 'misc']
+        logger.set_priority("WARNING")
+
+    cogs = [cog[:-3] for cog in listdir('./src/cogs') if cog[-3:] == ".py" and cog != "__init__.py"]
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
 
     try:
         bot.run(TOKEN)
     except KeyboardInterrupt:
-        logger.warning("Keyboard interupt: Shutting down")
+        logger.warning("Keyboard interrupt: Failed to shutdown")
     finally:
         shutdown_db()
         logger.info("Bot succesfully shutdown")
+
+
+if __name__ == "__main__":
+    main()

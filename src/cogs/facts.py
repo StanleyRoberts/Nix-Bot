@@ -80,14 +80,12 @@ class Facts(commands.Cog):
         """
         api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
         response = requests.get(api_url, headers={'X-Api-Key': NINJA_API_KEY})
-        message = "Error: " + str(response.status_code) + "\n" + response.text
         cjson = json.loads(response.text)
         if response.status_code == requests.codes.ok:
-            message = cjson[0]["fact"]
+            return cjson[0]["fact"]
         else:
             logger.error("{0} Error: {1} - Fact request failed".format(response.status_code, cjson["message"]))
             raise HttpError("{0} Error: {1}".format(response.status_code, cjson["message"]))
-        return message
 
 
 def setup(bot: discord.Bot) -> None:
