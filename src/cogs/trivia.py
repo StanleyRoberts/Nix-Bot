@@ -1,12 +1,9 @@
 import aiohttp
 import discord
-import requests
-import json
 import asyncio
 from difflib import get_close_matches
 
 from discord.ext import commands
-from helpers.env import NINJA_API_KEY
 from helpers.logger import Logger
 from helpers.style import Emotes, string_to_emoji, Colours
 logger = Logger()
@@ -82,7 +79,7 @@ class TriviaGame(discord.ui.View):
                 self.players, len(self.players)))
             if event.emoji == emoji and (
                     (len(self.players) <= 1) or event.member.id in self.players.keys()):
-                await self.channel.send("The answer was: {}".format(self.answer))
+                await self.channel.send("The answer was: {} {}".format(self.answer, Emotes.SUNGLASSES))
                 await self.send_question()
                 logger.debug("Question successfully skipped")
             else:
@@ -102,7 +99,7 @@ class TriviaGame(discord.ui.View):
                 elif get_close_matches(self.answer, [msg.content]) != []:
                     await self.correct_answer(msg)
                 else:
-                    await msg.add_reaction(Emotes.CRYING)
+                    await msg.add_reaction(Emotes.BRUH)
 
     async def correct_answer(self, msg: discord.Message):
         logger.info("Correct answer in Trivia detected answer: {0}, msg: {1}"
@@ -114,10 +111,11 @@ class TriviaGame(discord.ui.View):
         else:
             logger.debug("User is being added to self.players with one point")
             self.players.update({msg.author.id: 1})
-        await msg.reply("This was the correct answer ({0}) {1}".format(self.answer, Emotes.BLEP))
+        await msg.reply("This was the correct answer ({0}) {1}".format(self.answer, Emotes.HAPPY))
         if self.players[msg.author.id] >= 5:
             logger.debug("User has won")
-            await self.channel.send("The winner of this game of Trivia is {}".format(msg.author.mention))
+            await self.channel.send("The winner of this game of Trivia is {} {}"
+                                    .format(msg.author.mention, Emotes.TEEHEE))
             self.stop()
         else:
             logger.debug("The user hasnt won so the game goes on")
