@@ -2,6 +2,7 @@ import aiohttp
 import discord
 import asyncio
 from difflib import get_close_matches
+import re
 
 from discord.ext import commands
 from helpers.logger import Logger
@@ -50,7 +51,7 @@ class TriviaGame(discord.ui.View):
     """Is the View for and manages most of the Trivia game
             Args:
                 players (dict[discord.User, int]): The discord users with atleast one point and their score
-                channel (discord.TextChannel): The channel in which the trivia is held
+                channel (discord.TextChannel): The channel in which the trivia is being held
             """
 
     def __init__(self, players: dict[int, int], channel: discord.TextChannel, difficulty: str):
@@ -62,6 +63,9 @@ class TriviaGame(discord.ui.View):
         self.difficulty = difficulty
 
     async def send_question(self):
+        """pops the trivia from the cache and sends it
+            activates get_trivia if the cache is empty
+        """
         if len(self.trivias) == 0:
             await self.get_trivia(self.difficulty)
         trivia = self.trivias.pop()
@@ -72,6 +76,13 @@ class TriviaGame(discord.ui.View):
         await self.message.add_reaction('⏩')
 
     async def skip_question(self, event: discord.RawReactionActionEvent):
+        """skip the current question and show the answer
+                Args:
+                event (discord.RawReactionActionEvent) : Event of a user adding a reaction
+
+        Skips if the emoji is used by a person in self.players or if noone has any points so far
+        Sends out the answer of the question and the next question
+        """
         logger.debug("Question skipped detected")
         if event.message_id == self.message.id:
             emoji = await string_to_emoji('⏩')
@@ -86,8 +97,9 @@ class TriviaGame(discord.ui.View):
                 logger.debug("Question skip failed")
 
     async def guessing(self, msg: discord.Message):
-        """
-        Checks if a guess is correct; Gives out a point and makes a new question if it is
+        """Checks if a guess is correct
+
+        If the guess is a number it has to be exact, otherwise any (spellingwise) close guesses will count too
         """
         async with self.lock:
             logger.debug("Message was detected")
@@ -102,6 +114,11 @@ class TriviaGame(discord.ui.View):
                     await msg.add_reaction(Emotes.BRUH)
 
     async def correct_answer(self, msg: discord.Message):
+        """Manages the point for the user with the correct answer
+
+            Takes the message of the correct answer; If the user is not in self.players
+            it adds him with one point otherwise it checks if the user won, if not it gives him a point
+        """
         logger.info("Correct answer in Trivia detected answer: {0}, msg: {1}"
                     .format(self.answer, msg.content))
         await msg.add_reaction(Emotes.WHOA)
@@ -125,7 +142,7 @@ class TriviaGame(discord.ui.View):
         """Takes a difficulty and returns a list of trivia questions
 
         Takes a difficulty and returns the question, answer, category,
-        and difficulty of 100 trivia questions in a list of lists.
+        and difficulty of 100 trivia questions in a list of lists
         """
         async with aiohttp.ClientSession() as session:
             if difficulty == "random":
@@ -136,8 +153,8 @@ class TriviaGame(discord.ui.View):
             async with session.get(api_url) as response:
                 if response.ok:
                     logger.debug("Successful Trivia request")
-                    # TODO Take out the HTML out of text
-                    self.trivias = [(cjson['question'], cjson['answer'], cjson['category']['title'])
+                    def r(t): return re.sub('<[^<]+?>', '', t)  # Takes out HTML tags
+                    self.trivias = [(r(cjson['question']), r(cjson['answer']), r(cjson['category']['title']))
                                     for cjson in (await response.json(encoding="utf-8"))[:20]]
                 else:
                     logger.error("Trivia request failed. Status: {} Error msg: {}"
