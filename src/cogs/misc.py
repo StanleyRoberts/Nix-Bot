@@ -73,7 +73,7 @@ class Misc(commands.Cog):
             response = requests.request("POST", url, headers=headers, data=data)
             if response.status_code != requests.codes.ok:
                 logger.error(f"AI Error {response.status_code}: {response.content}")
-                msg.reply(f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CONFUSED}")
+                msg.reply(f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}")
 
             text = json.loads(response.content.decode('utf-8'))
             await msg.reply(text['generated_text'])
