@@ -33,7 +33,7 @@ class Post:
                     async with session.get(self._url) as resp:
                         self.img = [discord.File(io.BytesIO(await resp.read()), self._url)]
             except Exception as e:
-                logger.error("Failed to load image {0}".format(e.__class__.__name__))
+                logger.error(f"Failed to load image {e.__class__.__name__}")
         elif self._url:
             self.text = self._url
         return self
@@ -113,19 +113,19 @@ class RedditInterface:
             try:
                 self.sub = await self.reddit.subreddit(subreddit)
                 self.cache = [post async for post in self.sub.top(time_filter=self.time, limit=num)]
-                logger.info("The subreddit {} was set for reddit.interface".format(subreddit))
+                logger.info(f"The subreddit {subreddit} was set for reddit.interface")
                 self.error_response = None
             except prawcore.exceptions.Redirect:
-                logger.warning("Requested subreddit {} was not found".format(subreddit))
-                self.error_response = "{0} Subreddit \'{1}\' not found".format(Emotes.WTF, subreddit)
+                logger.warning(f"Requested subreddit {subreddit} was not found")
+                self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' not found"
             except prawcore.exceptions.NotFound:
-                logger.warning("Requested subreddit {} is banned".format(subreddit))
-                self.error_response = "{0} Subreddit \'{1}\' banned".format(Emotes.WTF, subreddit)
+                logger.warning(f"Requested subreddit {subreddit} is banned")
+                self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' banned"
             except prawcore.exceptions.Forbidden:
-                logger.warning("Requested subreddit {} is set to private".format(subreddit))
-                self.error_response = "{0} Subreddit \'{1}\' private".format(Emotes.WTF, subreddit)
+                logger.warning(f"Requested subreddit {subreddit} is set to private")
+                self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' private"
             except prawcore.AsyncPrawcoreException as e:
-                logger.error("Failure getting subreddit <{0}>: {1}".format(subreddit, e.__class__.__name__))
+                logger.error(f"Failure getting subreddit <{subreddit}>: {e.__class__.__name__}")
                 self.error_response = "Unknown error, please try again later"
 
             random.shuffle(self.cache)
@@ -147,8 +147,8 @@ class RedditInterface:
         try:
             subm = self.cache.pop()
         except IndexError:
-            logger.warning("The subreddit {} ran out of posts".format(self.sub))
-            return Post("Whoops, you ran out of posts! Try a different sub {0}".format(Emotes.CONFUSED))
+            logger.warning(f"The subreddit {self.sub} ran out of posts")
+            return Post(f"Whoops, you ran out of posts! Try a different sub {Emotes.CONFUSED}")
         return await Post("**" + subm.title + "**\t*(r/" + subm.subreddit.display_name + ")*\n" +
                           (subm.selftext if subm.is_self else ""),
                           None if subm.is_self else subm.url).load_img()

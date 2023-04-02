@@ -72,9 +72,8 @@ class Misc(commands.Cog):
                                })
             response = requests.request("POST", url, headers=headers, data=data)
             if response.status_code != requests.codes.ok:
-                logger.error("{0} AI request failed: {1}".format(response.status_code, response.content))
-                msg.reply(
-                    "Uh-oh! I'm having trouble at the moment, please try again later {0}".format(Emotes.CONFUSED))
+                logger.error(f"AI Error {response.status_code}: {response.content}")
+                msg.reply(f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CONFUSED}")
 
             text = json.loads(response.content.decode('utf-8'))
             await msg.reply(text['generated_text'])
@@ -90,8 +89,8 @@ class Help_Nav(discord.ui.View):
         self.index = self.index % len(self.pages)
         page = self.pages[self.index]
 
-        compass = "|".join([" {0} ".format(page.qualified_name) if page != self.pages[self.index]
-                            else "** {0} **".format(page.qualified_name) for page in self.pages[1:]]) + "\n"
+        compass = "|".join([f" {page.qualified_name} " if page != self.pages[self.index]
+                            else f"** {page.qualified_name} **" for page in self.pages[1:]]) + "\n"
         if page == "Front":
             desc = compass + "\nNote: depending on your server settings and role permissions, " +\
                 "some of these commands may be hidden or disabled"

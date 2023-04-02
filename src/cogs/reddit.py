@@ -30,20 +30,19 @@ class Reddit(commands.Cog):
     async def subscribe_to_sub(self, ctx: discord.ApplicationContext, sub: str,
                                channel: discord.Option(discord.TextChannel, required=False)) -> None:
         if not channel:
-            channel = ctx.channel
+            channel: discord.TextChannel = ctx.channel
 
         if not await RedditInterface.valid_sub(sub):
-            logger.warning("Subreddit {} is not valid".format(sub), guild_id=ctx.guild_id)
-            await ctx.respond("The subreddit {0} is not available {1}".format(sub, Emotes.EVIL))
+            logger.warning(f"Subreddit {sub} is not valid", guild_id=ctx.guild_id)
+            await ctx.respond(f"The subreddit {sub} is not available {Emotes.EVIL}")
         elif (sub.lower(),) in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
-            logger.warning("Subreddit {} was already subscribed to".format(
-                sub), guild_id=ctx.guild_id, channel_id=channel.id)
-            await ctx.respond("This server is already subscribed to {0} {1}".format(sub.lower(), Emotes.SUPRISE))
+            logger.warning(f"Subreddit {sub} was already subscribed to", guild_id=ctx.guild_id, channel_id=channel.id)
+            await ctx.respond(f"This server is already subscribed to {sub} {Emotes.SUPRISE}")
         else:
-            logger.info("Subreddit {} got subscribed to".format(sub), guild_id=ctx.guild_id, channel_id=channel.id)
+            logger.info(f"Subreddit {sub} got subscribed to", guild_id=ctx.guild_id, channel_id=channel.id)
             db.single_SQL("INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
-                          (ctx.guild_id, sub, channel.id))
-            await ctx.respond("This server is now subscribed to {0} {1}".format(sub, Emotes.HUG))
+                          (ctx.guild_id, sub.lower(), channel.id))
+            await ctx.respond(f"This server is now subscribed to {sub} {Emotes.HUG}")
 
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
@@ -52,13 +51,13 @@ class Reddit(commands.Cog):
             await self.get_subs(ctx)
             return
         if (sub.lower(),) not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
-            logger.warning("Subreddit {} was never subscribed to initially".format(sub), guild_id=ctx.guild_id)
-            await ctx.respond("This server is not subscribed to r/{0} {1}".format(sub, Emotes.SUPRISE))
+            logger.warning(f"Subreddit {sub} was never subscribed to", guild_id=ctx.guild_id)
+            await ctx.respond(f"This server is not subscribed to r/{sub} {Emotes.SUPRISE}")
         else:
-            logger.info("Subreddit {} was unsubscribed from".format(sub),
+            logger.info(f"Subreddit {sub} was unsubscribed from",
                         guild_id=ctx.guild_id, channel_id=ctx.channel_id)
             db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub))
-            await ctx.respond("This server is now unsubscribed from {0} {1}".format(sub, Emotes.SNEAKY))
+            await ctx.respond(f"This server is now unsubscribed from {sub} {Emotes.SNEAKY}")
 
     @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
     async def get_subs(self, ctx: discord.ApplicationContext) -> None:
@@ -83,8 +82,8 @@ class Reddit(commands.Cog):
         logger.info("Starting daily reddit loop")
         subs = db.single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
-            logger.info("Attempting to send reddit daily post <subreddit: {0}>".format(
-                entry[1]), guild_id=entry[0], channel_id=entry[2])
+            logger.info(f"Attempting to send reddit daily post <subreddit: {entry[1]}>",
+                        guild_id=entry[0], channel_id=entry[2])
             try:
                 post = await RedditInterface.single_post(entry[1], "day")
                 await (await self.bot.fetch_channel(entry[2])).send("__Daily post__\n" +

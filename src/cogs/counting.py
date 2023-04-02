@@ -15,7 +15,7 @@ class Counting(commands.Cog):
         self.lock = asyncio.Lock()
 
     @commands.Cog.listener("on_message")
-    async def count(self, msg):
+    async def count(self, msg: discord.Message):
         """
         Triggered on all messages, used to check for counting game
 
@@ -47,21 +47,19 @@ class Counting(commands.Cog):
         logger.info("fail_role set")
         db.single_SQL("UPDATE Guilds SET FailRoleID=%s WHERE ID=%s",
                       (role.id, ctx.guild_id))
-        await ctx.respond("The fail role is set to {0} {1}"
-                          .format(role.mention, Emotes.DRINKING), ephemeral=True)
+        await ctx.respond(f"The fail role is set to {role.mention} {Emotes.DRINKING}", ephemeral=True)
 
     @commands.slash_command(name='set_counting_channel', description="Sets the channel for the counting game")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_counting_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel) -> None:
         logger.info("counting_channel set")
         db.single_SQL("UPDATE Guilds SET CountingChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
-        await ctx.respond("Counting channel set to {0} {1}"
-                          .format(channel.mention, Emotes.DRINKING), ephemeral=True)
+        await ctx.respond(f"Counting channel set to {channel.mention} {Emotes.DRINKING}", ephemeral=True)
 
     @commands.slash_command(name='get_highscore', description="Shows you the highest count your server has reached")
     async def get_highscore(self, ctx: discord.ApplicationContext) -> None:
         highscore = db.single_SQL("SELECT HighScoreCounting FROM Guilds WHERE ID = %s", (ctx.guild.id,))
-        await ctx.respond("Your server highscore is {0}! {1}".format(highscore[0][0], Emotes.WHOA))
+        await ctx.respond(f"Your server highscore is {highscore[0][0]}! {Emotes.WHOA}")
 
     @staticmethod
     async def clear_fail_role() -> None:
@@ -87,7 +85,7 @@ class Counting(commands.Cog):
         """
         db.single_SQL("UPDATE Guilds SET CurrentCount=0, LastCounterID=NULL WHERE ID=%s", (msg.guild.id,))
         await msg.add_reaction(Emotes.CRYING)
-        await msg.channel.send("Counting Failed {0} {1}".format(Emotes.CRYING, err_txt))
+        await msg.channel.send(f"Counting Failed {Emotes.CRYING} {err_txt}")
         if roleID:
             try:
                 await msg.author.add_roles(msg.guild.get_role(roleID))
