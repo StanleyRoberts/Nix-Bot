@@ -24,7 +24,7 @@ class Logger(object):
 
     def set_priority(self, priority: str):
         self.print_level = 0
-        self.info("Logging level set to {0}".format(priority))
+        self.info(f"Logging level set to {priority}")
         self.print_level = Priority[priority].value
 
     def set_bot(self, discord_bot):

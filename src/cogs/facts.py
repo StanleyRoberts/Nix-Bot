@@ -37,7 +37,7 @@ class Facts(commands.Cog):
         if not channel:
             channel = ctx.channel
         db.single_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
-        await ctx.respond("Facts channel set to {0} {1}".format(channel.mention, Emotes.DRINKING), ephemeral=True)
+        await ctx.respond(f"Facts channel set to {channel.mention} {Emotes.DRINKING}", ephemeral=True)
         logger.debug("Fact channel set", member_id=ctx.user.id, channel_id=channel.id)
 
     @commands.slash_command(name='stop_facts',
@@ -46,7 +46,7 @@ class Facts(commands.Cog):
     async def toggle_facts(self, ctx: discord.ApplicationContext) -> None:
         db.single_SQL(
             "UPDATE Guilds SET FactChannelID=NULL WHERE ID=%s", (ctx.guild_id,))
-        await ctx.respond("Stopping daily facts {0}".format(Emotes.NOEMOTION), ephemeral=True)
+        await ctx.respond(f"Stopping daily facts {Emotes.NOEMOTION}", ephemeral=True)
         logger.debug("Fact channel unset", member_id=ctx.user.id, guild_id=ctx.guild_id)
 
     @tasks.loop(time=TIME)
@@ -78,14 +78,15 @@ class Facts(commands.Cog):
         Returns:
             string: Random fact
         """
-        api_url = 'https://api.api-ninjas.com/v1/facts?limit={}'.format(1)
+        api_url = 'https://api.api-ninjas.com/v1/facts?limit=1'
         response = requests.get(api_url, headers={'X-Api-Key': NINJA_API_KEY})
         cjson = json.loads(response.text)
         if response.status_code == requests.codes.ok:
             return cjson[0]["fact"]
         else:
-            logger.error("{0} Error: {1} - Fact request failed".format(response.status_code, cjson["message"]))
-            raise HttpError("{0} Error: {1}".format(response.status_code, cjson["message"]))
+            err = f"Fact Error {response.status_code}: {cjson['message']}"
+            logger.error(err)
+            raise HttpError(err)
 
 
 def setup(bot: discord.Bot) -> None:

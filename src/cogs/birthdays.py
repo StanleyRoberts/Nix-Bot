@@ -19,7 +19,7 @@ class Birthdays(commands.Cog):
     @discord.commands.default_permissions(manage_guild=True)
     async def set_counting_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel) -> None:
         db.single_SQL("UPDATE Guilds SET BirthdayChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
-        await ctx.respond("Birthday channel set to {0} {1}".format(channel.mention, Emotes.DRINKING), ephemeral=True)
+        await ctx.respond(f"Birthday channel set to {channel.mention} {Emotes.DRINKING}", ephemeral=True)
         logger.info("Counting channel set", guild_id=ctx.guild_id, channel_id=channel.id)
 
     @commands.slash_command(name='birthday', description="Set your birthday")
@@ -32,8 +32,7 @@ class Birthdays(commands.Cog):
         db.single_SQL("INSERT INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s) ON CONFLICT " +
                       "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
                       (ctx.guild.id, ctx.author.id, month + str(day), month + str(day)))
-        await ctx.respond(ctx.author.mention + " your birthday is set to {0} {1} {2}"
-                          .format(day, month, Emotes.UWU))
+        await ctx.respond(f"{ctx.author.mention} your birthday is set to {day} {month} {Emotes.UWU}")
         logger.info("Birthday set", member_id=ctx.author.id)
 
     @commands.slash_command(name='show_birthdays', description="Shows all tracked birthdays for the server")
@@ -64,7 +63,7 @@ class Birthdays(commands.Cog):
                 try:
                     await (await self.bot.fetch_channel(guild[0]))\
                         .send("Happy Birthday to: " + users +
-                              "!\nHope you have a brilliant day {0}".format(Emotes.HEART))
+                              f"!\nHope you have a brilliant day {Emotes.HEART}")
                 except discord.errors.Forbidden:
                     logger.warning("Failed to send birthday message", channel_id=guild[0])
                     # silently fail if no perms, TODO setup logging channel
