@@ -4,7 +4,7 @@ from discord.ext import commands, tasks
 import datetime as dt
 
 import helpers.database as db
-from helpers.style import Emotes, TIME
+from helpers.style import Emotes, Colours, TIME
 from helpers.logger import Logger
 
 logger = Logger()
@@ -44,7 +44,7 @@ class Birthdays(commands.Cog):
             out_str = "\n".join([(await self.bot.fetch_user(user[0])).mention + " : " + user[1] for user in vals])
         else:
             out_str = "No users have entered their birthday yet! Get started with " + self.set_birthday.mention
-        embed = discord.Embed(title="Birthday List", description=out_str)
+        embed = discord.Embed(title="Birthday List", description=out_str, color=Colours.PRIMARY)
         await ctx.respond(embed=embed)
 
     @tasks.loop(time=TIME)  # 1 behind curr time
