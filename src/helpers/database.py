@@ -67,6 +67,11 @@ def populate() -> None:
 
     cur.execute("CREATE TABLE Subreddits(GuildID BIGINT, subreddit TEXT, " +
                 "SubredditChannelID BIGINT, PRIMARY KEY(GuildID, subreddit));")
+    # TODO GuildID should be a foreign key (needs to be adjusted in live db too)
+
+    cur.execute("CREATE TABLE ReactMessages(GuildID BIGINT, MessageID BIGINT, RoleID BIGINT, EmojiID BIGINT " +
+                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID)), PRIMARY KEY (GuildID, MessageID, RoleID, EmojiID)")
+
     con.commit()
     cur.close()
     con.close()
