@@ -30,35 +30,35 @@ class Logger(object):
     def set_bot(self, discord_bot):
         self.command_bot = discord_bot
 
-    def debug(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
+    def debug(self, message: str, guild_id: int = 0, member_id: int = 0, channel_id: int = 0):
         try:
             call_class = inspect.stack()[1][0].f_locals["self"].__class__.__name__
         except KeyError:
             call_class = "No class"
         self._print_log(message, Priority.DEBUG, guild_id, member_id, channel_id, call_class)
 
-    def info(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
+    def info(self, message: str, guild_id: int = 0, member_id: int = 0, channel_id: int = 0):
         try:
             call_class = inspect.stack()[1][0].f_locals["self"].__class__.__name__
         except KeyError:
             call_class = "No class"
         self._print_log(message, Priority.INFO, guild_id, member_id, channel_id, call_class)
 
-    def warning(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
+    def warning(self, message: str, guild_id: int = 0, member_id: int = 0, channel_id: int = 0):
         try:
             call_class = inspect.stack()[1][0].f_locals["self"].__class__.__name__
         except KeyError:
             call_class = "No class"
         self._print_log(message, Priority.WARNING, guild_id, member_id, channel_id, call_class)
 
-    def error(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
+    def error(self, message: str, guild_id: int = 0, member_id: int = 0, channel_id: int = 0):
         try:
             call_class = inspect.stack()[1][0].f_locals["self"].__class__.__name__
         except KeyError:
             call_class = "No class"
         self._print_log(message, Priority.ERROR, guild_id, member_id, channel_id, call_class)
 
-    def critical(self, message: str, guild_id: int = None, member_id: int = None, channel_id: int = None):
+    def critical(self, message: str, guild_id: int = 0, member_id: int = 0, channel_id: int = 0):
         try:
             call_class = inspect.stack()[1][0].f_locals["self"].__class__.__name__
         except KeyError:

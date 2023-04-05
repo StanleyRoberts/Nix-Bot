@@ -14,7 +14,7 @@ class Admin(commands.Cog):
     @commands.slash_command(
         name="send_react_message",
         description="sends the given message to the given channel. " +
-        "users who react with the given emoji will be assigned the givn role")
+        "users who react with the given emoji will be assigned the given role")
     @discord.commands.default_permissions(manage_guild=True)
     async def greeting_role(self, ctx: discord.ApplicationContext,
                             text: str,

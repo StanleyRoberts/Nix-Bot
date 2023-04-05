@@ -69,7 +69,8 @@ async def on_member_remove(member: discord.Member) -> None:
 
 @bot.event
 async def on_ready() -> None:
-    logger.info('Logged in', member_id=bot.user.id)
+    if bot.user is not None:
+        logger.info('Logged in', member_id=bot.user.id)
 
 
 def main():

@@ -1,4 +1,6 @@
 import psycopg2
+from psycopg2.errors import UniqueViolation
+import typing
 
 from helpers.env import DATABASE_URL
 from helpers.logger import Logger
@@ -10,7 +12,7 @@ class KeyViolation(Exception):
     pass
 
 
-def single_SQL(query: str, values: tuple[str, ...] = None) -> list[tuple[any, ...]]:
+def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> typing.Optional[typing.Any]:
     """
     Opens a connection, submits a single SQL query to the database then cleans up
 
@@ -30,8 +32,8 @@ def single_SQL(query: str, values: tuple[str, ...] = None) -> list[tuple[any, ..
         logger.critical("Failed to connect to database")
     cur = con.cursor()
     try:
-        cur.execute(query, values)
-    except psycopg2.errors.UniqueViolation:
+        cur.execute(query, values if values != (None,) else None)
+    except UniqueViolation:
         logger.error("SQL Key contraint violated")
         raise KeyViolation("Key constraint violated")
     except psycopg2.Error as e:
