@@ -27,8 +27,9 @@ class Trivia(commands.Cog):
         view = TriviaGame({ctx.user.id: 0}, ctx.channel, difficulty)
 
         def remove_view():
+            logger.debug("View timeout detected")
             self.aktive_views.remove(view)
-            view.on_timeout = remove_view
+        view.on_timeout = remove_view
         self.aktive_views.append(view)
         await ctx.respond(embed=embed, view=view)
         await view.send_question()
@@ -69,10 +70,9 @@ class TriviaGame(discord.ui.View):
         if len(self.trivias) == 0:
             await self.get_trivia(self.difficulty)
         trivia = self.trivias.pop()
-        logger.debug(str(trivia))
         self.question, self.answer, self.category = trivia
-        self.message = await self.channel.send("Hint: {}, \nQuestion: {}"
-                                               .format(self.category, self.question))
+        logger.debug("Trivia question being send Question: {}, Answer: {}".format(self.question, self.answer))
+        self.message = await self.channel.send("Hint: {} \nQuestion: {}".format(self.category, self.question))
         await self.message.add_reaction('⏩')
 
     async def skip_question(self, event: discord.RawReactionActionEvent):
@@ -85,7 +85,7 @@ class TriviaGame(discord.ui.View):
         """
         logger.debug("Question skipped detected")
         if event.message_id == self.message.id:
-            emoji = await string_to_emoji('⏩')
+            emoji = string_to_emoji('⏩')
             logger.debug("The players are: {} with the length of {}".format(
                 self.players, len(self.players)))
             if event.emoji == emoji and (

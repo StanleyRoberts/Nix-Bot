@@ -1,6 +1,6 @@
 import datetime
 import discord
-
+from discord.partial_emoji import PartialEmoji
 
 TIME = datetime.time(hour=7)
 
@@ -39,3 +39,7 @@ class Emotes():
     WHOA = "<:NixWhoa:1026494032999895161>"  # highscore message, Trivia correct guess
     WTF = "<:NixWTF:1026494030407806986>"  # set sub failure for reddit browser
     YUM = "<:NixYum:1091877303740551288>"  # reddit browser new post button
+
+
+def string_to_emoji(emoji: str) -> PartialEmoji:
+    return PartialEmoji.from_str(emoji)
