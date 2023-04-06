@@ -146,7 +146,8 @@ class TriviaGame(discord.ui.View):
             logger.debug("User is being added to self.players with one point",
                          guild_id=msg.guild.id, channel_id=msg.channel.id)
             self.players.update({msg.author.id: 1})
-        await msg.reply("The correct answer was: '{0}' {1}".format(self.answer, Emotes.HAPPY))
+        await msg.reply(f"You got the answer! ({self.answer}) " +
+                        f"You are now at {self.players[msg.author.id]} points {Emotes.HAPPY}")
         if self.players[msg.author.id] >= MAX_POINTS:
             logger.debug("User has won",
                          guild_id=msg.guild.id, channel_id=msg.channel.id)
