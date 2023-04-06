@@ -85,7 +85,7 @@ class TriviaGame(discord.ui.View):
         self.message = await self.channel.send(f"**New Question** {Emotes.SNEAKY}\n" +
                                                f"Question: {self.question}\nHint: {self.category}")
         await self.message.add_reaction(SKIP)
-        # \/ this is a dirty fix, this class should not be a view at all
+        # \/ this is a dirty fix, this class should not be a view at all TODO
         self._View__timeout_expiry = time.monotonic() + self.timeout
 
     async def skip_question(self, reaction: discord.Reaction, user: discord.User):
@@ -163,7 +163,8 @@ class TriviaGame(discord.ui.View):
                          guild_id=msg.guild.id, channel_id=msg.channel.id)
             await self.channel.send(f"Congratulations! {msg.author.mention} has won with " +
                                     f"{MAX_POINTS} points! {Emotes.TEEHEE}")
-            self.stop()
+
+            self._View__timeout_expiry = time.monotonic() + 1  # TODO hotfix, again this class should not be a view
         else:
             await self._send_question()
 
