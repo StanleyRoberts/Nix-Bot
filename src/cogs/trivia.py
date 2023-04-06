@@ -50,10 +50,10 @@ class Trivia(commands.Cog):
             await self.active_views[msg.guild.id].check_guess(msg)
 
     @commands.Cog.listener("on_reaction_add")
-    async def skip(self, event: discord.RawReactionActionEvent):
-        logger.debug("reaction_add detected", member_id=event.user_id)
-        if event.user_id != self.bot.user.id and event.guild_id in self.active_views.keys():
-            await self.active_views[event.guild_id].skip_question(event)
+    async def skip(self, reaction: discord.Reaction, user: discord.User):
+        logger.debug("reaction_add detected", member_id=user.id)
+        if user.id != self.bot.user.id and reaction.message.guild.id in self.active_views.keys():
+            await self.active_views[reaction.message.guild.id].skip_question(reaction, user)
 
 
 class TriviaGame(discord.ui.View):
@@ -81,35 +81,42 @@ class TriviaGame(discord.ui.View):
         self.question, self.answer, self.category = await self._interface.get_trivia()
         logger.debug(f"sending trivia, q: {self.question}, a: {self.answer}",
                      guild_id=self.channel.guild.id, channel_id=self.channel.id)
-        self.message = await self.channel.send("Hint: {} \nQuestion: {}".format(self.category, self.question))
+        self.message = await self.channel.send(f"**New Question** {Emotes.SNEAKY}\n" +
+                                               f"Question: {self.question}\nHint: {self.category}")
         await self.message.add_reaction(SKIP)
 
-    async def skip_question(self, event: discord.RawReactionActionEvent):
+    async def skip_question(self, reaction: discord.Reaction, user: discord.User):
         """Skips the current question if the event matches conditions
 
         Skips the current trivia question and displays the correct answer if the event message_id
         matches the most recent trivia message AND the event emoji matches the skip emoji.
         A user can only skip if there are fewer than 2 players, or they are in the game
 
-                Args:
-                event (discord.RawReactionActionEvent) : Event of a user adding a reaction
-
+        Args:
+            reaction (discord.Reaction): Reaction that triggered skip event
+            user (discord.User): User that triggered skip event
         """
-        if event.message_id == self.message.id:
+        if reaction.message.id == self.message.id:
             logger.debug(f"question skipped, players: {self.players}",
-                         guild_id=event.guild_id, channel_id=event.channel_id)
-            if (event.emoji == string_to_emoji(SKIP)) and\
+                         guild_id=reaction.message.guild.id, channel_id=reaction.message.channel.id)
+            emoji = reaction.emoji
+            if type(emoji) == discord.Emoji:
+                logger.error("Unable to compare discord.Emoji to locally defined emoji")
+                return
+            comp = emoji == string_to_emoji(SKIP) if type(emoji) == discord.PartialEmoji else (
+                emoji == SKIP)
+            if (comp) and\
                 ((len(self.players) <= 1) or
-                 (event.member.id in self.players.keys())):
+                 (user.id in self.players.keys())):
                 await self.channel.send(f"The answer was: {self.answer} {Emotes.SUNGLASSES}")
                 await self._send_question()
                 logger.debug("Question successfully skipped",
-                             guild_id=event.guild_id,
-                             channel_id=event.channel_id)
+                             guild_id=reaction.message.guild.id,
+                             channel_id=reaction.message.channel.id)
             else:
                 logger.debug("Question skip failed",
-                             guild_id=event.guild_id,
-                             channel_id=event.channel_id)
+                             guild_id=reaction.message.guild.id,
+                             channel_id=reaction.message.channel.id)
 
     async def check_guess(self, msg: discord.Message):
         """Checks if a guess is correct
@@ -124,7 +131,7 @@ class TriviaGame(discord.ui.View):
                     logger.debug("digit in trivia detected",
                                  guild_id=msg.guild.id, channel_id=msg.channel.id)
                     await self._handle_correct(msg)
-                elif get_close_matches(self.answer.lower(), [msg.content.lower()]) != []:
+                elif get_close_matches(self.answer.lower(), [msg.content.lower()], cutoff=0.8) != []:
                     await self._handle_correct(msg)
                 else:
                     await msg.add_reaction(Emotes.BRUH)
@@ -135,7 +142,7 @@ class TriviaGame(discord.ui.View):
         On recieving a correct answer: increment the users points or,
         if they are not in the game, add them to the game with a single point
         """
-        logger.info(f"Correct trivia answer {self.answer} (true={msg.content})",
+        logger.info(f"Correct trivia answer: {msg.content} (true={self.answer})",
                     guild_id=msg.guild.id, channel_id=msg.channel.id)
         await msg.add_reaction(Emotes.WHOA)
         if msg.author.id in self.players.keys():
