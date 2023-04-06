@@ -1,3 +1,4 @@
+import time
 import discord
 import asyncio
 from difflib import get_close_matches
@@ -84,6 +85,8 @@ class TriviaGame(discord.ui.View):
         self.message = await self.channel.send(f"**New Question** {Emotes.SNEAKY}\n" +
                                                f"Question: {self.question}\nHint: {self.category}")
         await self.message.add_reaction(SKIP)
+        # \/ this is a dirty fix, this class should not be a view at all
+        self._View__timeout_expiry = time.monotonic() + self.timeout
 
     async def skip_question(self, reaction: discord.Reaction, user: discord.User):
         """Skips the current question if the event matches conditions
