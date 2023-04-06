@@ -10,7 +10,7 @@ logger = Logger()
 
 
 class Counting(commands.Cog):
-    def __init__(self, bot: discord.ApplicationContext) -> None:
+    def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
         self.lock = asyncio.Lock()
 
