@@ -164,7 +164,7 @@ class TriviaGame(discord.ui.View):
             await self.channel.send(f"Congratulations! {msg.author.mention} has won with " +
                                     f"{MAX_POINTS} points! {Emotes.TEEHEE}")
 
-            self._View__timeout_expiry = time.monotonic() + 1  # TODO hotfix, again this class should not be a view
+            self.on_timeout()
         else:
             await self._send_question()
 
