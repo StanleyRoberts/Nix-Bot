@@ -31,7 +31,7 @@ class Emotes():
     HUG = "<:NixHug:1033423234370125904>"  # reddit /subscribe success, reddit browser change subreddit button
     NOEMOTION = "<:NixNoEmotion:1026494031670300773>"  # stopped daily facts message
     SNEAKY = "<:NixSneaky:1033423327320080485>"  # unsubbed from sub message
-    STARE = "<:NixStare:1091877310052962344>"  # none
+    STARE = "<:NixStare:1091877310052962344>"  # existing trivia game
     SUNGLASSES = "<:NixSunglasses:1091877306793988166>"  # trivia answer after skip
     SUPRISE = "<:NixSuprise:1033423188937416704>"  # already subbed in /subscribe, not subscribed in /unsubscribe
     TEEHEE = "<:NixTeeHee:1091877308756930590>"  # Trivia show winner
