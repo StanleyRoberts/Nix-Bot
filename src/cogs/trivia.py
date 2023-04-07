@@ -6,12 +6,11 @@ import typing
 from discord.ext import commands
 
 from helpers.logger import Logger
-from helpers.style import Emotes, string_to_emoji, Colours
+from helpers.style import Emotes, Colours
 from trivia.interface import TriviaInterface
 
 logger = Logger()
 
-SKIP = '⏩'  # emoji used for skip question
 MAX_POINTS = 5  # score required to win
 
 
@@ -27,99 +26,83 @@ class Trivia(commands.Cog):
                          difficulty=discord.Option(str, default="random", required=False,
                                                    choices=["1", "2", "3", "4",
                                                             "5", "6", "8", "10"])):
-        if ctx.guild_id in self.active_views.keys():
-            channel = self.active_views[ctx.guild_id].channel
-            await ctx.respond(f"Uh oh! {Emotes.STARE} There is already an active trivia game in {channel.mention}")
+        if ctx.channel_id in self.active_views.keys():
+            await ctx.respond(f"Uh oh! {Emotes.STARE} There is already an active trivia game in this channel")
+            # TODO reprint current question
             return
-        view = TriviaGame({ctx.user.id: 0}, ctx.channel, difficulty)
+
+        interface = TriviaInterface(difficulty)
 
         def remove_view():
             logger.debug("View timeout detected")
             try:
-                self.active_views.pop(view.channel.guild.id)
+                self.active_views.pop(view.message.channel.id)
             except KeyError:
-                logger.error("tried to remove timed out view twice", guild_id=view.channel.guild.id)
-        view.on_timeout = remove_view
-        self.active_views.update({ctx.guild_id: view})
+                logger.error("tried to remove timed out view twice", guild_id=view.message.channel.id)
+
+        view = await TriviaGame({ctx.user.id: 0}, interface, remove_view).start()
+
+        self.active_views.update({ctx.channel_id: view})
         await ctx.respond(embed=discord.Embed(title="You have started a game of Trivia", colour=Colours.PRIMARY,
-                                              description=f"Difficulty: {difficulty}"), view=view)
-        await view.start()
+                                              description=f"Difficulty: {difficulty}"))
+        await ctx.send(view.get_message(), view=view)
 
     @commands.Cog.listener("on_message")
     async def on_guess(self, msg: discord.Message):
-        if msg.author.id != self.bot.user.id and msg.guild.id in self.active_views.keys():
-            await self.active_views[msg.guild.id].check_guess(msg)
+        if msg.author.id != self.bot.user.id and msg.channel.id in self.active_views.keys():
+            await self.active_views[msg.channel.id].check_guess(msg)
 
-    @commands.Cog.listener("on_reaction_add")
-    async def skip(self, reaction: discord.Reaction, user: discord.User):
-        logger.debug("reaction_add detected", member_id=user.id)
-        if user.id != self.bot.user.id and reaction.message.guild.id in self.active_views.keys():
-            await self.active_views[reaction.message.guild.id].skip_question(reaction, user)
+    # TODO add stop game command
 
 
 class TriviaGame(discord.ui.View):
     """View for the trivia game
             Args:
                 players (dict[int, int]): the current players ids, mapped to their score
-                channel (discord.TextChannel): The channel in which the trivia is being held
+                difficulty (str): _description_
+                interface (TriviaInterface): _description_
     """
 
-    def __init__(self, players: dict[int, int], channel: discord.TextChannel, difficulty: str):
+    def __init__(self, players: dict[int, int], interface: TriviaInterface, callback):
         super().__init__(timeout=300)
         self.players = players
-        self.channel = channel
         self.lock = asyncio.Lock()
-        self._interface = TriviaInterface(difficulty)
-        self.message = None
+        self._interface = interface
         self.question, self.answer, self.category = None, None, None
 
+        def timeout():
+            callback()
+            self.stop()
+        self.on_timeout = timeout  # TODO timeout needs to be tested
+
     async def start(self):
-        await self._send_question()
+        await self._new_question()
+        return self
 
-    async def _send_question(self):
-        """Sends a new trivia question
-        """
+    def get_message(self) -> str:
+        return f"**New Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: {self.category}"
+
+    async def _new_question(self):
         self.question, self.answer, self.category = await self._interface.get_trivia()
-        logger.debug(f"sending trivia, q: {self.question}, a: {self.answer}",
-                     guild_id=self.channel.guild.id, channel_id=self.channel.id)
-        self.message = await self.channel.send(f"**New Question** {Emotes.SNEAKY}\n" +
-                                               f"Question: {self.question}\nHint: {self.category}")
-        await self.message.add_reaction(SKIP)
-        # \/ this is a dirty fix, this class should not be a view at all TODO
-        self._View__timeout_expiry = time.monotonic() + self.timeout
+        logger.debug(f"sending trivia, q: {self.question}, a: {self.answer}")
 
-    async def skip_question(self, reaction: discord.Reaction, user: discord.User):
-        """Skips the current question if the event matches conditions
-
-        Skips the current trivia question and displays the correct answer if the event message_id
-        matches the most recent trivia message AND the event emoji matches the skip emoji.
-        A user can only skip if there are fewer than 2 players, or they are in the game
-
-        Args:
-            reaction (discord.Reaction): Reaction that triggered skip event
-            user (discord.User): User that triggered skip event
-        """
-        if reaction.message.id == self.message.id:
-            logger.debug(f"question skipped, players: {self.players}",
-                         guild_id=reaction.message.guild.id, channel_id=reaction.message.channel.id)
-            emoji = reaction.emoji
-            if type(emoji) == discord.Emoji:
-                logger.error("Unable to compare discord.Emoji to locally defined emoji")
-                return
-            comp = emoji == string_to_emoji(SKIP) if type(emoji) == discord.PartialEmoji else (
-                emoji == SKIP)
-            if (comp) and\
-                ((len(self.players) <= 1) or
-                 (user.id in self.players.keys())):
-                await self.channel.send(f"The answer was: {self.answer} {Emotes.SUNGLASSES}")
-                await self._send_question()
-                logger.debug("Question successfully skipped",
-                             guild_id=reaction.message.guild.id,
-                             channel_id=reaction.message.channel.id)
-            else:
-                logger.debug("Question skip failed",
-                             guild_id=reaction.message.guild.id,
-                             channel_id=reaction.message.channel.id)
+    @discord.ui.button(label="Skip", style=discord.ButtonStyle.secondary,
+                       emoji='⏩')
+    async def change_sub_callback(self, _, interaction: discord.Interaction):
+        logger.debug(f"question skipped, players: {self.players}",
+                     guild_id=interaction.guild_id, channel_id=interaction.channel_id)
+        if ((len(self.players) <= 1) or
+                (interaction.user.id in self.players.keys())):
+            await interaction.response.send_message(f"The answer was: {self.answer} {Emotes.SUNGLASSES}")
+            await self._new_question()
+            await interaction.channel.send(self.get_message(), view=self)
+            logger.debug("Question successfully skipped",
+                         guild_id=interaction.guild_id,
+                         channel_id=interaction.channel_id)
+        else:
+            logger.debug("Question skip failed",
+                         guild_id=interaction.guild_id,
+                         channel_id=interaction.channel_id)
 
     async def check_guess(self, msg: discord.Message):
         """Checks if a guess is correct
@@ -127,7 +110,7 @@ class TriviaGame(discord.ui.View):
         If the guess is a number it has to be exact, otherwise any (spellingwise) close guesses will count too
         """
         async with self.lock:
-            if msg.channel.id == self.channel.id:
+            if msg.channel.id == self.message.channel.id:
                 logger.debug("trivia answer recieved",
                              guild_id=msg.guild.id, channel_id=msg.channel.id)
                 if msg.content.isdigit() and msg.content is self.answer:
@@ -140,33 +123,32 @@ class TriviaGame(discord.ui.View):
                     await msg.add_reaction(Emotes.BRUH)
 
     async def _handle_correct(self, msg: discord.Message):
-        """Manages the point for the user with the correct answer
+        """Manages point assignments for correct answer
 
-        On recieving a correct answer: increment the users points or,
-        if they are not in the game, add them to the game with a single point
+        On recieving a correct answer: increment the sending users points or,
+        if they are not in the game, add them to the game with a single point.
+        If user has won, display message and stop game.
         """
         logger.info(f"Correct trivia answer: {msg.content} (true={self.answer})",
                     guild_id=msg.guild.id, channel_id=msg.channel.id)
         await msg.add_reaction(Emotes.WHOA)
         if msg.author.id in self.players.keys():
-            logger.debug("User that is already in self.players has received another point",
-                         guild_id=msg.guild.id, channel_id=msg.channel.id)
             self.players[msg.author.id] += 1
         else:
-            logger.debug("User is being added to self.players with one point",
-                         guild_id=msg.guild.id, channel_id=msg.channel.id)
             self.players.update({msg.author.id: 1})
+
         await msg.reply(f"You got the answer! ({self.answer}) " +
                         f"You are now at {self.players[msg.author.id]} points {Emotes.HAPPY}")
+
         if self.players[msg.author.id] >= MAX_POINTS:
             logger.debug("User has won",
                          guild_id=msg.guild.id, channel_id=msg.channel.id)
-            await self.channel.send(f"Congratulations! {msg.author.mention} has won with " +
-                                    f"{MAX_POINTS} points! {Emotes.TEEHEE}")
-
+            await msg.reply(f"Congratulations! {msg.author.mention} has won with " +
+                            f"{MAX_POINTS} points! {Emotes.TEEHEE}")
             self.on_timeout()
         else:
-            await self._send_question()
+            await self._new_question()
+            await msg.channel.send(self.get_message(), view=self)
 
 
 def setup(bot: discord.Bot) -> None:
