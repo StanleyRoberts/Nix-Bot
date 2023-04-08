@@ -28,7 +28,9 @@ class Trivia(commands.Cog):
                                                             "5", "6", "8", "10"])):
         if ctx.channel_id in self.active_views.keys():
             await ctx.respond(f"Uh oh! {Emotes.STARE} There is already an active trivia game in this channel")
-            # TODO reprint current question
+            await ctx.respond(f"The current question is: {self.active_views[ctx.channel_id].question}" +
+                              f"\nThe current hint is: {self.active_views[ctx.channel_id].category}",
+                              view=self.active_views[ctx.channel_id])
             return
 
         interface = TriviaInterface(difficulty)
