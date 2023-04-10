@@ -28,8 +28,7 @@ class Trivia(commands.Cog):
                                                             "5", "6", "8", "10"])):
         if ctx.channel_id in self.active_views.keys():
             await ctx.respond(f"Uh oh! {Emotes.STARE} There is already an active trivia game in this channel")
-            await ctx.respond(f"The current question is: {self.active_views[ctx.channel_id].question}" +
-                              f"\nThe current hint is: {self.active_views[ctx.channel_id].category}",
+            await ctx.respond(self.active_views[ctx.channel_id].get_current_question(),
                               view=self.active_views[ctx.channel_id])
             return
 
@@ -42,19 +41,21 @@ class Trivia(commands.Cog):
             except KeyError:
                 logger.error("tried to remove timed out view twice", guild_id=view.message.channel.id)
 
-        view = await TriviaGame({ctx.user.id: 0}, interface, remove_view).start()
+        view = TriviaGame({ctx.user.id: 0}, interface, remove_view)
 
         self.active_views.update({ctx.channel_id: view})
         await ctx.respond(embed=discord.Embed(title="You have started a game of Trivia", colour=Colours.PRIMARY,
                                               description=f"Difficulty: {difficulty}"))
-        await ctx.send(view.get_message(), view=view)
+        await ctx.send(await view.get_new_question(), view=view)
 
     @commands.Cog.listener("on_message")
     async def on_guess(self, msg: discord.Message):
         if msg.author.id != self.bot.user.id and msg.channel.id in self.active_views.keys():
             await self.active_views[msg.channel.id].check_guess(msg)
 
-    # TODO add stop game command
+    @commands.slash_command(name='stop_trivia', description='stops the in-progress trivia game in this channel')
+    async def stop_trivia(self, ctx: discord.ApplicationContext):
+        self.active_views[ctx.channel_id].on_timeout()
 
 
 class TriviaGame(discord.ui.View):
@@ -77,12 +78,12 @@ class TriviaGame(discord.ui.View):
             self.stop()
         self.on_timeout = timeout  # TODO timeout needs to be tested
 
-    async def start(self):
-        await self._new_question()
-        return self
-
-    def get_message(self) -> str:
+    async def get_new_question(self) -> str:
+        self._new_question()
         return f"**New Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: {self.category}"
+
+    def get_current_question(self) -> str:
+        return f"**Current Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: {self.category}"
 
     async def _new_question(self):
         self.question, self.answer, self.category = await self._interface.get_trivia()
@@ -96,8 +97,7 @@ class TriviaGame(discord.ui.View):
         if ((len(self.players) <= 1) or
                 (interaction.user.id in self.players.keys())):
             await interaction.response.send_message(f"The answer was: {self.answer} {Emotes.SUNGLASSES}")
-            await self._new_question()
-            await interaction.channel.send(self.get_message(), view=self)
+            await interaction.channel.send(await self.get_new_question(), view=self)
             logger.debug("Question successfully skipped",
                          guild_id=interaction.guild_id,
                          channel_id=interaction.channel_id)
@@ -149,8 +149,7 @@ class TriviaGame(discord.ui.View):
                             f"{MAX_POINTS} points! {Emotes.TEEHEE}")
             self.on_timeout()
         else:
-            await self._new_question()
-            await msg.channel.send(self.get_message(), view=self)
+            await msg.channel.send(await self.get_new_question(), view=self)
 
 
 def setup(bot: discord.Bot) -> None:
