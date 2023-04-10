@@ -53,7 +53,7 @@ class Admin(commands.Cog):
             msg.author.add_roles(msg.guild.get_role(val[0]))
 
     @commands.Cog.listener('on_raw_reaction_add')
-    async def assign_roles(self, event: discord.RawReactionActionEvent):
+    async def assign_react_role(self, event: discord.RawReactionActionEvent):
         vals = db.single_SQL("SELECT EmojiID, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
         for val in vals:
             if val[0] == event.emoji.id:
