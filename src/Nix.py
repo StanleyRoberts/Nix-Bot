@@ -76,6 +76,7 @@ async def on_ready() -> None:
 def main():
     if __debug__:
         db.populate()
+        bot.load_extension("cogs.debug")
         try:
             priority = Priority[sys.argv[1].upper()].name
             logger.set_priority(priority)
@@ -85,7 +86,8 @@ def main():
         logger.debug_mode = False
         logger.set_priority("WARNING")
 
-    cogs = [cog[:-3] for cog in listdir('./src/cogs') if cog[-3:] == ".py" and cog != "__init__.py"]
+    cogs = [cog[: -3] for cog in listdir('./src/cogs')
+            if cog[-3:] == ".py" and (cog not in ["__init__.py", "debug.py"])]
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
 

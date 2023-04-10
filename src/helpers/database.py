@@ -74,6 +74,9 @@ def populate() -> None:
     cur.execute("CREATE TABLE ReactMessages(GuildID BIGINT, MessageID BIGINT, RoleID BIGINT, EmojiID BIGINT " +
                 "FOREIGN KEY(GuildID) REFERENCES Guilds(ID)), PRIMARY KEY (GuildID, MessageID, RoleID, EmojiID)")
 
+    cur.execute("CREATE TABLE RoleChannel(GuildID BIGINT, RoleID BIGINT, ChannelID BIGINT, " +
+                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(ID, ChannelID, RoleID))")
+
     con.commit()
     cur.close()
     con.close()
