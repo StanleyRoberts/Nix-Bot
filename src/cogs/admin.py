@@ -8,8 +8,6 @@ logger = Logger()
 
 
 class Admin(commands.Cog):
-    def __init__(self, bot: discord.Bot) -> None:
-        self.bot = bot
 
     @commands.slash_command(
         name="send_react_message",
@@ -45,20 +43,21 @@ class Admin(commands.Cog):
     async def role_channel(self, ctx: discord.ApplicationContext,
                            channel: discord.TextChannel,
                            role: discord.Role):
+        # TODO this requires live db update
         db.single_SQL("INSERT INTO RoleMessages VALUES %s %s %s", (ctx.guild_id, role.id, channel.id))
 
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message):
         vals = db.single_SQL("SELECT RoleID FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
         for val in vals:
-            msg.author.add_roles(self.bot.get_guild(msg.guild.id).get_role(val[0]))
+            msg.author.add_roles(msg.guild.get_role(val[0]))
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def assign_roles(self, event: discord.RawReactionActionEvent):
         vals = db.single_SQL("SELECT EmojiID, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
         for val in vals:
             if val[0] == event.emoji.id:
-                event.member.add_roles(self.bot.get_guild(event.guild_id).get_role(vals[1]))
+                event.member.add_roles(event.member.guild.get_role(vals[1]))
 
 
 def setup(bot: discord.Bot) -> None:
