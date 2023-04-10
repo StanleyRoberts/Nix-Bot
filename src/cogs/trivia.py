@@ -21,13 +21,13 @@ class Trivia(commands.Cog):
         self.active_views: typing.Dict[int, TriviaGame] = {}
 
     @commands.slash_command(name='trivia',
-                            description="Start a game of Trivia where the first person to get 5 points wins")
+                            description="Start a game of Trivia. The first person to get 5 points wins")
     async def game_start(self, ctx: discord.ApplicationContext,
                          difficulty=discord.Option(str, default="random", required=False,
                                                    choices=["1", "2", "3", "4",
                                                             "5", "6", "8", "10"])):
         if ctx.channel_id in self.active_views.keys():
-            await ctx.respond(f"Uh oh! {Emotes.STARE} There is already an active trivia game in this channel")
+            await ctx.respond(f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel")
             await ctx.respond(self.active_views[ctx.channel_id].get_current_question(),
                               view=self.active_views[ctx.channel_id])
             return
@@ -35,17 +35,17 @@ class Trivia(commands.Cog):
         interface = TriviaInterface(difficulty)
 
         def remove_view():
-            logger.debug("View timeout detected")
+            logger.debug("TrivaGame view stopped")
             try:
                 self.active_views.pop(view.message.channel.id)
             except KeyError:
-                logger.error("tried to remove timed out view twice", guild_id=view.message.channel.id)
+                logger.error("tried to remove stopped view twice", guild_id=view.message.channel.id)
 
         view = TriviaGame({ctx.user.id: 0}, interface, remove_view)
 
         self.active_views.update({ctx.channel_id: view})
-        await ctx.respond(embed=discord.Embed(title="You have started a game of Trivia", colour=Colours.PRIMARY,
-                                              description=f"Difficulty: {difficulty}"))
+        await ctx.respond(embed=discord.Embed(title=f"{Emotes.UWU} You have started a game of Trivia",
+                                              colour=Colours.PRIMARY, description=f"Difficulty: {difficulty}"))
         await ctx.send(await view.get_new_question(), view=view)
 
     @commands.Cog.listener("on_message")
@@ -79,15 +79,25 @@ class TriviaGame(discord.ui.View):
         self.on_timeout = timeout  # TODO timeout needs to be tested
 
     async def get_new_question(self) -> str:
+        """Generates new question and returns it
+
+        Returns:
+            str: formatted string with the current question
+        """
         self._new_question()
         return f"**New Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: {self.category}"
 
     def get_current_question(self) -> str:
+        """Gets the current question
+
+        Returns:
+            str: formatted string with the current question
+        """
         return f"**Current Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: {self.category}"
 
     async def _new_question(self):
         self.question, self.answer, self.category = await self._interface.get_trivia()
-        logger.debug(f"sending trivia, q: {self.question}, a: {self.answer}")
+        logger.debug(f"generated trivia, q: {self.question}, a: {self.answer}")
 
     @discord.ui.button(label="Skip", style=discord.ButtonStyle.secondary,
                        emoji='⏩')
