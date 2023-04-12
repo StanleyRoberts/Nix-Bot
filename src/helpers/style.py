@@ -1,5 +1,7 @@
 import datetime
 import discord
+import re
+from emoji import UNICODE_EMOJI
 from discord.partial_emoji import PartialEmoji
 
 TIME = datetime.time(hour=7)
@@ -27,7 +29,7 @@ class Emotes():
     DRINKING = "<:NixDrinking:1026494037043187713>"  # set fail role, set bday/counting/fact channel
     EVIL = "<:NixEvil:1033423155034849340>"  # subreddit not available for /subscribe
     HAPPY = "<:NixHappy:1091877310875046009>"  # Trivia msg after correct guess
-    HEART = "<:NixHeart:1026494038825779331>"  # bday message
+    HEART = "<:NixHeart:1026494038825779331>"  # bday message, send_react_message success
     HUG = "<:NixHug:1033423234370125904>"  # reddit /subscribe success, reddit browser change subreddit button
     NOEMOTION = "<:NixNoEmotion:1026494031670300773>"  # stopped daily facts message
     SNEAKY = "<:NixSneaky:1033423327320080485>"  # unsubbed from sub message
@@ -37,9 +39,13 @@ class Emotes():
     TEEHEE = "<:NixTeeHee:1091877308756930590>"  # Trivia show winner
     UWU = "<:NixUwU:1026494034371420250>"  # birthday set message
     WHOA = "<:NixWhoa:1026494032999895161>"  # highscore message, Trivia correct guess
-    WTF = "<:NixWTF:1026494030407806986>"  # set sub failure for reddit browser
+    WTF = "<:NixWTF:1026494030407806986>"  # set sub failure for reddit browser, invalid emoji in send_react_success
     YUM = "<:NixYum:1091877303740551288>"  # reddit browser new post button
 
 
 def string_to_emoji(emoji: str) -> PartialEmoji:
-    return PartialEmoji.from_str(emoji)
+    if emoji in UNICODE_EMOJI or\
+            re.compile(r"<?(?P<animated>a)?:?(?P<name>\w+):(?P<id>[0-9]{13,20})>?").match(emoji):
+        return PartialEmoji.from_str(emoji)
+    else:
+        raise ValueError("Not a valid emoji")
