@@ -1,6 +1,8 @@
 import psycopg2
 from psycopg2.errors import UniqueViolation
+from psycopg2 import sql
 import typing
+import traceback
 
 from helpers.env import DATABASE_URL
 from helpers.logger import Logger
@@ -10,6 +12,25 @@ logger = Logger()
 
 class KeyViolation(Exception):
     pass
+
+
+def select_from_unsafe(table_name: str) -> typing.Optional[typing.Any]:
+    """selects from table. ONLY FOR TESTING
+
+    Args:
+        table_name (str): table to select from
+
+    Returns:
+        typing.Optional[typing.Any]: returned values
+    """
+    con = psycopg2.connect(DATABASE_URL)
+    cur = con.cursor()
+    cur.execute('SELECT * FROM public.{}'.format(table_name))
+    val = cur.fetchall()
+    con.commit()
+    cur.close()
+    con.close()
+    logger.debug(val)
 
 
 def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> typing.Optional[typing.Any]:
@@ -37,9 +58,9 @@ def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> typing.O
         logger.error("SQL Key contraint violated")
         raise KeyViolation("Key constraint violated")
     except psycopg2.Error as e:
-        logger.error(f"SQL Error: {e.__class__.__name__}")
+        logger.error(f"SQL Error: {e.__class__.__name__}\n{traceback.format_exc()}")
     except psycopg2.Warning as e:
-        logger.warning(f"SQL Warning: {e.__class__.__name__}")
+        logger.warning(f"SQL Warning: {e.__class__.__name__}\n{traceback.format_exc()}")
     val = None
     if cur.description:
         val = cur.fetchall()
