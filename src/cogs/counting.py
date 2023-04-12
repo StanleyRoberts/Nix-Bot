@@ -10,7 +10,7 @@ logger = Logger()
 
 
 class Counting(commands.Cog):
-    def __init__(self) -> None:
+    def __init__(self, _) -> None:
         self.lock = asyncio.Lock()
 
     @commands.Cog.listener("on_message")

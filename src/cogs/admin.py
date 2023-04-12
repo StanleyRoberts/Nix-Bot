@@ -11,8 +11,8 @@ class Admin(commands.Cog):
 
     @commands.slash_command(
         name="send_react_message",
-        description="sends the given message to the given channel. " +
-        "users who react with the given emoji will be assigned the given role")
+        description="sends a message to the given channel. " +
+        "reacting with the given emoji will assign the given role")
     @discord.commands.default_permissions(manage_guild=True)
     async def greeting_role(self, ctx: discord.ApplicationContext,
                             text: str,
@@ -28,9 +28,9 @@ class Admin(commands.Cog):
             db.single_SQL("INSERT INTO ReactMessages VALUES %s %s %s %s",
                           (ctx.guild_id, message.id, role.id, emoji.id))
 
-    @discord.slash_commands(name="clear_role_setting",
-                            description="resets all role assigning for send_react_message or set_role_channel " +
-                            "note this will not clear existing roles, or delete Nix messages")
+    @discord.slash_command(name="clear_role_setting",
+                           description="resets all role assigning behaviour" +
+                           "note this will not clear existing roles, or delete Nix messages")
     @discord.commands.default_permissions(manage_guild=True)
     async def delete_react_entry(self, ctx: discord.ApplicationContext):
         logger.info("Dropping react entries", guild_id=ctx.guild_id)
@@ -38,8 +38,8 @@ class Admin(commands.Cog):
         db.single_SQL("DELETE FROM RoleMessages WHERE GuildID=%s", (ctx.guild_id,))
 
     @discord.slash_command(name='set_role_channel',
-                           description='sets a role channel, anyone who sends a message in "+\
-                            "the chosen channel will be assigned the given role')
+                           description="sets role channel, anyone who sends a message in " +
+                           "the channel will be assigned the given role")
     async def role_channel(self, ctx: discord.ApplicationContext,
                            channel: discord.TextChannel,
                            role: discord.Role):
