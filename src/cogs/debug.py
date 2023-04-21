@@ -9,8 +9,8 @@ logger = Logger()
 
 class Debug(commands.Cog):
     @commands.slash_command(name='sql', description='log sql data')
-    async def get_sql(self, _: discord.ApplicationContext, text: discord.InputText):
-        vals = db.single_SQL("SELECT * FROM %s", (text,))
+    async def get_sql(self, _: discord.ApplicationContext, text: str):
+        vals = db.select_from_unsafe(text)
         logger.info(vals)
 
 

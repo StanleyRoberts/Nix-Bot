@@ -19,7 +19,7 @@ NIX_AS = ["I am Nix, a phoenix made of flames", "Yes, I think Stan is the best!"
 
 
 class Misc(commands.Cog):
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
 
     @commands.slash_command(name='quote', description="Displays an AI-generated quote over an inspirational image")

@@ -75,7 +75,7 @@ class Logger(object):
                    ):
         if priority.value < self.print_level:
             return
-        log = "[" + priority.name + "] {" + call_class + "}: " + message
+        log = "[" + priority.name + "] {" + call_class + "}: " + str(message)
         if Logger.debug_mode:
             time = datetime.now().strftime("%H:%M:%S") + " "
             log = time + log
