@@ -52,15 +52,21 @@ def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> typing.O
     except psycopg2.Error:
         logger.critical("Failed to connect to database")
     cur = con.cursor()
+    err_mess = None
     try:
         cur.execute(query, values if values != (None,) else None)
     except UniqueViolation:
         logger.error("SQL Key contraint violated")
         raise KeyViolation("Key constraint violated")
     except psycopg2.Error as e:
-        logger.error(f"SQL Error: {e.__class__.__name__}\n{traceback.format_exc()}")
+        err_mess = f"SQL Error: {e.__class__.__name__}\n{traceback.format_exc()}"
+        logger.error(err_mess)
     except psycopg2.Warning as e:
-        logger.warning(f"SQL Warning: {e.__class__.__name__}\n{traceback.format_exc()}")
+        err_mess = f"SQL Warning: {e.__class__.__name__}\n{traceback.format_exc()}"
+        logger.warning(err_mess)
+
+    if err_mess:
+        raise RuntimeError(err_mess)
     val = None
     if cur.description:
         val = cur.fetchall()
