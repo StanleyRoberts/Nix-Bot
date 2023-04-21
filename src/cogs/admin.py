@@ -3,6 +3,7 @@ from discord.ext import commands
 
 from helpers.logger import Logger
 import helpers.database as db
+from helpers.style import Emotes, string_to_emoji
 
 logger = Logger()
 
@@ -17,16 +18,26 @@ class Admin(commands.Cog):
     async def greeting_role(self, ctx: discord.ApplicationContext,
                             text: str,
                             channel: discord.TextChannel,
-                            emoji: discord.Option(discord.Emoji, required=False),
+                            emoji: discord.Option(str, required=False),
                             role: discord.Option(discord.Role, required=False)):
+
+        if emoji:
+            try:
+                part_emoji = string_to_emoji(emoji)
+            except ValueError:
+                await ctx.respond(f"Whoops! {Emotes.WTF} That emoji is not a valid discord emoji", ephemeral=True)
+                return
+
         message = await channel.send(text)
         if not emoji:
             return
-        message.add_reaction(emoji=emoji)
+
+        await message.add_reaction(emoji=part_emoji)
         if role:
             # TODO this requires live database update
-            db.single_SQL("INSERT INTO ReactMessages VALUES %s %s %s %s",
+            db.single_SQL("INSERT INTO ReactMessages VALUES (%s, %s, %s, %s)",
                           (ctx.guild_id, message.id, role.id, emoji.id))
+        await ctx.respond(f"Message Sent! {Emotes.HEART}", ephemeral=True)
 
     @discord.slash_command(name="clear_role_setting",
                            description="resets all role assigning behaviour" +
