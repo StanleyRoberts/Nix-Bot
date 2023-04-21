@@ -52,12 +52,23 @@ class Admin(commands.Cog):
         for val in vals:
             msg.author.add_roles(msg.guild.get_role(val[0]))
 
+    @commands.Cog.listener('on_message')
+    async def chain_message(self, msg: discord.Message):
+        db.single_SQL("INSERT INTO ChainedUsers VALUES %s %s", (msg.guild.id, msg.author.id))
+        users = db.single_SQL("SELECT UserID FROM ChainedUsers WHERE GuildID=%s", (msg.guild.id,))
+        logger.debug(users)
+
     @commands.Cog.listener('on_raw_reaction_add')
     async def assign_roles(self, event: discord.RawReactionActionEvent):
         vals = db.single_SQL("SELECT EmojiID, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
         for val in vals:
             if val[0] == event.emoji.id:
                 event.member.add_roles(event.member.guild.get_role(vals[1]))
+
+    async def send_message(self, guild: discord.Guild):
+        vals = db.single_SQL("SELECT ChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
+        for val in vals:
+            await guild.get_channel(val[0]).send(val[1])
 
 
 def setup(bot: discord.Bot) -> None:
