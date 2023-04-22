@@ -6,8 +6,9 @@ import typing
 from discord.ext import commands
 
 from helpers.logger import Logger
-from helpers.style import Emotes, string_to_emoji, Colours
+from helpers.style import Emotes, Colours
 from trivia.interface import TriviaInterface
+from helpers.emoji import string_to_partial_emoji
 
 logger = Logger()
 
@@ -106,7 +107,7 @@ class TriviaGame(discord.ui.View):
             if type(emoji) == discord.Emoji:
                 logger.error("Unable to compare discord.Emoji to locally defined emoji")
                 return
-            comp = emoji == string_to_emoji(SKIP) if type(emoji) == discord.PartialEmoji else (
+            comp = emoji == string_to_partial_emoji(SKIP) if type(emoji) == discord.PartialEmoji else (
                 emoji == SKIP)
             if (comp) and\
                 ((len(self.players) <= 1) or

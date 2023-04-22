@@ -98,8 +98,8 @@ def populate() -> None:
                 "SubredditChannelID BIGINT, PRIMARY KEY(GuildID, subreddit));")
     # TODO GuildID should be a foreign key (needs to be adjusted in live db too)
 
-    cur.execute("CREATE TABLE ReactMessages(GuildID BIGINT, MessageID BIGINT, RoleID BIGINT, EmojiID BIGINT, " +
-                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, MessageID, RoleID, EmojiID));")
+    cur.execute("CREATE TABLE ReactMessages(GuildID BIGINT, MessageID BIGINT, RoleID BIGINT, Emoji TEXT, " +
+                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, MessageID, RoleID, Emoji));")
 
     cur.execute("CREATE TABLE RoleChannel(GuildID BIGINT, RoleID BIGINT, ChannelID BIGINT, " +
                 "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, ChannelID, RoleID));")
