@@ -3,13 +3,13 @@ from discord.ext import commands
 
 from helpers.logger import Logger, Priority
 import helpers.database as db
-from helpers.style import Emotes, string_to_emoji
+from helpers.style import Emotes
+from helpers.emoji import Emoji, string_to_partial_emoji
 
 logger = Logger()
 
 
 class Admin(commands.Cog):
-
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
 
@@ -20,13 +20,16 @@ class Admin(commands.Cog):
     @discord.commands.default_permissions(manage_guild=True)
     async def greeting_role(self, ctx: discord.ApplicationContext,
                             text: str,
-                            channel: discord.TextChannel,
+                            channel: discord.Option(discord.TextChannel, required=False),
                             emoji: discord.Option(str, required=False),
                             role: discord.Option(discord.Role, required=False)):
+        if not channel:
+            channel = ctx.channel
 
         if emoji:
+            logger.debug(f"emoji1={emoji}")
             try:
-                part_emoji = string_to_emoji(emoji)
+                emoji = Emoji(emoji)
             except ValueError:
                 await ctx.respond(f"Whoops! {Emotes.WTF} That emoji is not a valid discord emoji", ephemeral=True)
                 return
@@ -35,11 +38,13 @@ class Admin(commands.Cog):
         if not emoji:
             return
 
-        await message.add_reaction(emoji=part_emoji)
+        await message.add_reaction(emoji=emoji.to_partial_emoji())
+        logger.debug(f"role={role}")
         if role:
             # TODO this requires live database update
+            logger.debug(f"Message ID on insert: {message.id}")
             db.single_SQL("INSERT INTO ReactMessages VALUES (%s, %s, %s, %s)",
-                          (ctx.guild_id, message.id, role.id, emoji.id))
+                          (ctx.guild_id, message.id, role.id, emoji.as_text()))
         await ctx.respond(f"Message Sent! {Emotes.HEART}", ephemeral=True)
 
     @discord.slash_command(name="clear_role_setting",
@@ -49,7 +54,7 @@ class Admin(commands.Cog):
     async def delete_react_entry(self, ctx: discord.ApplicationContext):
         logger.info("Dropping react entries", guild_id=ctx.guild_id)
         db.single_SQL("DELETE FROM ReactMessages WHERE GuildID=%s", (ctx.guild_id,))
-        db.single_SQL("DELETE FROM RoleMessages WHERE GuildID=%s", (ctx.guild_id,))
+        db.single_SQL("DELETE FROM RoleChannel WHERE GuildID=%s", (ctx.guild_id,))
 
     @discord.slash_command(name='set_role_channel',
                            description="sets role channel, anyone who sends a message in " +
@@ -110,10 +115,15 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def assign_react_role(self, event: discord.RawReactionActionEvent):
-        vals = db.single_SQL("SELECT EmojiID, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
+        if event.user_id == self.bot.user.id:
+            return
+        logger.debug(f"Message ID on reaction: {event.message_id}")
+        vals = db.single_SQL("SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
+        logger.debug(f"SQL values: {vals}")
         for val in vals:
-            if val[0] == event.emoji.id:
-                event.member.add_roles(event.member.guild.get_role(vals[1]))
+            if Emoji(val[0]).to_partial_emoji() == event.emoji:
+                logger.debug("adding role")
+                await event.member.add_roles(event.member.guild.get_role(val[1]))
 
     async def send_message(self, guild: discord.Guild, user: discord.User):
         vals = db.single_SQL("SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))

@@ -57,7 +57,7 @@ class Reddit(commands.Cog):
             logger.info(f"Subreddit {sub} was unsubscribed from",
                         guild_id=ctx.guild_id, channel_id=ctx.channel_id)
             db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub))
-            await ctx.respond(f"This server is now unsubscribed from {sub} {Emotes.SNEAKY}")
+            await ctx.respond(f"This server is now unsubscribed from r/{sub} {Emotes.SNEAKY}")
 
     @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
     async def get_subs(self, ctx: discord.ApplicationContext) -> None:
