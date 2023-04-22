@@ -45,7 +45,14 @@ class Admin(commands.Cog):
             logger.debug(f"Message ID on insert: {message.id}")
             db.single_SQL("INSERT INTO ReactMessages VALUES (%s, %s, %s, %s)",
                           (ctx.guild_id, message.id, role.id, emoji.as_text()))
-        await ctx.respond(f"Message Sent! {Emotes.HEART}", ephemeral=True)
+        await ctx.respond(f"Message Sent! {Emotes.HEART}")
+
+    @discord.slash_command(name="remove_single_role", description="Takes out role assigning behaviour for one role")
+    async def remove_single_role(self, ctx: discord.ApplicationContext, role: discord.Option(discord.Role,
+                                 description="The role to remove assignment for")):
+        db.single_SQL("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id))
+        db.single_SQL("DELETE FROM ReactMessages WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id))
+        await ctx.respond(f"All role assign behaviours have been cleared for {role.name}")
 
     @discord.slash_command(name="clear_role_setting",
                            description="resets all role assigning behaviour" +
@@ -55,19 +62,23 @@ class Admin(commands.Cog):
         logger.info("Dropping react entries", guild_id=ctx.guild_id)
         db.single_SQL("DELETE FROM ReactMessages WHERE GuildID=%s", (ctx.guild_id,))
         db.single_SQL("DELETE FROM RoleChannel WHERE GuildID=%s", (ctx.guild_id,))
+        await ctx.respond("All role assign behaviours have been cleared")
 
     @discord.slash_command(name='set_role_channel',
                            description="sets role channel, anyone who sends a message in " +
                            "the channel will be assigned the given role")
+    @discord.commands.default_permissions(manage_guild=True)
     async def role_channel(self, ctx: discord.ApplicationContext,
                            channel: discord.TextChannel,
                            role: discord.Role):
         # TODO this requires live db update
-        db.single_SQL("INSERT INTO RoleMessages VALUES (%s, %s, %s)", (ctx.guild_id, role.id, channel.id))
+        db.single_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s)", (ctx.guild_id, role.id, channel.id))
+        await ctx.respond(f"Role channel was set to {channel.mention}")
 
     @discord.commands.slash_command(
         name="set_chain_message", description="set message that is sent at " +
         "the first message of a user in a channel.")
+    @discord.commands.default_permissions(manage_guild=True)
     async def set_chain_message(self, ctx: discord.ApplicationContext,
                                 message: discord.Option(
                                     str, description="The Message that will be send. Write <<user>> to ping the user"),
@@ -82,14 +93,19 @@ class Admin(commands.Cog):
                           (ctx.guild_id, channel_id, response_channel.id, message))
             await ctx.respond(f"You set a chain_message for the channel {response_channel}")
         except db.KeyViolation:
-            await ctx.respond(f"You already set this as a message for this channel {Emotes.CONFUSED}", ephemeral=True)
+            await ctx.respond(f"You already set this as a message for this channel {Emotes.CONFUSED}")
 
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message):
         if msg.author != self.bot.user.id:
             vals = db.single_SQL("SELECT RoleID FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
             for val in vals:
-                msg.author.add_roles(msg.guild.get_role(val[0]))
+                await msg.author.add_roles(msg.guild.get_role(val[0]))
+
+    @commands.slash_command(name="clear_chain_messages", description="Clears all the chain-messages")
+    @discord.commands.default_permissions(manage_guild=True)
+    async def clear_chain_message(self, ctx: discord.ApplicationContext):
+        db.single_SQL("DELETE FROM MessageChain WHERE GuildID=%s", (ctx.guild_id,))
 
     @commands.Cog.listener('on_message')
     async def chain_message(self, msg: discord.Message):
