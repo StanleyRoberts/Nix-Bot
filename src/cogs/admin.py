@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from helpers.logger import Logger
+from helpers.logger import Logger, Priority
 import helpers.database as db
 from helpers.style import Emotes, string_to_emoji
 
@@ -9,6 +9,9 @@ logger = Logger()
 
 
 class Admin(commands.Cog):
+
+    def __init__(self, bot: discord.Bot) -> None:
+        self.bot = bot
 
     @commands.slash_command(
         name="send_react_message",
@@ -55,19 +58,55 @@ class Admin(commands.Cog):
                            channel: discord.TextChannel,
                            role: discord.Role):
         # TODO this requires live db update
-        db.single_SQL("INSERT INTO RoleMessages VALUES %s %s %s", (ctx.guild_id, role.id, channel.id))
+        db.single_SQL("INSERT INTO RoleMessages VALUES (%s, %s, %s)", (ctx.guild_id, role.id, channel.id))
+
+    @discord.commands.slash_command(
+        name="set_chain_message", description="set message that is sent at " +
+        "the first message of a user in a channel.")
+    async def set_chain_message(self, ctx: discord.ApplicationContext,
+                                message: discord.Option(
+                                    str, description="The Message that will be send. Write <<user>> to ping the user"),
+                                response_channel: discord.Option(
+                                    discord.TextChannel, "Channel where the message will be sent in"),
+                                message_channel: discord.Option(
+                                    discord.TextChannel, required=False, description="Channel where the message " +
+                                    "comes from. If none is given the message will be detacted in any channel")):
+        channel_id = message_channel.id if message_channel is not None else -1
+        try:
+            db.single_SQL("INSERT INTO MessageChain VALUES (%s,%s,%s,%s)",
+                          (ctx.guild_id, channel_id, response_channel.id, message))
+            await ctx.respond(f"You set a chain_message for the channel {response_channel}")
+        except db.KeyViolation:
+            await ctx.respond(f"You already set this as a message for this channel {Emotes.CONFUSED}", ephemeral=True)
 
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message):
-        vals = db.single_SQL("SELECT RoleID FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
-        for val in vals:
-            msg.author.add_roles(msg.guild.get_role(val[0]))
+        if msg.author != self.bot.user.id:
+            vals = db.single_SQL("SELECT RoleID FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
+            for val in vals:
+                msg.author.add_roles(msg.guild.get_role(val[0]))
 
     @commands.Cog.listener('on_message')
     async def chain_message(self, msg: discord.Message):
-        db.single_SQL("INSERT INTO ChainedUsers VALUES %s %s", (msg.guild.id, msg.author.id))
-        users = db.single_SQL("SELECT UserID FROM ChainedUsers WHERE GuildID=%s", (msg.guild.id,))
-        logger.debug(users)
+        if msg.author != self.bot.user.id:
+            values = db.single_SQL(
+                "SELECT ChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,))
+            if values is not None:
+                check_vals = [val[0] for val in values]
+                if msg.channel.id in check_vals or -1 in check_vals:
+                    log_level = Priority(logger.print_level).name
+                    logger.set_priority("CRITICAL")
+                    try:
+                        db.single_SQL("INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
+                                      (msg.guild.id, msg.author.id, msg.channel.id
+                                       if msg.channel.id in check_vals else -1))
+                        await self.send_message(msg.guild, msg.author)
+                    except db.KeyViolation:
+                        logger.set_priority(log_level)
+                        logger.info("User that is already chained has written in the channel again",
+                                    member_id=msg.author.id, guild_id=msg.guild.id)
+                    finally:
+                        logger.set_priority(log_level)
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def assign_react_role(self, event: discord.RawReactionActionEvent):
@@ -76,10 +115,11 @@ class Admin(commands.Cog):
             if val[0] == event.emoji.id:
                 event.member.add_roles(event.member.guild.get_role(vals[1]))
 
-    async def send_message(self, guild: discord.Guild):
-        vals = db.single_SQL("SELECT ChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
+    async def send_message(self, guild: discord.Guild, user: discord.User):
+        vals = db.single_SQL("SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
         for val in vals:
-            await guild.get_channel(val[0]).send(val[1])
+            msg = val[1].replace("<<user>>", user.mention)
+            await guild.get_channel(val[0]).send(msg)
 
 
 def setup(bot: discord.Bot) -> None:

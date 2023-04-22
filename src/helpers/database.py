@@ -98,11 +98,14 @@ def populate() -> None:
     cur.execute("CREATE TABLE RoleChannel(GuildID BIGINT, RoleID BIGINT, ChannelID BIGINT, " +
                 "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, ChannelID, RoleID));")
 
-    cur.execute("CREATE TABLE MessageChain(GuildID BIGINT, ChannelID BIGINT, Message VARCHAR(2000), " +
-                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, ChannelID));")
+    cur.execute(
+        "CREATE TABLE MessageChain(GuildID BIGINT, ChannelID BIGINT, ResponseChannelID BIGINT," +
+        "Message VARCHAR(2000), FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, ChannelID));")
 
-    cur.execute("CREATE TABLE ChainedUsers(GuildID BIGINT, UserID BIGINT," +
-                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, UserID));")
+    cur.execute(
+        "CREATE TABLE ChainedUsers(GuildID BIGINT, UserID BIGINT, ChannelID BIGINT," +
+        "FOREIGN KEY(GuildID, ChannelID) REFERENCES MessageChain(GuildID, ChannelID)," +
+        "PRIMARY KEY(GuildID, UserID, ChannelID));")
 
     con.commit()
     cur.close()
