@@ -36,6 +36,7 @@ class Admin(commands.Cog):
 
         message = await channel.send(text)
         if not emoji:
+            await ctx.respond(f"Message Sent! {Emotes.HEART}", ephemeral=True)
             return
 
         await message.add_reaction(emoji=emoji.to_partial_emoji())
