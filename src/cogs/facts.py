@@ -67,7 +67,7 @@ class Facts(commands.Cog):
                 try:
                     await (await self.bot.fetch_channel(factID[0])).send("__Daily fact__\n" + fact)
                 except discord.errors.Forbidden:
-                    logger.warning("Failed to send fact message", channel_id=factID[0])
+                    logger.info("Permission failure for sending fact message", channel_id=factID[0])
                     pass  # silently fail if no perms, TODO setup logging channel
 
     @staticmethod

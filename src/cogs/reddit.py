@@ -89,7 +89,7 @@ class Reddit(commands.Cog):
                 await (await self.bot.fetch_channel(entry[2])).send("__Daily post__\n" +
                                                                     post.text, files=post.img)
             except discord.errors.Forbidden:
-                logger.warning("Permission failure for daily reddit post <subreddit: {0}>".format(
+                logger.info("Permission failure for daily reddit post <subreddit: {0}>".format(
                     entry[1]), guild_id=entry[0], channel_id=entry[2])
                 pass  # silently fail if no perms, TODO setup logging channel
 

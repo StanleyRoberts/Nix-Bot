@@ -93,6 +93,10 @@ def populate() -> None:
                 "CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (821016940462080000, " +
                 "NULL, NULL, NULL, 0, NULL, 0, NULL);")
 
+    cur.execute("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, " +
+                "CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (1026169937422729226, " +
+                "NULL, NULL, NULL, 0, NULL, 0, NULL);")
+
     cur.execute("CREATE TABLE Subreddits(GuildID BIGINT, subreddit TEXT, " +
                 "SubredditChannelID BIGINT, PRIMARY KEY(GuildID, subreddit));")
     # TODO GuildID should be a foreign key (needs to be adjusted in live db too)

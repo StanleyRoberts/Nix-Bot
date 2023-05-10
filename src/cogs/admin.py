@@ -8,6 +8,9 @@ from helpers.emoji import Emoji, string_to_partial_emoji
 
 logger = Logger()
 
+# TODO how does send_react and send_chain message handle if Nix doesnt have perms?
+# TODO on_remove_react to remove assigned role
+
 
 class Admin(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
@@ -87,7 +90,7 @@ class Admin(commands.Cog):
                                     discord.TextChannel, "Channel where the message will be sent in"),
                                 message_channel: discord.Option(
                                     discord.TextChannel, required=False, description="Channel where the message " +
-                                    "comes from. If none is given the message will be detacted in any channel")):
+                                    "comes from. If none the message will be detected in any channel")):
         channel_id = message_channel.id if message_channel is not None else -1
         try:
             db.single_SQL("INSERT INTO MessageChain VALUES (%s,%s,%s,%s)",

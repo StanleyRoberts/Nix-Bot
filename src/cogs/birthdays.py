@@ -65,7 +65,7 @@ class Birthdays(commands.Cog):
                         .send("Happy Birthday to: " + users +
                               f"!\nHope you have a brilliant day {Emotes.HEART}"))
                 except discord.errors.Forbidden:
-                    logger.warning("Failed to send birthday message", channel_id=guild[0])
+                    logger.info("Permission failure for sending birthday message", channel_id=guild[0])
                     # silently fail if no perms, TODO setup logging channel
                     pass
 
