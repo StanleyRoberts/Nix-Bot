@@ -109,9 +109,9 @@ class TriviaGame(discord.ui.View):
                 return
             comp = emoji == string_to_partial_emoji(SKIP) if type(emoji) == discord.PartialEmoji else (
                 emoji == SKIP)
-            if (comp) and\
+            if ((comp) and
                 ((len(self.players) <= 1) or
-                 (user.id in self.players.keys())):
+                 (user.id in self.players.keys()))):
                 await self.channel.send(f"The answer was: {self.answer} {Emotes.SUNGLASSES}")
                 await self._send_question()
                 logger.debug("Question successfully skipped",

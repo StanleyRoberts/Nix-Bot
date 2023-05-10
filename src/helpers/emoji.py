@@ -37,8 +37,8 @@ class Emoji:
 
 
 def string_to_partial_emoji(emoji: str) -> PartialEmoji:
-    if emoji in emoji_lib.UNICODE_EMOJI['en'] or\
-            re.compile(r"<?(?P<animated>a)?:?(?P<name>\w+):(?P<id>[0-9]{13,20})>?").match(emoji):
+    if (emoji in emoji_lib.UNICODE_EMOJI['en'] or
+            re.compile(r"<?(?P<animated>a)?:?(?P<name>\w+):(?P<id>[0-9]{13,20})>?").match(emoji)):
         return PartialEmoji.from_str(emoji)
     else:
         raise ValueError(f"{emoji} is not a valid emoji")
