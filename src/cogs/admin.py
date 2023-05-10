@@ -110,25 +110,20 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def chain_message(self, msg: discord.Message):
-        if msg.author != self.bot.user.id:
+        if msg.author.id != self.bot.user.id:
             values = db.single_SQL(
                 "SELECT ChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,))
             if values is not None:
                 check_vals = [val[0] for val in values]
                 if msg.channel.id in check_vals or -1 in check_vals:
-                    log_level = Priority(logger.print_level).name
-                    logger.set_priority("CRITICAL")
                     try:
                         db.single_SQL("INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
                                       (msg.guild.id, msg.author.id, msg.channel.id
                                        if msg.channel.id in check_vals else -1))
                         await self.send_message(msg.guild, msg.author)
                     except db.KeyViolation:
-                        logger.set_priority(log_level)
                         logger.info("User that is already chained has written in the channel again",
                                     member_id=msg.author.id, guild_id=msg.guild.id)
-                    finally:
-                        logger.set_priority(log_level)
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def assign_react_role(self, event: discord.RawReactionActionEvent):
