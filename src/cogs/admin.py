@@ -1,15 +1,12 @@
 import discord
 from discord.ext import commands
 
-from helpers.logger import Logger, Priority
+from helpers.logger import Logger
 import helpers.database as db
 from helpers.style import Emotes
-from helpers.emoji import Emoji, string_to_partial_emoji
+from helpers.emoji import Emoji
 
 logger = Logger()
-
-# TODO how does send_react and send_chain message handle if Nix doesnt have perms?
-# TODO on_remove_react to remove assigned role
 
 
 class Admin(commands.Cog):
@@ -37,7 +34,13 @@ class Admin(commands.Cog):
                 await ctx.respond(f"Whoops! {Emotes.WTF} That emoji is not a valid discord emoji", ephemeral=True)
                 return
 
-        message = await channel.send(text)
+        try:
+            message = await channel.send(text)
+        except discord.errors.Forbidden:
+            logger.info("Permission failure for chain_message", guild_id=ctx.guild_id, channel_id=channel.id)
+            await ctx.respond(f"Whoops! {Emotes.WTF} I don't have permissions to write in {channel.mention}",
+                              ephemeral=True)
+            return
         if not emoji:
             await ctx.respond(f"Message Sent! {Emotes.HEART}", ephemeral=True)
             return
@@ -90,7 +93,7 @@ class Admin(commands.Cog):
                                     discord.TextChannel, "Channel where the message will be sent in"),
                                 message_channel: discord.Option(
                                     discord.TextChannel, required=False, description="Channel where the message " +
-                                    "comes from. If none the message will be detected in any channel")):
+                                    "comes from. If none is given the message will be detected in any channel")):
         channel_id = message_channel.id if message_channel is not None else -1
         try:
             db.single_SQL("INSERT INTO MessageChain VALUES (%s,%s,%s,%s)",
@@ -123,7 +126,7 @@ class Admin(commands.Cog):
                         db.single_SQL("INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
                                       (msg.guild.id, msg.author.id, msg.channel.id
                                        if msg.channel.id in check_vals else -1))
-                        await self.send_message(msg.guild, msg.author)
+                        await self.send_chained_message(msg.guild, msg.author)
                     except db.KeyViolation:
                         logger.info("User that is already chained has written in the channel again",
                                     member_id=msg.author.id, guild_id=msg.guild.id)
@@ -140,11 +143,16 @@ class Admin(commands.Cog):
                 logger.debug("adding role")
                 await event.member.add_roles(event.member.guild.get_role(val[1]))
 
-    async def send_message(self, guild: discord.Guild, user: discord.User):
-        vals = db.single_SQL("SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
-        for val in vals:
-            msg = val[1].replace("<<user>>", user.mention)
-            await guild.get_channel(val[0]).send(msg)
+    @staticmethod
+    async def send_chained_message(guild: discord.Guild, user: discord.User):
+        try:
+            vals = db.single_SQL("SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
+            for val in vals:
+                msg = val[1].replace("<<user>>", user.mention)
+                await guild.get_channel(val[0]).send(msg)
+        except discord.errors.Forbidden:
+            logger.info("Permission failure for chain_message", guild_id=guild.id, channel_id=val[0])
+            pass
 
 
 def setup(bot: discord.Bot) -> None:
