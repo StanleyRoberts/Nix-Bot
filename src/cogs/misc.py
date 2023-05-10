@@ -29,11 +29,11 @@ class Misc(commands.Cog):
 
     @commands.slash_command(name='all_commands', description="Displays all of Nix's commands")
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
-        desc = "Note: depending on your server settings and role permissions," +\
-            " some of these commands may be hidden or disabled\n\n" +\
-            "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " + command.description + "\n"
-                                                               for command in self.bot.cogs[cog].walk_commands()]))
-                     for cog in self.bot.cogs])  # Holy hell
+        desc = ("Note: depending on your server settings and role permissions," +
+                " some of these commands may be hidden or disabled\n\n" +
+                "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " + command.description + "\n"
+                                                                   for command in self.bot.cogs[cog].walk_commands()]))
+                        for cog in self.bot.cogs]))  # Holy hell
         embed = discord.Embed(title="Help Page", description=desc,
                               colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
@@ -92,12 +92,12 @@ class Help_Nav(discord.ui.View):
         compass = "|".join([f" {page.qualified_name} " if page != self.pages[self.index]
                             else f"** {page.qualified_name} **" for page in self.pages[1:]]) + "\n"
         if page == "Front":
-            desc = compass + "\nNote: depending on your server settings and role permissions, " +\
-                "some of these commands may be hidden or disabled"
+            desc = compass + ("\nNote: depending on your server settings and role permissions, " +
+                              "some of these commands may be hidden or disabled")
         else:
-            desc = compass + "".join("\n***" + page.qualified_name + "***:\n" + ""
-                                     .join(sorted([command.mention + " : " + command.description + "\n"
-                                                   for command in page.walk_commands()])))
+            desc = compass + ("\n***" + page.qualified_name + "***:\n" + ""
+                              .join(sorted([command.mention + " : " + command.description + "\n"
+                                            for command in page.walk_commands()])))
 
         return discord.Embed(title="Help Page", description=desc,
                              colour=Colours.PRIMARY)
