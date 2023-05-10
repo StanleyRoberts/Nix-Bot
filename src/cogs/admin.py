@@ -9,7 +9,6 @@ from helpers.emoji import Emoji, string_to_partial_emoji
 logger = Logger()
 
 # TODO how does send_react and send_chain message handle if Nix doesnt have perms?
-# TODO on_remove_react to remove assigned role
 
 
 class Admin(commands.Cog):
@@ -139,6 +138,16 @@ class Admin(commands.Cog):
             if Emoji(val[0]).to_partial_emoji() == event.emoji:
                 logger.debug("adding role")
                 await event.member.add_roles(event.member.guild.get_role(val[1]))
+
+    @commands.Cog.listener('on_raw_reaction_remove')
+    async def unassign_react_role(self, event: discord.RawReactionActionEvent):
+        vals = db.single_SQL("SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
+        for val in vals:
+            if Emoji(val[0]).to_partial_emoji() == event.emoji:
+                logger.debug("removing role")
+                guild = await self.bot.fetch_guild(event.guild_id)
+                member = await guild.fetch_member(event.user_id)
+                await member.remove_roles(guild.get_role(val[1]))
 
     async def send_message(self, guild: discord.Guild, user: discord.User):
         vals = db.single_SQL("SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
