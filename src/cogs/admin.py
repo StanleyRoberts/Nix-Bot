@@ -154,6 +154,16 @@ class Admin(commands.Cog):
             logger.info("Permission failure for chain_message", guild_id=guild.id, channel_id=val[0])
             pass
 
+    @commands.Cog.listener('on_raw_reaction_remove')
+    async def unassign_react_role(self, event: discord.RawReactionActionEvent):
+        vals = db.single_SQL("SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
+        for val in vals:
+            if Emoji(val[0]).to_partial_emoji() == event.emoji:
+                logger.debug("removing role")
+                guild = await self.bot.fetch_guild(event.guild_id)
+                member = await guild.fetch_member(event.user_id)
+                await member.remove_roles(guild.get_role(val[1]))
+
 
 def setup(bot: discord.Bot) -> None:
     bot.add_cog(Admin(bot))
