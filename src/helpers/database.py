@@ -56,7 +56,6 @@ def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> typing.O
     try:
         cur.execute(query, values if values != (None,) else None)
     except UniqueViolation:
-        logger.error("SQL Key contraint violated")
         raise KeyViolation("Key constraint violated")
     except psycopg2.Error as e:
         err_mess = f"SQL Error: {e.__class__.__name__}\n{traceback.format_exc()}"
