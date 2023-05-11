@@ -23,16 +23,17 @@ class Counting(commands.Cog):
         """
         async with self.lock:
             if (msg.content.isdigit()):
-                values = db.single_SQL("SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, "
-                                       "FailRoleID FROM Guilds WHERE ID=%s", (msg.guild.id,))
-                if (msg.channel.id == values[0][0]):
+                (chnl_id, curr_ct, last_ctr_id, high_score, fail_id) = db.single_SQL(
+                    "SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, "
+                    "FailRoleID FROM Guilds WHERE ID=%s", (msg.guild.id,))[0]
+                if (msg.channel.id == chnl_id):
                     logger.debug("Integer message detacted in counting channel")
-                    if (int(msg.content) != values[0][1] + 1):
+                    if (int(msg.content) != curr_ct + 1):
                         logger.debug("Wrong number detected in counting channel")
-                        await self.fail(msg, "Wrong number", values[0][4])
-                    elif (msg.author.id == values[0][2]):
+                        await self.fail(msg, "Wrong number", fail_id)
+                    elif (msg.author.id == last_ctr_id):
                         logger.debug("Double-user-input detected in counting channel")
-                        await self.fail(msg, "Same user entered two numbers", values[0][4])
+                        await self.fail(msg, "Same user entered two numbers", fail_id)
                     else:
                         await msg.add_reaction(Emotes.BLEP)
                         db.single_SQL("UPDATE Guilds SET LastCounterID =%s, CurrentCount = CurrentCount+1, " +

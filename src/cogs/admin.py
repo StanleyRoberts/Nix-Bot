@@ -106,8 +106,8 @@ class Admin(commands.Cog):
     async def assign_role(self, msg: discord.Message):
         if msg.author != self.bot.user.id:
             vals = db.single_SQL("SELECT RoleID FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
-            for val in vals:
-                await msg.author.add_roles(msg.guild.get_role(val[0]))
+            for (role_id,) in vals:
+                await msg.author.add_roles(msg.guild.get_role(role_id))
 
     @commands.slash_command(name="clear_chain_messages", description="Clears all the chain-messages")
     @discord.commands.default_permissions(manage_guild=True)
@@ -138,31 +138,31 @@ class Admin(commands.Cog):
         logger.debug(f"Message ID on reaction: {event.message_id}")
         vals = db.single_SQL("SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
         logger.debug(f"SQL values: {vals}")
-        for val in vals:
-            if Emoji(val[0]).to_partial_emoji() == event.emoji:
+        for (emoji, role_id) in vals:
+            if Emoji(emoji).to_partial_emoji() == event.emoji:
                 logger.debug("adding role")
-                await event.member.add_roles(event.member.guild.get_role(val[1]))
-
-    @staticmethod
-    async def send_chained_message(guild: discord.Guild, user: discord.User):
-        try:
-            vals = db.single_SQL("SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
-            for val in vals:
-                msg = val[1].replace("<<user>>", user.mention)
-                await guild.get_channel(val[0]).send(msg)
-        except discord.errors.Forbidden:
-            logger.info("Permission failure for chain_message", guild_id=guild.id, channel_id=val[0])
-            pass
+                await event.member.add_roles(event.member.guild.get_role(role_id))
 
     @commands.Cog.listener('on_raw_reaction_remove')
     async def unassign_react_role(self, event: discord.RawReactionActionEvent):
         vals = db.single_SQL("SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
-        for val in vals:
-            if Emoji(val[0]).to_partial_emoji() == event.emoji:
+        for (emoji, role_id) in vals:
+            if Emoji(emoji).to_partial_emoji() == event.emoji:
                 logger.debug("removing role")
                 guild = await self.bot.fetch_guild(event.guild_id)
                 member = await guild.fetch_member(event.user_id)
-                await member.remove_roles(guild.get_role(val[1]))
+                await member.remove_roles(guild.get_role(role_id))
+
+    @staticmethod
+    async def send_chained_message(guild: discord.Guild, user: discord.User):
+        vals = db.single_SQL("SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
+        for (response_channel_id, message) in vals:
+            msg = message.replace("<<user>>", user.mention)
+            try:
+                await guild.get_channel(response_channel_id).send(msg)
+            except discord.errors.Forbidden:
+                logger.info("Permission failure for chain_message", guild_id=guild.id, channel_id=response_channel_id)
+                pass
 
 
 def setup(bot: discord.Bot) -> None:
