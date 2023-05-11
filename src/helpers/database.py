@@ -38,7 +38,7 @@ def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> typing.O
     Opens a connection, submits a single SQL query to the database then cleans up
 
     Args:
-        query (string): SQL query to execute
+        query (string): SQL query to execute.
         values (tuple, optional): Values to provide to the SQL query (i.e. for %s). Defaults to None.
 
     Raises:
@@ -73,6 +73,43 @@ def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> typing.O
     cur.close()
     con.close()
     return val
+
+
+def multi_void_SQL(commands: list[tuple[str, tuple[typing.Any, ...]]]):
+    """Executes multiple commands for the database that don't have a return
+
+    Args:
+        commands (list[tuple[str, tuple[typing.Any, ...]]]): List of tuples where each tuple contains a string and a
+            tuple. The string of each tuple is the query and the inner tuple contains the substituted values for the
+            query.
+
+    Raises:
+        KeyViolation: _description_
+        RuntimeError: _description_
+    """
+    try:
+        con = psycopg2.connect(DATABASE_URL)
+    except psycopg2.Error:
+        logger.critical("Failed to connect to database")
+    cur = con.cursor()
+    err_mess = None
+    for (query, values) in commands:
+        try:
+            cur.execute(query, values)
+        except UniqueViolation:
+            raise KeyViolation("Key constraint violated")
+        except psycopg2.Error as e:
+            err_mess = f"SQL Error: {e.__class__.__name__}\n{traceback.format_exc()}"
+            logger.error(err_mess)
+        except psycopg2.Warning as e:
+            err_mess = f"SQL Warning: {e.__class__.__name__}\n{traceback.format_exc()}"
+            logger.warning(err_mess)
+
+        if err_mess:
+            raise RuntimeError(err_mess)
+    con.commit()
+    cur.close()
+    con.close()
 
 
 def populate() -> None:
