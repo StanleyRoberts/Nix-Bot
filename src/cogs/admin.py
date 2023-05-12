@@ -54,7 +54,8 @@ class Admin(commands.Cog):
                           (ctx.guild_id, message.id, role.id, emoji.as_text()))
         await ctx.respond(f"Message Sent! {Emotes.HEART}")
 
-    @discord.slash_command(name="remove_single_role", description="Takes out role assigning behaviour for one role")
+    @discord.slash_command(name="remove_single_role_assignment", description="Takes out role assigning behaviour"
+                           + "for one role")
     async def remove_single_role(self, ctx: discord.ApplicationContext, role: discord.Option(discord.Role,
                                  description="The role to remove assignment for")):
         db.multi_void_SQL([
@@ -81,9 +82,21 @@ class Admin(commands.Cog):
                            channel: discord.TextChannel,
                            role: discord.Role):
         # TODO this requires live db update
-        db.single_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s)",
+        db.single_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s, TRUE)",
                       (ctx.guild_id, role.id, channel.id))
         await ctx.respond(f"Role channel was set to {channel.mention}")
+
+    @discord.slash_command(name='set_remove_role_channel',
+                           description="sets role remove channel, the role will be taken from anyone"
+                           + "writing in the set channel")
+    @discord.commands.default_permissions(manage_guild=True)
+    async def remove_role_channel(self, ctx: discord.ApplicationContext,
+                                  channel: discord.TextChannel,
+                                  role: discord.Role):
+        # TODO this requires live db update
+        db.single_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s, FALSE)",
+                      (ctx.guild_id, role.id, channel.id))
+        await ctx.respond(f"Role remove channel was set to {channel.mention}")
 
     @discord.commands.slash_command(
         name="set_chain_message", description="set message that is sent at " +
@@ -108,9 +121,12 @@ class Admin(commands.Cog):
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message):
         if msg.author != self.bot.user.id:
-            vals = db.single_SQL("SELECT RoleID FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
-            for (role_id,) in vals:
-                await msg.author.add_roles(msg.guild.get_role(role_id))
+            vals = db.single_SQL("SELECT RoleID, Adds_role FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
+            for (role_id, add_role) in vals:
+                if add_role:
+                    await msg.author.add_roles(msg.guild.get_role(role_id))
+                else:
+                    await msg.author.remove_roles(msg.guild.get_role(role_id))
 
     @commands.slash_command(name="clear_chain_messages", description="Clears all the chain-messages")
     @discord.commands.default_permissions(manage_guild=True)
