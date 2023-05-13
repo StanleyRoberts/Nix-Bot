@@ -102,7 +102,8 @@ class Admin(commands.Cog):
     async def set_chain_message(self, ctx: discord.ApplicationContext,
                                 message: discord.Option(
                                     str,
-                                    description="The message text that will be sent as a follow up. Write <<user>> to ping the user"),
+                                    description="The message text that will be sent as a follow up. " +
+                                                "Write <<user>> to ping the user"),
                                 response_channel: discord.Option(
                                     discord.TextChannel,
                                     description="The channel where Nix sends its follow up"),
@@ -145,7 +146,7 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message):
-        if msg.author != self.bot.user.id:
+        if msg.author.id != self.bot.user.id:
             vals = db.single_SQL("SELECT RoleID, ToAdd FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
             for (role_id, add_role) in vals:
                 if add_role:
