@@ -11,6 +11,7 @@ Nix is a personable bot providing many functions, such as random quotes, facts, 
 - **Subscriptions**: Nix provides the ability to subscribe to facts or subreddits, sending a fact/post to your server every day!
 - **Birthday tracking**: Users can input their birthdays, and Nix will send a birthday message for them to a specified channel. Let your server celebrate birthdays together!
 - **Counting game**: Nix can also keep track of the classic discord counting game, no need for a seperate bot!
+- **Admin**: A range of admin tools are also provided, this mainly relates to automatic role assignments and messages from Nix on various customisable events (e.g. reacting to, or writing a message). We use this in Watching Raccoons to create a custom new member experience, but these commands are generic enough to let you do whatever you want with them.
 
 ### Personality 
 

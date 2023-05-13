@@ -14,8 +14,8 @@ class KeyViolation(Exception):
     pass
 
 
-def select_from_unsafe(table_name: str) -> typing.Optional[typing.Any]:
-    """selects from table. ONLY FOR TESTING
+def select_from_unsafe(table_name: str):
+    """logs select from table. ONLY FOR TESTING
 
     Args:
         table_name (str): table to select from
@@ -126,6 +126,23 @@ def populate() -> None:
     cur.execute("CREATE TABLE Birthdays(GuildID BIGINT, UserID BIGINT, Birthdate TEXT, " +
                 "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, UserID));")
 
+    cur.execute("CREATE TABLE Subreddits(GuildID BIGINT, subreddit TEXT, " +
+                "SubredditChannelID BIGINT, PRIMARY KEY(GuildID, subreddit));")
+
+    cur.execute("CREATE TABLE ReactMessages(GuildID BIGINT, MessageID BIGINT, RoleID BIGINT, Emoji TEXT, " +
+                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, MessageID, RoleID, Emoji));")
+
+    cur.execute("CREATE TABLE RoleChannel(GuildID BIGINT, RoleID BIGINT, ChannelID BIGINT, ToAdd BOOLEAN, " +
+                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, ChannelID, RoleID));")
+
+    cur.execute("CREATE TABLE MessageChain(GuildID BIGINT, WatchedChannelID BIGINT, ResponseChannelID BIGINT, " +
+                "Message VARCHAR(2000), FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, " +
+                "WatchedChannelID));")
+
+    cur.execute("CREATE TABLE ChainedUsers(GuildID BIGINT, UserID BIGINT, ChannelID BIGINT, " +
+                "FOREIGN KEY(GuildID, ChannelID) REFERENCES MessageChain(GuildID, WatchedChannelID), " +
+                "PRIMARY KEY(GuildID, UserID, ChannelID));")
+
     cur.execute("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, " +
                 "CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (821016940462080000, " +
                 "NULL, NULL, NULL, 0, NULL, 0, NULL);")
@@ -133,25 +150,6 @@ def populate() -> None:
     cur.execute("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, " +
                 "CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (1026169937422729226, " +
                 "NULL, NULL, NULL, 0, NULL, 0, NULL);")
-
-    cur.execute("CREATE TABLE Subreddits(GuildID BIGINT, subreddit TEXT, " +
-                "SubredditChannelID BIGINT, PRIMARY KEY(GuildID, subreddit));")
-    # TODO GuildID should be a foreign key (needs to be adjusted in live db too)
-
-    cur.execute("CREATE TABLE ReactMessages(GuildID BIGINT, MessageID BIGINT, RoleID BIGINT, Emoji TEXT, " +
-                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, MessageID, RoleID, Emoji));")
-
-    cur.execute("CREATE TABLE RoleChannel(GuildID BIGINT, RoleID BIGINT, ChannelID BIGINT, Adds_role BOOLEAN," +
-                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, ChannelID, RoleID));")
-
-    cur.execute(
-        "CREATE TABLE MessageChain(GuildID BIGINT, ChannelID BIGINT, ResponseChannelID BIGINT," +
-        "Message VARCHAR(2000), FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, ChannelID));")
-
-    cur.execute(
-        "CREATE TABLE ChainedUsers(GuildID BIGINT, UserID BIGINT, ChannelID BIGINT," +
-        "FOREIGN KEY(GuildID, ChannelID) REFERENCES MessageChain(GuildID, ChannelID)," +
-        "PRIMARY KEY(GuildID, UserID, ChannelID));")
 
     con.commit()
     cur.close()
