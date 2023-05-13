@@ -11,6 +11,7 @@ Nix is a personable bot providing many functions, such as random quotes, facts, 
 - **Subscriptions**: Nix provides the ability to subscribe to facts or subreddits, sending a fact/post to your server every day!
 - **Birthday tracking**: Users can input their birthdays, and Nix will send a birthday message for them to a specified channel. Let your server celebrate birthdays together!
 - **Counting game**: Nix can also keep track of the classic discord counting game, no need for a seperate bot!
+- **Admin**: A range of admin tools are also provided, this mainly relates to automatic role assignments and messages from Nix on various customisable events (e.g. reacting to, or writing a message). We use this in Watching Raccoons to create a custom new member experience, but these commands are generic enough to let you do whatever you want with them.
 
 ### Personality 
 
@@ -32,7 +33,7 @@ The app requires [Python 3.10+](https://www.python.org/downloads/), and we also 
 Setup a virtual environment using: `python -m venv .venv`  
 And install the requirements (on your virtual env) with: `pip install -r requirements.txt`
 
-For running locally/testing, you will also need a `.env` file (or another way to set environment variables for the app), which establishes private keys/tokens to be used within the app. If you are not one of the original authors for this project you will have to create this yourself with your own keys/tokens as required (please examine the functions/env.py file to identify the variables that must be set). For live deployment the environment variables must be set on the hosting service/machine you use.
+For running locally/testing, you will also need a `.env` file (or another way to set environment variables for the app), which establishes private keys/tokens to be used within the app. If you are not one of the original authors for this project you will have to create this yourself with your own keys/tokens as required (please examine the functions/env.py file to identify the variables that must be set). For live deployment the environment variables must be set on the hosting service/machine you use. The testing.postgres module needs to be installed using the following command: `pip install git+https://github.com/tk0miya/testing.postgresql.git`
 
 Running the project locally (i.e. not on Fly.io) runs a testing build, with a fresh testing database however you will need [PostgreSQL](https://www.postgresql.org/download/) installed on your machine and on your `PATH`.
 
@@ -42,6 +43,8 @@ This app is run on a [Fly.io](https://fly.io/) account connected to this GitHub 
 If you would like to run this app yourself, it should work by deploying to Fly.io in the same way and setting appropriate environment variables.
 
 While developing you can quickly modify the `requirements.txt` by running `pip freeze > requirements.txt`. The Dockerfile can be updated with `docker build -t nix .`. The requirements and Dockerfile **must** be up to date before deploying any changes to Fly.io.
+
+Static type checking can be performed using MyPy. Simply run `mypy Nix.py`. If you get import implementations errors you may need to adjust the `MYPYPATH` environment variable.
 
 To run the code on Fly.io you will need to copy the values in your `.env` into the Fly.io configuration variables (and make any necessary key changes to reflect your live app), you will also need to setup a PostgreSQL server to interact with whose connection URL should be specified in an environment variable.
 

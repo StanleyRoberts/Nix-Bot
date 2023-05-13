@@ -57,7 +57,7 @@ class Reddit(commands.Cog):
             logger.info(f"Subreddit {sub} was unsubscribed from",
                         guild_id=ctx.guild_id, channel_id=ctx.channel_id)
             db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub))
-            await ctx.respond(f"This server is now unsubscribed from {sub} {Emotes.SNEAKY}")
+            await ctx.respond(f"This server is now unsubscribed from r/{sub} {Emotes.SNEAKY}")
 
     @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
     async def get_subs(self, ctx: discord.ApplicationContext) -> None:
@@ -89,7 +89,7 @@ class Reddit(commands.Cog):
                 await (await self.bot.fetch_channel(entry[2])).send("__Daily post__\n" +
                                                                     post.text, files=post.img)
             except discord.errors.Forbidden:
-                logger.warning("Permission failure for daily reddit post <subreddit: {0}>".format(
+                logger.info("Permission failure for daily reddit post <subreddit: {0}>".format(
                     entry[1]), guild_id=entry[0], channel_id=entry[2])
                 pass  # silently fail if no perms, TODO setup logging channel
 

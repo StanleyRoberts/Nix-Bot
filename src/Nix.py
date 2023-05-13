@@ -39,9 +39,14 @@ async def on_guild_remove(guild: discord.Guild) -> None:
     Args:
         guild (discord.Guild): Guild that triggered the event
     """
-    db.single_SQL("DELETE FROM Guilds WHERE ID=%s", (guild.id,))
-    db.single_SQL("DELETE FROM Birthdays WHERE GuildID=%s", (guild.id,))
-    db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s", (guild.id,))
+    db.multi_void_SQL([
+        ("DELETE FROM Birthdays WHERE GuildID=%s", (guild.id,)),
+        ("DELETE FROM Subreddits WHERE GuildID=%s", (guild.id,)),
+        ("DELETE FROM ChainedUsers WHERE GuildID=%s", (guild.id,)),
+        ("DELETE FROM MessageChain WHERE GuildID=%s", (guild.id,)),
+        ("DELETE FROM RoleChannel WHERE GuildID=%s", (guild.id,)),
+        ("DELETE FROM ReactMessages WHERE GuildID=%s", (guild.id,)),
+        ("DELETE FROM Guilds WHERE ID=%s", (guild.id,))])
 
 
 @bot.event
@@ -52,7 +57,11 @@ async def on_guild_channel_delete(channel: discord.TextChannel) -> None:
     Args:
         channel (discord.Channel): Channel that triggered the event
     """
-    db.single_SQL("DELETE FROM Subreddits WHERE SubredditChannelID=%s", (channel.id,))
+    db.multi_void_SQL([
+        ("DELETE FROM Subreddits WHERE SubredditChannelID=%s", (channel.id,)),
+        ("DELETE FROM ChainedUsers WHERE ChannelID=%s", (channel.id,)),
+        ("DELETE FROM MessageChain WHERE ChannelID=%s OR ResponseChannelID=%s", (channel.id, channel.id)),
+        ("DELETE FROM RoleChannel WHERE ChannelID=%s", (channel.id,))])
 
 
 @bot.event
@@ -63,18 +72,21 @@ async def on_member_remove(member: discord.Member) -> None:
     Args:
         member (discord.Member): Member that triggered the event
     """
-    db.single_SQL("DELETE FROM Birthdays WHERE GuildID=%s AND UserID=%s",
-                  (member.guild.id, member.id))
+    db.multi_void_SQL([
+        ("DELETE FROM Birthdays WHERE GuildID=%s AND UserID=%s", (member.guild.id, member.id)),
+        ("DELETE FROM ChainedUsers WHERE GuildID=%s AND UserID=%s", (member.guild.id, member.id))])
 
 
 @bot.event
 async def on_ready() -> None:
-    logger.info('Logged in', member_id=bot.user.id)
+    if bot.user is not None:
+        logger.info('Logged in', member_id=bot.user.id)
 
 
 def main():
     if __debug__:
         db.populate()
+        bot.load_extension("cogs.debug")
         try:
             priority = Priority[sys.argv[1].upper()].name
             logger.set_priority(priority)
@@ -84,7 +96,8 @@ def main():
         logger.debug_mode = False
         logger.set_priority("WARNING")
 
-    cogs = [cog[:-3] for cog in listdir('./src/cogs') if cog[-3:] == ".py" and cog != "__init__.py"]
+    cogs = [cog[: -3] for cog in listdir('./src/cogs')
+            if cog[-3:] == ".py" and (cog not in ["__init__.py", "debug.py"])]
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
 

@@ -1,7 +1,8 @@
 import discord
 from discord.partial_emoji import PartialEmoji
 
-from helpers.style import Emotes, string_to_emoji
+from helpers.style import Emotes
+from helpers.emoji import string_to_partial_emoji
 from helpers.logger import Logger
 
 logger = Logger()
@@ -21,7 +22,7 @@ class PostViewer(discord.ui.View):
         logger.info("Created PostViewer")
 
     @discord.ui.button(label="New Post", style=discord.ButtonStyle.primary,
-                       emoji=string_to_emoji(Emotes.YUM))
+                       emoji=string_to_partial_emoji(Emotes.YUM))
     async def refresh_callback(self, _, interaction: discord.Interaction):
         await interaction.response.defer()
         post = await self.reddit.get_post()
