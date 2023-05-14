@@ -34,6 +34,7 @@ class Admin(commands.Cog):
                 await ctx.respond(f"Whoops! {Emotes.WTF} That emoji is not a valid discord emoji", ephemeral=True)
                 return
 
+        text = text.replace("<<nl>>", "\n")
         try:
             message = await channel.send(text)
         except discord.errors.Forbidden:
