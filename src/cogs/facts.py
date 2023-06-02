@@ -64,6 +64,7 @@ class Facts(commands.Cog):
         for factID in guilds:
             if factID[0]:
                 logger.debug("Attempting to send fact message", channel_id=factID[0])
+                logger.warning(f"Fact Cog: {self.__repr__()}")
                 try:
                     await (await self.bot.fetch_channel(factID[0])).send("__Daily fact__\n" + fact)
                 except discord.errors.Forbidden:
