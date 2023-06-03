@@ -1,19 +1,4 @@
 import asyncio
-import discord
-from helpers.style import Colours
-
-
-def make_embed(users: dict[discord.User, int], title: str) -> discord.Embed:
-    """Constructs an embed showing the current players in the lobby
-
-        Returns:
-            discord.Embed: The constructed embed
-        """
-    desc = "Playing now:\n " + "\n".join(str(key.mention) + " : " + str(
-        users[key]) for key in users.keys())
-    embed = discord.Embed(title=title, description=desc,
-                          colour=Colours.PRIMARY)
-    return embed
 
 
 async def start_timer(time: int) -> None:
@@ -22,12 +7,7 @@ async def start_timer(time: int) -> None:
     Args:
         time (int): amount of time to wait in seconds
     """
-    seconds = time
-    while True:
-        seconds -= 1
-        if seconds == 0:
-            break
-        await asyncio.sleep(1)
+    await asyncio.sleep(time)
 
 
 RULES = """__Charlatan Rules__
