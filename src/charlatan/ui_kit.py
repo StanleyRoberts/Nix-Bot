@@ -72,11 +72,17 @@ class CharlatanLobby(discord.ui.View):
 
     @ discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
     async def join_callback(self, _, interaction: discord.Interaction) -> None:
-        logger.debug("New player joined game", member_id=interaction.user.id)
-        self.game_state.add_player(interaction.user)
-        view = CharlatanLobby(self.game_state)
-        await interaction.response.edit_message(embed=self.game_state.make_embed("Charlatan"),
-                                                view=view)
+        if self.game_state.find_player(interaction.user) is None:
+            logger.debug("New player joined game", member_id=interaction.user.id)
+            self.game_state.add_player(interaction.user)
+            view = CharlatanLobby(self.game_state)
+            await interaction.response.edit_message(embed=self.game_state.make_embed("Charlatan"),
+                                                    view=view)
+        else:
+            logger.info("User double login into Charlatan lobby detected",
+                        member_id=interaction.user, channel_id=interaction.channel)
+            await interaction.response.send_message(content=f"You have already joined the game {Emotes.NOEMOTION}",
+                                                    ephemeral=True)
 
     @ discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
     async def rules_callback(self, _, interaction: discord.Interaction) -> None:
@@ -85,6 +91,7 @@ class CharlatanLobby(discord.ui.View):
     @ discord.ui.button(label="Confirm Lobby", row=1, style=discord.ButtonStyle.primary)
     async def start_callback(self, _, interaction: discord.Interaction) -> None:
         self.game_state.wordlist = self.game_state.wordlist[:16]
+        self.game_state.choose_charlatan()
         await interaction.response.send_message(view=CharlatanView(self.game_state))
         await interaction.message.delete()
 
@@ -176,7 +183,7 @@ class CharlatanView(discord.ui.View):
             # TODO \/ send message, is edit more coherent (NotFound: Unknown Webhook 404 in edit)?
             self.game_state.remake_players_with_score()
             view = CharlatanView(game_state=self.game_state)
-            await interaction.edit_original_response(view=view)
+            await interaction.response.edit_message(view=view)
         play_again_button.callback = play_again
         self.add_item(play_again_button)
         logger.debug("Play Again button added to items")
@@ -186,7 +193,7 @@ class CharlatanView(discord.ui.View):
         async def back_to_lobby(interaction: discord.Interaction):
             logger.debug("Return to Loby button selected")
             play_again_button.disabled = True  # TODO add lock
-            await self.message.edit(view=self)
+            await interaction.response.edit_message(view=self)
             self.game_state.remake_players_without_score()
             self.game_state.wordlist = helper.DEFAULT_WORDLIST
             view = CharlatanLobby(self.game_state)
@@ -214,8 +221,9 @@ class CharlatanChoice(discord.ui.View):
         super().__init__(timeout=120)
         self.parent = parent
         self.guess_made = False
-        for i in range(len(self.game_state.wordlist)):
-            self.add_button(i, False if self.game_state.wordlist[i] is not self.game_state.word else True)
+        for i in range(len(self.parent.game_state.wordlist)):
+            self.add_button(
+                i, False if self.parent.game_state.wordlist[i] is not self.parent.game_state.word else True)
 
     def add_button(self, i: int, correct_button: bool) -> None:
         """Adds a button to the view

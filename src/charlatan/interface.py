@@ -38,7 +38,9 @@ class CharlatanGame:
         self.word = random.choice(self.wordlist)
 
     def choose_charlatan(self):
-        self.players[random.randint(0, len(self.players)-1)].is_charlatan = True
+        charlatan = self.players[random.randint(0, len(self.players) - 1)]
+        charlatan.is_charlatan = True
+        logger.debug(f"Random Charlatan was selected Charlatan: {charlatan.user.id}")
 
     def add_player(self, new_player: discord.User):
         self.players.append(Player(new_player, 0))
@@ -86,29 +88,25 @@ class CharlatanGame:
             discord.User: The most voted player
         """
         await helper.start_timer(PLAYER_VOTE_TIME)
-        return sorted(self.players, key=lambda x: x.score)[::-1][0].user  # TODO handle ties
+        return sorted(self.players, key=lambda x: x.times_voted_for)[::-1][0].user  # TODO handle ties
 
     def cast_vote(self, user: discord.User, button_id: int) -> str:
         player = self.find_player(user)
-        if player.votee != -1:
+        if not player.votee == -1:
             # TODO the voted player should probably be part of the callback,
             # rather than relying on hackily storing data in the id
 
             # Reset the previous vote
-            # TODO doesnt work lmao
             self.players[player.votee].times_voted_for -= 1
             player.votee = -1
-        self.players[int(button_id)].times_voted_for += 1
-        player.votee += int(button_id)  # TODO this cant be a good idea
-        return "You voted for {}".format(self.players[int(button_id)].user.display_name)
+        player.votee = int(button_id)  # TODO this cant be a good idea
+        self.players[player.votee].times_voted_for += 1
+        return "You voted for {}".format(self.players[player.votee].user.display_name)
 
     def find_player(self, user: discord.User) -> Player:
         for player in self.players:
             if player.user == user:
                 return player
-        else:
-            logger.warning("Find_player received a user that is not in the list of players."
-                           + f"List of player: {self.players}, User: {user}")
 
     def make_embed(self, title: str) -> discord.Embed:
         """Constructs an embed showing the current players in the lobby
