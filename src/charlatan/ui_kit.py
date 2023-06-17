@@ -92,8 +92,7 @@ class CharlatanLobby(discord.ui.View):
     async def start_callback(self, _, interaction: discord.Interaction) -> None:
         self.game_state.wordlist = self.game_state.wordlist[:16]
         self.game_state.choose_charlatan()
-        await interaction.response.send_message(view=CharlatanView(self.game_state))
-        await interaction.message.delete()
+        await interaction.response.edit_message(view=CharlatanView(self.game_state))
 
 
 class CharlatanView(discord.ui.View):
@@ -110,8 +109,7 @@ class CharlatanView(discord.ui.View):
             embed=discord.Embed(description="Game is ongoing", title="Charlatan", colour=Colours.PRIMARY), view=self)
         await self.game_state.send_dms()
         await self.score_players(await self.vote())
-        await self.message.edit(embed=self.game_state.make_embed("Leaderboard"))
-        await self.add_buttons()
+        await self.leaderboard()
 
     async def vote(self) -> discord.User:
         """Begins voting for the Charlatan
@@ -171,7 +169,7 @@ class CharlatanView(discord.ui.View):
             await self.message.edit(embed=discord.Embed(description="\nThe Charlatan did not guess the correct word {}"
                                     .format(Emotes.CONFUSED), title="Charlatan", colour=Colours.PRIMARY), view=self)
 
-    async def add_buttons(self):
+    async def leaderboard(self):
         """Adds Play Again and Back to Lobby buttons to the interaction message
         """
         self.clear_items()
@@ -179,32 +177,25 @@ class CharlatanView(discord.ui.View):
         play_again_button = discord.ui.Button(label="Play Again", style=discord.ButtonStyle.primary)
 
         async def play_again(interaction: discord.Interaction):
-            logger.debug("Play Again button selected")
             # TODO \/ send message, is edit more coherent (NotFound: Unknown Webhook 404 in edit)?
             self.game_state.remake_players_with_score()
             view = CharlatanView(game_state=self.game_state)
             await interaction.response.edit_message(view=view)
         play_again_button.callback = play_again
         self.add_item(play_again_button)
-        logger.debug("Play Again button added to items")
 
         lobby_button = discord.ui.Button(label="Back to Lobby", style=discord.ButtonStyle.secondary)
 
         async def back_to_lobby(interaction: discord.Interaction):
-            logger.debug("Return to Loby button selected")
             play_again_button.disabled = True  # TODO add lock
-            await interaction.response.edit_message(view=self)
             self.game_state.remake_players_without_score()
             self.game_state.wordlist = helper.DEFAULT_WORDLIST
-            view = CharlatanLobby(self.game_state)
-            view.message = await interaction.channel.send(view=view)  # TODO error(NotFound: Unknown Webhook 404)
+            # TODO error(NotFound: Unknown Webhook 404)
+            await interaction.response.edit_message(view=CharlatanLobby(self.game_state))
         lobby_button.callback = back_to_lobby
         self.add_item(lobby_button)
-        logger.debug("Lobby button added to items")
 
-        await self.message.edit(view=self)
-        logger.debug("The items of the class CharlatanGame are {}".format(self.children))
-        logger.debug("View was edited with Lobby and Play Again buttons")
+        await self.message.edit(view=self, embed=self.game_state.make_embed("Leaderboard"))
 
 
 class CharlatanChoice(discord.ui.View):
