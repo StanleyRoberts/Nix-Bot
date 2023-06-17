@@ -4,7 +4,7 @@ from discord.partial_emoji import PartialEmoji
 from helpers.style import Emotes
 from helpers.emoji import string_to_partial_emoji
 from helpers.logger import Logger
-
+from reddit.interface import RedditInterface
 logger = Logger()
 
 
@@ -16,7 +16,7 @@ class PostViewer(discord.ui.View):
         reddit (asyncpraw.Reddit): Reddit instance
     """
 
-    def __init__(self, reddit):
+    def __init__(self, reddit: RedditInterface):
         super().__init__(timeout=300)
         self.reddit = reddit
         logger.info("Created PostViewer")

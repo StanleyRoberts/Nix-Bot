@@ -11,8 +11,8 @@ logger = Logger()
 class TriviaView(discord.ui.View):
     """View for the trivia game
             Args:
-                players (dict[int, int]): the current players ids, mapped to their score
-                difficulty (str): _description_
+                players (dict[str, int]): the current players ids, mapped to their score
+                difficulty (str): The difficulty of the questions
                 interface (TriviaGame): _description_
     """
 
@@ -31,7 +31,7 @@ class TriviaView(discord.ui.View):
     @discord.ui.button(label="Skip", style=discord.ButtonStyle.secondary,
                        emoji='⏩')
     async def skip_callback(self, _, interaction: discord.Interaction):
-        old_answer = await self.state.skip(interaction.user.id)
+        old_answer = await self.state.skip(str(interaction.user.id))
         if old_answer:
             await interaction.response.send_message(f"The answer was: {old_answer} {Emotes.SUNGLASSES}")
             await interaction.channel.send(await self.state.get_new_question(), view=self)
@@ -50,13 +50,13 @@ class TriviaView(discord.ui.View):
         """
         async with self.lock:
             if msg.channel.id == self.message.channel.id:
-                guess = self.state.check_guess(msg.content, msg.author.id)
+                guess = self.state.check_guess(msg.content, str(msg.author.id))
                 if guess == GuessValue.INCORRECT:
                     await msg.add_reaction(Emotes.BRUH)
                 else:
                     await msg.add_reaction(Emotes.WHOA)
                     await msg.reply(f"You got the answer! ({self.state.answer}) " +
-                                    f"You are now at {self.state.players[msg.author.id]} points {Emotes.HAPPY}")
+                                    f"You are now at {self.state.players[str(msg.author.id)]} points {Emotes.HAPPY}")
                     if guess == GuessValue.CORRECT_AND_WON:
                         await msg.reply(f"Congratulations! {msg.author.mention} has won with " +
                                         f"{MAX_POINTS} points! {Emotes.TEEHEE}")
