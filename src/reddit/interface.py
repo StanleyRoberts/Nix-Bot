@@ -49,12 +49,6 @@ class RedditInterface:
     """
 
     def __init__(self, sub: str, time: str = "day") -> None:
-        try:
-            self.reddit = praw.Reddit(client_id=CLIENT_ID,
-                                      client_secret=SECRET_KEY,
-                                      user_agent=USER_AGENT)
-        except prawcore.AsyncPrawcoreException:
-            logger.error("Failed to initialise PRAW reddit instance")
         self.cache: list[praw.models.reddit.submission.Submission] = []
         self._nsub = sub
         self.time = time
@@ -72,14 +66,14 @@ class RedditInterface:
             bool: returns True if the sub exists, and False otherwise
         """
         try:
-            interface = RedditInterface(subreddit)
-            temp = await interface.reddit.subreddit(subreddit)
-            [post async for post in temp.top("day", 1)]
+            async with praw.Reddit(client_id=CLIENT_ID,
+                                   client_secret=SECRET_KEY,
+                                   user_agent=USER_AGENT) as interface:
+                temp = await interface.subreddit(subreddit)
+                [post async for post in temp.top("day", 1)]
             return True
         except prawcore.exceptions.AsyncPrawcoreException:
             return False
-        finally:
-            await interface.reddit.close()
 
     @staticmethod
     async def single_post(subreddit: str, time: str) -> Post:
@@ -94,7 +88,6 @@ class RedditInterface:
         """
         reddit = RedditInterface(subreddit, time)
         post = await reddit.get_post()
-        await reddit.reddit.close()
         return post
 
     async def set_subreddit(self, subreddit: str, num: int = 15) -> None:
@@ -111,11 +104,14 @@ class RedditInterface:
         """
         if not self.sub == subreddit:
             try:
-                self.sub = subreddit
-                self.cache = [post async for post in await self.reddit.subreddit(self.sub).top(
-                    time_filter=self.time, limit=num)]
-                logger.info(f"The subreddit {subreddit} was set for reddit.interface")
-                self.error_response = ""
+                async with praw.Reddit(client_id=CLIENT_ID,
+                                       client_secret=SECRET_KEY,
+                                       user_agent=USER_AGENT) as instance:
+                    self.sub = subreddit
+                    self.cache = [post async for post in await instance.subreddit(self.sub).top(
+                        time_filter=self.time, limit=num)]
+                    logger.info(f"The subreddit {subreddit} was set for reddit.interface")
+                    self.error_response = ""
             except prawcore.exceptions.Redirect:
                 logger.warning(f"Requested subreddit {subreddit} was not found")
                 self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' not found"
@@ -153,7 +149,3 @@ class RedditInterface:
         return await Post("**" + subm.title + "**\t*(r/" + subm.subreddit.display_name + ")*\n" +
                           (subm.selftext if subm.is_self else ""),
                           "" if subm.is_self else subm.url).load_img()
-
-    async def on_timeout(self) -> bool:
-        await self.reddit.reddit.close()
-        return super().on_timeout()
