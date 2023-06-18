@@ -35,13 +35,13 @@ class Reddit(commands.Cog):
         if not await RedditInterface.valid_sub(sub):
             logger.warning(f"Subreddit {sub} is not valid", guild_id=ctx.guild_id)
             await ctx.respond(f"The subreddit {sub} is not available {Emotes.EVIL}")
-        elif (sub.lower(),) in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        elif (sub.lower(),) in db.single_void_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             logger.warning(f"Subreddit {sub} was already subscribed to", guild_id=ctx.guild_id, channel_id=channel.id)
             await ctx.respond(f"This server is already subscribed to {sub} {Emotes.SUPRISE}")
         else:
             logger.info(f"Subreddit {sub} got subscribed to", guild_id=ctx.guild_id, channel_id=channel.id)
-            db.single_SQL("INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
-                          (ctx.guild_id, sub.lower(), channel.id))
+            db.single_void_SQL("INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
+                               (ctx.guild_id, sub.lower(), channel.id))
             await ctx.respond(f"This server is now subscribed to {sub} {Emotes.HUG}")
 
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
@@ -50,18 +50,18 @@ class Reddit(commands.Cog):
         if not sub:
             await self.get_subs(ctx)
             return
-        if (sub.lower(),) not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        if (sub.lower(),) not in db.single_void_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             logger.warning(f"Subreddit {sub} was never subscribed to", guild_id=ctx.guild_id)
             await ctx.respond(f"This server is not subscribed to r/{sub} {Emotes.SUPRISE}")
         else:
             logger.info(f"Subreddit {sub} was unsubscribed from",
                         guild_id=ctx.guild_id, channel_id=ctx.channel_id)
-            db.single_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub))
+            db.single_void_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub))
             await ctx.respond(f"This server is now unsubscribed from r/{sub} {Emotes.SNEAKY}")
 
     @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
     async def get_subs(self, ctx: discord.ApplicationContext) -> None:
-        subscriptions = db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
+        subscriptions = db.single_void_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
         logger.info("The list of subscripted subreddits was requested",
                     guild_id=ctx.guild_id, channel_id=ctx.channel_id)
         desc = "You have not subscribed to any subreddits yet\nGet started with {0}!".format(

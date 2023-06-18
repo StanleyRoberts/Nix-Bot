@@ -18,7 +18,7 @@ class Birthdays(commands.Cog):
     @commands.slash_command(name='set_birthday_channel', description="Sets the channel for the birthday messages")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_counting_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel) -> None:
-        db.single_SQL("UPDATE Guilds SET BirthdayChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
+        db.single_void_SQL("UPDATE Guilds SET BirthdayChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
         await ctx.respond(f"Birthday channel set to {channel.mention} {Emotes.DRINKING}", ephemeral=True)
         logger.info("Counting channel set", guild_id=ctx.guild_id, channel_id=channel.id)
 
@@ -29,9 +29,9 @@ class Birthdays(commands.Cog):
                            month: discord.Option(str, "Enter month of the year", required=True,
                                                  choices=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])) -> None:
-        db.single_SQL("INSERT INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s) ON CONFLICT " +
-                      "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
-                      (ctx.guild.id, ctx.author.id, month + str(day), month + str(day)))
+        db.single_void_SQL("INSERT INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s) ON CONFLICT " +
+                           "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
+                           (ctx.guild.id, ctx.author.id, month + str(day), month + str(day)))
         await ctx.respond(f"{ctx.author.mention} your birthday is set to {day} {month} {Emotes.UWU}")
         logger.info("Birthday set", member_id=ctx.author.id)
 

@@ -23,9 +23,12 @@ class Counting(commands.Cog):
         """
         async with self.lock:
             if (msg.content.isdigit()):
-                (chnl_id, curr_ct, last_ctr_id, high_score, fail_id) = db.single_SQL(
+                if msg.guild is None:
+                    return
+                values = db.single_SQL(
                     "SELECT CountingChannelID, CurrentCount, LastCounterID, HighScoreCounting, "
-                    "FailRoleID FROM Guilds WHERE ID=%s", (msg.guild.id,))[0]
+                    "FailRoleID FROM Guilds WHERE ID=%s", (msg.guild.id,))
+                (chnl_id, curr_ct, last_ctr_id, high_score, fail_id) = values[0]
                 if (msg.channel.id == chnl_id):
                     logger.debug("Integer message detacted in counting channel")
                     if (int(msg.content) != curr_ct + 1):
@@ -36,24 +39,24 @@ class Counting(commands.Cog):
                         await self.fail(msg, "Same user entered two numbers", fail_id)
                     else:
                         await msg.add_reaction(Emotes.BLEP)
-                        db.single_SQL("UPDATE Guilds SET LastCounterID =%s, CurrentCount = CurrentCount+1, " +
-                                      "HighScoreCounting=(CASE WHEN %s>HighScoreCounting THEN %s ELSE " +
-                                      "HighScoreCounting END) WHERE ID =%s",
-                                      (msg.author.id, msg.content, msg.content, msg.guild.id))
+                        db.single_void_SQL("UPDATE Guilds SET LastCounterID =%s, CurrentCount = CurrentCount+1, " +
+                                           "HighScoreCounting=(CASE WHEN %s>HighScoreCounting THEN %s ELSE " +
+                                           "HighScoreCounting END) WHERE ID =%s",
+                                           (msg.author.id, msg.content, msg.content, msg.guild.id))
 
     @commands.slash_command(name='set_fail_role', description="Sets the role the given to users who fail at counting")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_fail_role(self, ctx: discord.ApplicationContext, role: discord.Role) -> None:
         logger.info("fail_role set")
-        db.single_SQL("UPDATE Guilds SET FailRoleID=%s WHERE ID=%s",
-                      (role.id, ctx.guild_id))
+        db.single_void_SQL("UPDATE Guilds SET FailRoleID=%s WHERE ID=%s",
+                           (role.id, ctx.guild_id))
         await ctx.respond(f"The fail role is set to {role.mention} {Emotes.DRINKING}", ephemeral=True)
 
     @commands.slash_command(name='set_counting_channel', description="Sets the channel for the counting game")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_counting_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel) -> None:
         logger.info("counting_channel set")
-        db.single_SQL("UPDATE Guilds SET CountingChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
+        db.single_void_SQL("UPDATE Guilds SET CountingChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
         await ctx.respond(f"Counting channel set to {channel.mention} {Emotes.DRINKING}", ephemeral=True)
 
     @commands.slash_command(name='get_highscore', description="Shows you the highest count your server has reached")
@@ -61,17 +64,19 @@ class Counting(commands.Cog):
         highscore = db.single_SQL("SELECT HighScoreCounting FROM Guilds WHERE ID = %s", (ctx.guild.id,))
         await ctx.respond(f"Your server highscore is {highscore[0][0]}! {Emotes.WHOA}")
 
-    @staticmethod
-    async def clear_fail_role() -> None:
+    # @commands.slash_command(name='clear_fails', description="Clears fail-role from all users")
+    async def clear_fail_role(self, ctx: discord.ApplicationContext) -> None:
         """
-        Clears fail roles from all users on all servers
+        Clears fail roles from all users
         """
-        guilds_and_roles = db.single_SQL("SELECT ID, LoserRoleID FROM Guilds")
-        for pair in guilds_and_roles:
-            # For all users with the role
-            for user in commands.get_guild(pair[0]).get_role(pair[1]).members:
-                # Remove the role
-                await user.remove_roles(commands.get_guild(pair[0]).get_role(pair[1]))
+        loserID = db.single_SQL("SELECT FailRoleID FROM Guilds WHERE id=%s", (ctx.guild.id,))
+        if loserID is None:
+            return
+        loserRole = ctx.guild.get_role(loserID[0])
+        # For all users with the role
+        for member in loserRole.members:
+            # Remove the role
+            await member.remove_roles(loserRole)
 
     @staticmethod
     async def fail(msg: discord.Message, err_txt: str, roleID: int) -> None:
@@ -83,19 +88,24 @@ class Counting(commands.Cog):
             err_txt (string): Failure message to print to channel
             roleID (int): ID of role to assign to user that failed
         """
-        db.single_SQL("UPDATE Guilds SET CurrentCount=0, LastCounterID=NULL WHERE ID=%s", (msg.guild.id,))
+        if msg.guild is None or not isinstance(msg.author, discord.Member):
+            return
+        db.single_void_SQL("UPDATE Guilds SET CurrentCount=0, LastCounterID=NULL WHERE ID=%s", (msg.guild.id,))
         await msg.add_reaction(Emotes.CRYING)
         await msg.channel.send(f"Counting Failed {Emotes.CRYING} {err_txt}")
         if roleID:
+            role = msg.guild.get_role(roleID)
+            if role is None:
+                return
             try:
-                await msg.author.add_roles(msg.guild.get_role(roleID))
+                await msg.author.add_roles(role)  # type: ignore
             except discord.errors.Forbidden:
                 logger.warning("Missing permission to assign fail_role")
                 await msg.channel.send("Whoops! I couldn't set the " +
                                        "{0} role {1} (I need 'Manage Roles' to do that)"
                                        ".\nI won't try again until you set a new fail role"
-                                       .format(msg.guild.get_role(roleID).mention, Emotes.CONFUSED))
-                db.single_SQL("UPDATE Guilds SET FailRoleID=NULL WHERE ID=%s", (msg.guild.id,))
+                                       .format(role.mention, Emotes.CONFUSED))
+                db.single_void_SQL("UPDATE Guilds SET FailRoleID=NULL WHERE ID=%s", (msg.guild.id,))
 
 
 def setup(bot: discord.Bot) -> None:

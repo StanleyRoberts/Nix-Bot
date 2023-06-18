@@ -36,7 +36,7 @@ class Facts(commands.Cog):
                                channel: discord.Option(discord.TextChannel, required=False)) -> None:
         if not channel:
             channel = ctx.channel
-        db.single_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
+        db.single_void_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
         await ctx.respond(f"Facts channel set to {channel.mention} {Emotes.DRINKING}", ephemeral=True)
         logger.debug("Fact channel set", member_id=ctx.user.id, channel_id=channel.id)
 
@@ -44,7 +44,7 @@ class Facts(commands.Cog):
                             description="Disables daily facts (run set_fact_channel to enable again)")
     @discord.commands.default_permissions(manage_guild=True)
     async def toggle_facts(self, ctx: discord.ApplicationContext) -> None:
-        db.single_SQL(
+        db.single_void_SQL(
             "UPDATE Guilds SET FactChannelID=NULL WHERE ID=%s", (ctx.guild_id,))
         await ctx.respond(f"Stopping daily facts {Emotes.NOEMOTION}", ephemeral=True)
         logger.debug("Fact channel unset", member_id=ctx.user.id, guild_id=ctx.guild_id)
@@ -66,7 +66,13 @@ class Facts(commands.Cog):
                 logger.debug("Attempting to send fact message", channel_id=factID[0])
                 logger.warning(f"Fact Cog: {self.__repr__()}")
                 try:
-                    await (await self.bot.fetch_channel(factID[0])).send("__Daily fact__\n" + fact)
+                    channel = await self.bot.fetch_channel(factID[0])
+                    if not isinstance(channel, discord.TextChannel) and not isinstance(channel, discord.Thread):
+                        logger.error("Channel is neither a textchannel nor a thread", channel_id=channel.id,
+                                     guild_id=channel.guild.id if not isinstance(channel,
+                                                                                 discord.abc.PrivateChannel) else 0)
+                        return
+                    await channel.send("__Daily fact__\n" + fact)
                 except discord.errors.Forbidden:
                     logger.info("Permission failure for sending fact message", channel_id=factID[0])
                     pass  # silently fail if no perms, TODO setup logging channel
@@ -80,6 +86,9 @@ class Facts(commands.Cog):
             string: Random fact
         """
         api_url = 'https://api.api-ninjas.com/v1/facts?limit=1'
+        if NINJA_API_KEY is None:
+            logger.error("NINJA_API_KEY variable not available")
+            return ""
         response = requests.get(api_url, headers={'X-Api-Key': NINJA_API_KEY})
         cjson = json.loads(response.text)
         if response.status_code == requests.codes.ok:

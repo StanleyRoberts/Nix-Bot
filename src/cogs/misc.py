@@ -31,7 +31,8 @@ class Misc(commands.Cog):
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
         desc = ("Note: depending on your server settings and role permissions," +
                 " some of these commands may be hidden or disabled\n\n" +
-                "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " + command.description + "\n"
+                "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " +
+                                                                   command.description + "\n"
                                                                    for command in self.bot.cogs[cog].walk_commands()]))
                         for cog in self.bot.cogs]))  # Holy hell
         embed = discord.Embed(title="Help Page", description=desc,
@@ -54,6 +55,9 @@ class Misc(commands.Cog):
         Args:
             msg (discord.Message): Message that triggered event
         """
+        if self.bot.user is None:
+            logger.error("bot.user is None (Bot is offline)")
+            return
         if (self.bot.user.mentioned_in(msg) and msg.reference is None):
             logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
             clean_prompt = re.sub(" @", " ",
@@ -72,8 +76,8 @@ class Misc(commands.Cog):
                                })
             response = requests.request("POST", url, headers=headers, data=data)
             if response.status_code != requests.codes.ok:
-                logger.error(f"AI Error {response.status_code}: {response.content}")
-                msg.reply(f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}")
+                logger.error(f"AI Error {response.status_code}: {response.content.decode()}")
+                await msg.reply(f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}")
 
             text = json.loads(response.content.decode('utf-8'))
             await msg.reply(text['generated_text'])
@@ -106,13 +110,13 @@ class Help_Nav(discord.ui.View):
     async def backward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
-        logger.debug("Back button pressed", member_id=interaction.user.id)
+        logger.debug("Back button pressed", member_id=interaction.user.id if interaction.user is not None else 0)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
     async def forward_callback(self, _, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
-        logger.debug("Next button pressed", member_id=interaction.user.id)
+        logger.debug("Next button pressed", member_id=interaction.user.id if interaction.user is not None else 0)
 
 
 def setup(bot: discord.Bot) -> None:

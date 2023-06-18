@@ -50,8 +50,8 @@ class Admin(commands.Cog):
         logger.debug(f"role={role}")
         if role:
             logger.debug(f"Message ID on insert: {message.id}")
-            db.single_SQL("INSERT INTO ReactMessages VALUES (%s, %s, %s, %s)",
-                          (ctx.guild_id, message.id, role.id, emoji.as_text()))
+            db.single_void_SQL("INSERT INTO ReactMessages VALUES (%s, %s, %s, %s)",
+                               (ctx.guild_id, message.id, role.id, emoji.as_text()))
         await ctx.respond(f"Message Sent! {Emotes.HEART}")
 
     @discord.slash_command(name="remove_single_role_assignment", description="Takes out all of Nix's role " +
@@ -81,8 +81,8 @@ class Admin(commands.Cog):
     async def role_channel(self, ctx: discord.ApplicationContext,
                            channel: discord.TextChannel,
                            role: discord.Role):
-        db.single_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s, TRUE)",
-                      (ctx.guild_id, role.id, channel.id))
+        db.single_void_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s, TRUE)",
+                           (ctx.guild_id, role.id, channel.id))
         await ctx.respond(f"Role channel was set to {channel.mention}")
 
     @discord.slash_command(name='set_remove_role_channel',
@@ -92,8 +92,8 @@ class Admin(commands.Cog):
     async def remove_role_channel(self, ctx: discord.ApplicationContext,
                                   channel: discord.TextChannel,
                                   role: discord.Role):
-        db.single_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s, FALSE)",
-                      (ctx.guild_id, role.id, channel.id))
+        db.single_void_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s, FALSE)",
+                           (ctx.guild_id, role.id, channel.id))
         await ctx.respond(f"Role remove channel was set to {channel.mention}")
 
     @discord.commands.slash_command(
@@ -115,8 +115,8 @@ class Admin(commands.Cog):
                                     "If not provided then Nix follows up all messages")):
         channel_id = message_channel.id if message_channel is not None else -1
         try:
-            db.single_SQL("INSERT INTO MessageChain VALUES (%s,%s,%s,%s)",
-                          (ctx.guild_id, channel_id, response_channel.id, message))
+            db.single_void_SQL("INSERT INTO MessageChain VALUES (%s,%s,%s,%s)",
+                               (ctx.guild_id, channel_id, response_channel.id, message))
             await ctx.respond(f"You set a chain_message for the channel {response_channel}")
         except db.KeyViolation:
             await ctx.respond(f"You already set this as a message for this channel {Emotes.CONFUSED}")
@@ -133,13 +133,13 @@ class Admin(commands.Cog):
         if msg.author.id != self.bot.user.id:
             values = db.single_SQL("SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s",
                                    (msg.guild.id,))
-            if values:
+            if values[0] is None:
                 check_vals = [val[0] for val in values]
                 if msg.channel.id in check_vals or -1 in check_vals:
                     try:
-                        db.single_SQL("INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
-                                      (msg.guild.id, msg.author.id, msg.channel.id
-                                       if msg.channel.id in check_vals else -1))
+                        db.single_void_SQL("INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
+                                           (msg.guild.id, msg.author.id, msg.channel.id
+                                            if msg.channel.id in check_vals else -1))
                         await self.send_chained_message(msg.guild, msg.author)
                     except db.KeyViolation:
                         logger.info("User that is already chained has written in the channel again",
