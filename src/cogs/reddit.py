@@ -89,8 +89,11 @@ class Reddit(commands.Cog):
                         guild_id=entry[0], channel_id=entry[2])
             try:
                 post = await RedditInterface.single_post(entry[1], "day")
-                await (await self.bot.fetch_channel(entry[2])).send("__Daily post__\n" +
-                                                                    post.text, files=post.img)
+                channel = await self.bot.fetch_channel(entry[2])
+                if not isinstance(channel, discord.abc.Messageable):
+                    logger.error("reddit daily post channel is not sendable")
+                    continue
+                await channel.send("__Daily post__\n" + post.text, files=post.img)
             except discord.errors.Forbidden:
                 logger.info("Permission failure for daily reddit post <subreddit: {0}>".format(
                     entry[1]), guild_id=entry[0], channel_id=entry[2])

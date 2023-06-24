@@ -204,7 +204,11 @@ class Admin(commands.Cog):
         for (response_channel_id, message) in vals:
             msg = message.replace("<<user>>", user.mention)
             try:
-                await guild.get_channel(response_channel_id).send(msg)
+                channel = guild.get_channel(response_channel_id)
+                if not isinstance(channel, discord.abc.Messageable):
+                    logger.error("Chained message channel not sendable", channel_id=guild.id, guild_id=guild.id)
+                    continue
+                await channel.send(msg)
             except discord.errors.Forbidden:
                 logger.info("Permission failure for chain_message",
                             guild_id=guild.id, channel_id=response_channel_id)

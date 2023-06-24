@@ -34,14 +34,16 @@ class TriviaView(discord.ui.View):
         old_answer = await self.state.skip(str(interaction.user.id))
         if old_answer:
             await interaction.response.send_message(f"The answer was: {old_answer} {Emotes.SUNGLASSES}")
+            channel_id = interaction.channel_id if interaction.channel_id else 0
+            guild_id = interaction.guild_id if interaction.guild_id else 0
+            if not isinstance(interaction.channel, discord.abc.Messageable):
+                logger.error("Callback for trivia interaction is not in sendable channel",
+                             channel_id=channel_id, guild_id=guild_id)
+                return
             await interaction.channel.send(await self.state.get_new_question(), view=self)
-            logger.debug("Question successfully skipped",
-                         guild_id=interaction.guild_id,
-                         channel_id=interaction.channel_id)
+            logger.debug("Question successfully skipped", channel_id=channel_id, guild_id=guild_id)
         else:
-            logger.debug("Question skip failed",
-                         guild_id=interaction.guild_id,
-                         channel_id=interaction.channel_id)
+            logger.debug("Question skip failed", channel_id=channel_id, guild_id=guild_id)
 
     async def handle_guess(self, msg: discord.Message):
         """Checks if a guess is correct
