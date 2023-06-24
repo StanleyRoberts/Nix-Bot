@@ -167,7 +167,13 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def assign_react_role(self, event: discord.RawReactionActionEvent):
+        if self.bot.user is None:
+            logger.error("Bot is offline")
+            return
         if event.user_id == self.bot.user.id:
+            return
+        if event.member is None:
+            logger.info("event.member is None")
             return
         logger.debug(f"Message ID on reaction: {event.message_id}")
         vals = db.single_SQL(
@@ -176,7 +182,8 @@ class Admin(commands.Cog):
         for (emoji, role_id) in vals:
             if Emoji(emoji).to_partial_emoji() == event.emoji:
                 logger.debug("adding role")
-                await event.member.add_roles(event.member.guild.get_role(role_id))
+                role = event.member.guild.get_role(role_id)
+                await event.member.add_roles(role)
 
     @commands.Cog.listener('on_raw_reaction_remove')
     async def unassign_react_role(self, event: discord.RawReactionActionEvent):
