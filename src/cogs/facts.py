@@ -33,7 +33,8 @@ class Facts(commands.Cog):
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_fact_channel(self, ctx: discord.ApplicationContext,
-                               channel: discord.Option(discord.TextChannel, required=False)) -> None:
+                               channel: discord.Option(discord.TextChannel, required=False)  # type: ignore
+                               ) -> None:
         if not channel:
             channel = ctx.channel
         db.single_void_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
@@ -67,11 +68,12 @@ class Facts(commands.Cog):
                 logger.warning(f"Fact Cog: {self.__repr__()}")
                 try:
                     channel = await self.bot.fetch_channel(factID[0])
-                    if not isinstance(channel, discord.TextChannel) and not isinstance(channel, discord.Thread):
+                    if not (isinstance(channel, discord.abc.Messageable) and
+                            isinstance(channel, discord.abc.PrivateChannel)):
                         logger.error("Channel is neither a textchannel nor a thread", channel_id=channel.id,
                                      guild_id=channel.guild.id if not isinstance(channel,
                                                                                  discord.abc.PrivateChannel) else 0)
-                        return
+                        continue
                     await channel.send("__Daily fact__\n" + fact)
                 except discord.errors.Forbidden:
                     logger.info("Permission failure for sending fact message", channel_id=factID[0])

@@ -5,7 +5,6 @@ from helpers.logger import Logger
 import helpers.database as db
 from helpers.style import Emotes
 from helpers.emoji import Emoji
-
 logger = Logger()
 
 
@@ -130,9 +129,14 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def chain_message(self, msg: discord.Message):
+        if (not isinstance(msg.channel, discord.abc.PrivateChannel)):
+            logger.info("chain_message activated in Private channel")
+            return
+        if self.bot.user is None:
+            logger.error("Bot offline", channel_id=msg.channel.id)
+            return
         if msg.author.id != self.bot.user.id:
-            values = db.single_SQL("SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s",
-                                   (msg.guild.id,))
+            values = db.single_SQL("SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,))
             if values[0] is None:
                 check_vals = [val[0] for val in values]
                 if msg.channel.id in check_vals or -1 in check_vals:
@@ -147,6 +151,12 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message):
+        if (not isinstance(msg.channel, discord.abc.PrivateChannel)):
+            logger.info("assign_role activated in Private channel")
+            return
+        if self.bot.user is None:
+            logger.error("bot is offline")
+            return
         if msg.author.id != self.bot.user.id:
             vals = db.single_SQL("SELECT RoleID, ToAdd FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
             for (role_id, add_role) in vals:

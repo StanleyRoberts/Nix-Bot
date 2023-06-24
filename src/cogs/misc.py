@@ -34,7 +34,7 @@ class Misc(commands.Cog):
                 "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " +
                                                                    command.description + "\n"
                                                                    for command in self.bot.cogs[cog].walk_commands()]))
-                        for cog in self.bot.cogs]))  # Holy hell
+                        for cog in self.bot.cogs]))  # TODO combine command and groups from walk_commands
         embed = discord.Embed(title="Help Page", description=desc,
                               colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)

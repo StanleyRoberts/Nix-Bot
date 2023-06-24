@@ -47,6 +47,9 @@ class Trivia(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def on_guess(self, msg: discord.Message):
+        if isinstance(msg.channel, discord.abc.PrivateChannel):
+            logger.info("on_guess activated in PrivateChannel", channel_id=msg.channel.id)
+            return
         if msg.author.id != self.bot.user.id and msg.channel.id in self.active_views.keys():
             await self.active_views[msg.channel.id].handle_guess(msg)
 

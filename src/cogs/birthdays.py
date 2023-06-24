@@ -6,7 +6,6 @@ import datetime as dt
 import helpers.database as db
 from helpers.style import Emotes, Colours, TIME
 from helpers.logger import Logger
-
 logger = Logger()
 
 
@@ -24,11 +23,12 @@ class Birthdays(commands.Cog):
 
     @commands.slash_command(name='birthday', description="Set your birthday")
     async def set_birthday(self, ctx: discord.ApplicationContext,
-                           day: discord.Option(int, "Enter day of the month (as integer)",
+                           day: discord.Option(int, "Enter day of the month (as integer)",  # type: ignore
                                                min_value=0, max_value=31, required=True),
-                           month: discord.Option(str, "Enter month of the year", required=True,
+                           month: discord.Option(str, "Enter month of the year", required=True,  # type: ignore
                                                  choices=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                                                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])) -> None:
+                                                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+                           ) -> None:
         db.single_void_SQL("INSERT INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s) ON CONFLICT " +
                            "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
                            (ctx.guild.id, ctx.author.id, month + str(day), month + str(day)))
@@ -61,7 +61,12 @@ class Birthdays(commands.Cog):
             if guild[0]:
                 logger.debug("Attempting to send birthday message", channel_id=guild[0])
                 try:
-                    (await (await self.bot.fetch_channel(guild[0]))
+                    channel = await self.bot.fetch_channel(guild[0])
+                    if not (isinstance(channel, discord.abc.Messageable) and
+                            isinstance(channel, discord.abc.PrivateChannel)):
+                        logger.error("Birthday channel set to Private Channel", channel_id=channel.id)
+                        continue
+                    (await channel
                         .send("Happy Birthday to: " + users +
                               f"!\nHope you have a brilliant day {Emotes.HEART}"))
                 except discord.errors.Forbidden:
