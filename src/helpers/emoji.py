@@ -1,5 +1,5 @@
 import re
-import emoji as emoji_lib
+import emoji as emoji_lib  # type: ignore[import]
 
 from discord.partial_emoji import PartialEmoji
 

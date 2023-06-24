@@ -33,7 +33,7 @@ class Facts(commands.Cog):
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_fact_channel(self, ctx: discord.ApplicationContext,
-                               channel: discord.Option(discord.TextChannel, required=False)  # type: ignore
+                               channel: discord.Option(discord.TextChannel, required=False)  # type: ignore[valid-type]
                                ) -> None:
         if not channel:
             channel = ctx.channel

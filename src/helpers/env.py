@@ -16,7 +16,7 @@ HF_API = os.getenv('HF_API')  # HuggingFace API key
 
 
 if __debug__:
-    import testing.postgresql as tp
+    import testing.postgresql as tp  # type: ignore[import]
     postgres = tp.Postgresql()
     DATABASE_URL = postgres.url()
 

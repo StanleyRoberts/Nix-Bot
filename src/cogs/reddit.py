@@ -17,7 +17,7 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='reddit', description="Displays a random top reddit post from the given subreddit")
     async def send_reddit_post(self, ctx: discord.ApplicationContext, subreddit: str,
-                               time: discord.Option(str, default="day",
+                               time: discord.Option(str, default="day",  # type: ignore[valid-type]
                                                     choices=["month", "hour", "week", "all", "day", "year"],
                                                     description="Time period to search for top posts")):
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
@@ -28,14 +28,15 @@ class Reddit(commands.Cog):
     @commands.slash_command(name='subscribe', description="Subscribe to a subreddit to get daily posts from it")
     @discord.commands.default_permissions(manage_guild=True)
     async def subscribe_to_sub(self, ctx: discord.ApplicationContext, sub: str,
-                               channel: discord.Option(discord.TextChannel, required=False)) -> None:
+                               channel: discord.Option(  # type: ignore[valid-type]
+                                   discord.TextChannel, required=False)) -> None:
         if not channel:
             channel: discord.TextChannel = ctx.channel
 
         if not await RedditInterface.valid_sub(sub):
             logger.warning(f"Subreddit {sub} is not valid", guild_id=ctx.guild_id)
             await ctx.respond(f"The subreddit {sub} is not available {Emotes.EVIL}")
-        elif (sub.lower(),) in db.single_void_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        elif (sub.lower(),) in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             logger.warning(f"Subreddit {sub} was already subscribed to", guild_id=ctx.guild_id, channel_id=channel.id)
             await ctx.respond(f"This server is already subscribed to {sub} {Emotes.SUPRISE}")
         else:
@@ -46,11 +47,13 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.default_permissions(manage_guild=True)
-    async def unsubscribe_from_sub(self, ctx: discord.ApplicationContext, sub: discord.Option(required=False)) -> None:
+    async def unsubscribe_from_sub(self, ctx: discord.ApplicationContext,
+                                   sub: discord.Option(required=False)  # type: ignore[valid-type]
+                                   ) -> None:
         if not sub:
             await self.get_subs(ctx)
             return
-        if (sub.lower(),) not in db.single_void_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        if (sub.lower(),) not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             logger.warning(f"Subreddit {sub} was never subscribed to", guild_id=ctx.guild_id)
             await ctx.respond(f"This server is not subscribed to r/{sub} {Emotes.SUPRISE}")
         else:
@@ -61,7 +64,7 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
     async def get_subs(self, ctx: discord.ApplicationContext) -> None:
-        subscriptions = db.single_void_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
+        subscriptions = db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
         logger.info("The list of subscripted subreddits was requested",
                     guild_id=ctx.guild_id, channel_id=ctx.channel_id)
         desc = "You have not subscribed to any subreddits yet\nGet started with {0}!".format(

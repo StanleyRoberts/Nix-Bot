@@ -23,9 +23,11 @@ class Birthdays(commands.Cog):
 
     @commands.slash_command(name='birthday', description="Set your birthday")
     async def set_birthday(self, ctx: discord.ApplicationContext,
-                           day: discord.Option(int, "Enter day of the month (as integer)",  # type: ignore
+                           day: discord.Option(int,  # type: ignore[valid-type]
+                                               "Enter day of the month (as integer)",
                                                min_value=0, max_value=31, required=True),
-                           month: discord.Option(str, "Enter month of the year", required=True,  # type: ignore
+                           month: discord.Option(str,  # type: ignore[valid-type]
+                                                 "Enter month of the year", required=True,
                                                  choices=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
                            ) -> None:

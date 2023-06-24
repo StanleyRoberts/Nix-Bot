@@ -19,9 +19,9 @@ class Admin(commands.Cog):
     @discord.commands.default_permissions(manage_guild=True)
     async def greeting_role(self, ctx: discord.ApplicationContext,
                             text: str,
-                            channel: discord.Option(discord.TextChannel, required=False),
-                            emoji: discord.Option(str, required=False),
-                            role: discord.Option(discord.Role, required=False)):
+                            channel: discord.Option(discord.TextChannel, required=False),  # type: ignore[valid-type]
+                            emoji: discord.Option(str, required=False),  # type: ignore[valid-type]
+                            role: discord.Option(discord.Role, required=False)):  # type: ignore[valid-type]
         if not channel:
             channel = ctx.channel
 
@@ -55,8 +55,9 @@ class Admin(commands.Cog):
 
     @discord.slash_command(name="remove_single_role_assignment", description="Takes out all of Nix's role " +
                            "assigning behaviour for this role")
-    async def remove_single_role(self, ctx: discord.ApplicationContext, role: discord.Option(discord.Role,
-                                 description="The role to remove assignment for")):
+    async def remove_single_role(self, ctx: discord.ApplicationContext,
+                                 role: discord.Option(discord.Role,  # type: ignore[valid-type]
+                                                      description="The role to remove assignment for")):
         db.multi_void_SQL([
             ("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id)),
             ("DELETE FROM ReactMessages WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id))])
@@ -100,14 +101,14 @@ class Admin(commands.Cog):
         description="allows Nix to follow up with custom messages whenever a user send a message")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_chain_message(self, ctx: discord.ApplicationContext,
-                                message: discord.Option(
+                                message: discord.Option(  # type: ignore[valid-type]
                                     str,
                                     description="The message text that will be sent as a follow up. " +
                                                 "Write <<user>> to ping the user"),
-                                response_channel: discord.Option(
+                                response_channel: discord.Option(  # type: ignore[valid-type]
                                     discord.TextChannel,
                                     description="The channel where Nix sends its follow up"),
-                                message_channel: discord.Option(
+                                message_channel: discord.Option(  # type: ignore[valid-type]
                                     discord.TextChannel,
                                     required=False,
                                     description="The channel Nix watches for new messages " +

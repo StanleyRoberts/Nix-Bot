@@ -98,7 +98,7 @@ class Counting(commands.Cog):
             if role is None:
                 return
             try:
-                await msg.author.add_roles(role)  # type: ignore
+                await msg.author.add_roles(role)
             except discord.errors.Forbidden:
                 logger.warning("Missing permission to assign fail_role")
                 await msg.channel.send("Whoops! I couldn't set the " +
