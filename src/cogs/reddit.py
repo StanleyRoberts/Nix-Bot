@@ -31,7 +31,7 @@ class Reddit(commands.Cog):
                                channel: discord.Option(  # type: ignore[valid-type]
                                    discord.TextChannel, required=False)) -> None:
         if not channel:
-            channel: discord.TextChannel = ctx.channel
+            channel = ctx.channel
 
         if not await RedditInterface.valid_sub(sub):
             logger.warning(f"Subreddit {sub} is not valid", guild_id=ctx.guild_id)

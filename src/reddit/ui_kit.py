@@ -26,6 +26,9 @@ class PostViewer(discord.ui.View):
     async def refresh_callback(self, _, interaction: discord.Interaction):
         await interaction.response.defer()
         post = await self.reddit.get_post()
+        if interaction.message is None:
+            logger.info("Interaction.message of reddit ui is None")
+            return
         await interaction.message.edit(content=post.text, files=post.img, attachments=[],
                                        view=self)
         logger.debug("PostViewer - New post")
@@ -56,8 +59,14 @@ class ChangeSubModal(discord.ui.Modal):
     async def callback(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         newsub = self.children[0].value
+        if newsub is None:
+            logger.info("InputText of reddit modal is None")
+            return
         await self.caller.reddit.set_subreddit(newsub)
         post = await self.caller.reddit.get_post()
+        if interaction.message is None:
+            logger.info("Interaction.message of reddit ui is None")
+            return
         await interaction.message.edit(content=post.text, files=post.img, attachments=[],
                                        view=self.caller)
         logger.info("ChangeSubModal closed")

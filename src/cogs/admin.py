@@ -188,6 +188,9 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_raw_reaction_remove')
     async def unassign_react_role(self, event: discord.RawReactionActionEvent):
+        if event.guild_id is None:
+            logger.info("unassign_react_role detected outside of guild", channel_id=event.channel_id)
+            return
         vals = db.single_SQL(
             "SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
         for (emoji, role_id) in vals:

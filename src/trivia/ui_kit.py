@@ -31,11 +31,14 @@ class TriviaView(discord.ui.View):
     @discord.ui.button(label="Skip", style=discord.ButtonStyle.secondary,
                        emoji='⏩')
     async def skip_callback(self, _, interaction: discord.Interaction):
+        if interaction.user is None:
+            logger.info("skip_callback triggered by PING interaction")
+            return
         old_answer = await self.state.skip(str(interaction.user.id))
+        channel_id = interaction.channel_id if interaction.channel_id else 0
+        guild_id = interaction.guild_id if interaction.guild_id else 0
         if old_answer:
             await interaction.response.send_message(f"The answer was: {old_answer} {Emotes.SUNGLASSES}")
-            channel_id = interaction.channel_id if interaction.channel_id else 0
-            guild_id = interaction.guild_id if interaction.guild_id else 0
             if not isinstance(interaction.channel, discord.abc.Messageable):
                 logger.error("Callback for trivia interaction is not in sendable channel",
                              channel_id=channel_id, guild_id=guild_id)
