@@ -174,7 +174,7 @@ class Admin(commands.Cog):
         if event.user_id == self.bot.user.id:
             return
         if event.member is None:
-            logger.info("event.member is None")
+            logger.info("reaction event has no member (likely: user not in guild)")
             return
         logger.debug(f"Message ID on reaction: {event.message_id}")
         vals = db.single_SQL(

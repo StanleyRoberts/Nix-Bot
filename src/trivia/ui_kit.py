@@ -32,7 +32,7 @@ class TriviaView(discord.ui.View):
                        emoji='⏩')
     async def skip_callback(self, _, interaction: discord.Interaction):
         if interaction.user is None:
-            logger.info("skip_callback triggered by PING interaction")
+            logger.error("skip_callback interaction has no user")
             return
         old_answer = await self.state.skip(str(interaction.user.id))
         channel_id = interaction.channel_id if interaction.channel_id else 0
