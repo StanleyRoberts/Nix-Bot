@@ -18,7 +18,8 @@ class HttpError(Exception):
 class Facts(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
-        self.daily_fact.start()
+        if not self.daily_fact.is_running():
+            self.daily_fact.start()
 
     @commands.slash_command(name='fact', description="Displays a random fact")
     async def send_fact(self, ctx: discord.ApplicationContext) -> None:
@@ -64,7 +65,6 @@ class Facts(commands.Cog):
         for factID in guilds:
             if factID[0]:
                 logger.debug("Attempting to send fact message", channel_id=factID[0])
-                logger.warning(f"Fact Cog: {self.__repr__()}")
                 try:
                     await (await self.bot.fetch_channel(factID[0])).send("__Daily fact__\n" + fact)
                 except discord.errors.Forbidden:
