@@ -39,7 +39,7 @@ class TriviaInterface:
                 api_url = 'http://jservice.io/api/clues?value={}&min_date=2000'.format(str(self.difficulty) + '00')
             async with session.get(api_url) as response:
                 if response.ok:
-                    def r(t): return re.sub('<[^<]+?>', '', t)  # strip HTML tags
+                    def r(t) -> str: return re.sub('<[^<]+?>', '', t)  # strip HTML tags
                     self._cache = [(r(cjson['question']), r(cjson['answer']), r(cjson['category']['title']))
                                    for cjson in (await response.json(encoding="utf-8"))[:20]]
                     logger.debug("Successful cache refill")
@@ -98,12 +98,14 @@ class TriviaGame:
         else:
             return GuessValue.INCORRECT
 
-    async def skip(self, id: str):
+    async def skip(self, id: str) -> str:
+        value: str = ""
         if ((len(self.players) <= 1) or
                 (id in self.players.keys())):
             old_answer = self.answer
             await self.get_new_question()
-            return old_answer
+            value = old_answer
+        return value
 
     def _handle_correct(self, id: str) -> GuessValue:
         if id in self.players.keys():
