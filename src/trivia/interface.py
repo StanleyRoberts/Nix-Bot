@@ -34,9 +34,10 @@ class TriviaInterface:
         """
         async with aiohttp.ClientSession() as session:
             if self.difficulty == "random":
-                api_url = 'http://jservice.io/api/clues?min_date=2000'
+                api_url = 'http://jservice.io/api/clues?min_date=2000-01-01'
             else:
-                api_url = 'http://jservice.io/api/clues?value={}&min_date=2000'.format(str(self.difficulty) + '00')
+                api_url = 'http://jservice.io/api/clues?value={}&min_date=2000-01-01'.format(
+                    str(self.difficulty) + '00')
             async with session.get(api_url) as response:
                 if response.ok:
                     def r(t): return re.sub('<[^<]+?>', '', t)  # strip HTML tags
@@ -53,7 +54,7 @@ class TriviaInterface:
         Returns:
             tuple[str, str, str]: question, answer, category
         """
-        if not self._cache:
+        if len(self._cache) == 0:
             logger.debug("refilling cache")
             await self._fill_cache()
         return self._cache.pop()
