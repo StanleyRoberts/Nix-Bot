@@ -17,9 +17,9 @@ TLogger = typing.TypeVar("TLogger", bound="Logger")
 
 
 class Logger(object):
-    _instance: typing.Union[TLogger, None] = None
+    _instance = None
 
-    def __new__(cls: TLogger) -> TLogger:
+    def __new__(cls: typing.Type[TLogger]) -> TLogger:
         if cls._instance is None:
             cls._instance = super(Logger, cls).__new__(cls)
             cls.print_level = 0
