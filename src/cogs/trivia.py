@@ -43,7 +43,12 @@ class Trivia(commands.Cog):
         self.active_views.update({ctx.channel_id: view})
         await ctx.respond(embed=discord.Embed(title=f"{Emotes.UWU} You have started a game of Trivia",
                                               colour=Colours.PRIMARY, description=f"Difficulty: {difficulty}"))
-        await ctx.send(await view.get_question(), view=view)
+        text = await view.get_question()
+        if not text:
+            await ctx.send(f"An error has acurred within the Trivia game {Emotes.CRYING}")
+            self.stop_trivia()
+        else:
+            await ctx.send(text, view=view)
 
     @commands.Cog.listener("on_message")
     async def on_guess(self, msg: discord.Message):
