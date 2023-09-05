@@ -57,6 +57,7 @@ class Trivia(commands.Cog):
 
     @commands.slash_command(name='stop_trivia', description='stops the in-progress trivia game in this channel')
     async def stop_trivia(self, ctx: discord.ApplicationContext):
+        await ctx.respond(f"Trivia has been stopped by {ctx.user.mention} {Emotes.DRINKING}")
         await self.active_views[ctx.channel_id].on_timeout()
 
 
