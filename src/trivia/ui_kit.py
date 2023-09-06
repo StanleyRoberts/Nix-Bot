@@ -1,5 +1,6 @@
 import discord
 import asyncio
+import typing
 
 from helpers.style import Emotes
 from helpers.logger import Logger
@@ -16,14 +17,15 @@ class TriviaView(discord.ui.View):
                 interface (TriviaGame): _description_
     """
 
-    def __init__(self, state, callback):
+    def __init__(self, state, callback, channel_id):
         super().__init__(timeout=300)
         self.lock = asyncio.Lock()
         self.state = state
+        self.channel_id = channel_id
         temp = super().on_timeout
 
         async def timeout():
-            callback()
+            callback(channel_id)
             await temp()
             self.stop()
         self.on_timeout = timeout  # TODO timeout needs to be tested
@@ -64,7 +66,7 @@ class TriviaView(discord.ui.View):
                     else:
                         await msg.channel.send(await self.get_question(), view=self)
 
-    async def get_question(self):
+    async def get_question(self) -> typing.Union[str, None]:
         return await self.state.get_new_question()
 
     def get_current_question(self):

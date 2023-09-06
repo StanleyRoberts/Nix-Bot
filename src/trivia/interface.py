@@ -35,9 +35,9 @@ class TriviaInterface:
         """
         async with aiohttp.ClientSession() as session:
             if self.difficulty == "random":
-                api_url = 'http://jservice.io/api/clues?min_date=2000-01-01'
+                api_url = 'http://jservice.io/api/clues?min_date=2009-01-01'
             else:
-                api_url = 'http://jservice.io/api/clues?value={}&min_date=2000-01-01'.format(
+                api_url = 'http://jservice.io/api/clues?value={}&min_date=2009-01-01'.format(
                     str(self.difficulty) + '00')
             async with session.get(api_url) as response:
                 if response.ok:
@@ -85,7 +85,7 @@ class TriviaGame:
         self.players = {player_id: 0}
         self.question, self.answer, self.category = None, None, None
 
-    async def get_new_question(self) -> str:
+    async def get_new_question(self) -> typing.Union[str, None]:
         """Generates new question and returns it
 
         Returns:
@@ -93,10 +93,13 @@ class TriviaGame:
         """
         self.question, self.answer, self.category = await self._interface.get_trivia() or (None, None, None)
         logger.debug(f"generated trivia, q: {self.question}, a: {self.answer}")
-        return f"**New Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: {self.category}"
+        if self.question:
+            return f"**New Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: ||{self.category}||"
+        else:
+            return None
 
     def get_current_question(self) -> str:
-        return f"**Current Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: {self.category}"
+        return f"**Current Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: ||{self.category}||"
 
     def check_guess(self, content: str, id: int) -> bool:
         if content.isdigit() and content is self.answer or\
