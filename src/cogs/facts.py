@@ -19,8 +19,8 @@ class HttpError(Exception):
 class Facts(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
-        self.mutex = asyncio.Lock()
-        self.daily_fact.start()
+        if not self.daily_fact.is_running():
+            self.daily_fact.start()
 
     @commands.slash_command(name='fact', description="Displays a random fact")
     async def send_fact(self, ctx: discord.ApplicationContext) -> None:
@@ -57,34 +57,21 @@ class Facts(commands.Cog):
         """
         Called daily to print facts to fact channel
         """
-        if not self.mutex.locked():
-            async with self.mutex:
-                logger.info("Starting daily fact loop")
-                guilds = db.single_SQL("SELECT FactChannelID FROM Guilds")
+        logger.info("Starting daily birthday loop")
+        guilds = db.single_SQL("SELECT FactChannelID FROM Guilds")
+        try:
+            fact = self.get_fact()
+        except HttpError:
+            logger.error("Couldn't get fact for daily facts")
+            return
+        for factID in guilds:
+            if factID[0]:
+                logger.debug("Attempting to send fact message", channel_id=factID[0])
                 try:
-                    fact = self.get_fact()
-                except HttpError:
-                    logger.error("Couldn't get fact for daily facts")
-                    return
-                for factID in guilds:
-                    if factID[0]:
-                        logger.debug("Attempting to send fact message", channel_id=factID[0])
-                        logger.warning(f"Fact Cog: {self.__repr__()}")
-                        try:
-                            channel = await self.bot.fetch_channel(factID[0])
-                            if not (isinstance(channel, discord.abc.Messageable) and
-                                    isinstance(channel, discord.abc.PrivateChannel)):
-                                logger.error(
-                                    "Channel is neither a textchannel nor a thread", channel_id=channel.id,
-                                    guild_id=channel.guild.id
-                                    if not isinstance(channel, discord.abc.PrivateChannel) else 0)
-                                continue
-                            await channel.send("__Daily fact__\n" + fact)
-                        except discord.errors.Forbidden:
-                            logger.info("Permission failure for sending fact message", channel_id=factID[0])
-                            pass  # silently fail if no perms, TODO setup logging channel
-        else:
-            logger.error("Failed to acquire fact mutex")
+                    await (await self.bot.fetch_channel(factID[0])).send("__Daily fact__\n" + fact)
+                except discord.errors.Forbidden:
+                    logger.info("Permission failure for sending fact message", channel_id=factID[0])
+                    pass  # silently fail if no perms, TODO setup logging channel
 
     @staticmethod
     def get_fact() -> str:
