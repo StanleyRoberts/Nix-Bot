@@ -4,9 +4,10 @@ import requests
 import typing
 import json
 import re
+from characterai import PyAsyncCAI as PyCAI
 
 from helpers.style import Colours
-from helpers.env import HF_API
+from helpers.env import HF_API, CAI_CHAR_TOKEN as TOKEN, CAI_NIX_ID
 from helpers.logger import Logger
 from helpers.style import Emotes
 
@@ -47,7 +48,7 @@ class Misc(commands.Cog):
         logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.Cog.listener("on_message")
-    async def NLP(self, msg: discord.Message):
+    async def NLP(self, msg: discord.Message) -> None:
         """
         Prints out an AI generated response to the message if it mentions Nix
 
@@ -58,25 +59,18 @@ class Misc(commands.Cog):
             logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
             clean_prompt = re.sub(" @", " ",
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
-
-            url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
-            headers = {"Authorization": f"Bearer {HF_API}"}
-
-            prompt = {"past_user_inputs": USER_QS,
-                      "generated_responses": NIX_AS,
-                      "text": clean_prompt}
-
-            data = json.dumps({"inputs": prompt,
-                               "parameters": {"return_full_text": False},
-                               "options": {"use_cache": False}
-                               })
-            response = requests.request("POST", url, headers=headers, data=data)
-            if response.status_code != requests.codes.ok:
-                logger.error(f"AI Error {response.status_code}: {response.content}")
-                msg.reply(f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}")
-
-            text = json.loads(response.content.decode('utf-8'))
-            await msg.reply(text['generated_text'])
+            client = PyCAI(TOKEN)
+            await client.start()
+            chat = await client.chat.new_chat(CAI_NIX_ID)
+            participants = chat['participants']
+            if not participants[0]['is_human']:
+                nix_username = participants[0]['user']['username']
+            else:
+                nix_username = participants[1]['user']['username']
+            data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt)
+            name = data['src_char']['participant']['name']
+            text = data['replies'][0]['text']
+            await msg.reply(f"{name} : {text}")
 
 
 class Help_Nav(discord.ui.View):
