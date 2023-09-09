@@ -55,18 +55,21 @@ class Facts(commands.Cog):
         """
         Called daily to print facts to fact channel
         """
-        logger.info("Starting daily birthday loop")
+        logger.info("Starting daily fact loop")
         guilds = db.single_SQL("SELECT FactChannelID FROM Guilds")
-        try:
-            fact = self.get_fact()
-        except HttpError:
-            logger.error("Couldn't get fact for daily facts")
-            return
+        fact = self.get_fact()
+        logger.debug(guilds)  # TODO remove
         for factID in guilds:
             if factID[0]:
                 logger.debug("Attempting to send fact message", channel_id=factID[0])
                 try:
-                    await (await self.bot.fetch_channel(factID[0])).send("__Daily fact__\n" + fact)
+                    msg = (("__Daily fact__\n" + fact) if fact else "Oh no, I can't think" +
+                           f"of any good facts right now. Maybe I will think of one later {Emotes.CRYING}")
+                    channel = await self.bot.fetch_channel(factID[0])
+                    if isinstance(channel, discord.abc.Messageable):
+                        await channel.send(msg)
+                    else:
+                        logger.info("Channel for daily fact not messageable", channel_id=factID[0])
                 except discord.errors.Forbidden:
                     logger.info("Permission failure for sending fact message", channel_id=factID[0])
                     pass  # silently fail if no perms, TODO setup logging channel
