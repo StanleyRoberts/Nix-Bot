@@ -44,7 +44,7 @@ If you would like to run this app yourself, it should work by deploying to Fly.i
 
 While developing you can quickly modify the `requirements.txt` by running `pip freeze > requirements.txt`. The Dockerfile can be updated with `docker build -t nix .`. The requirements and Dockerfile **must** be up to date before deploying any changes to Fly.io.
 
-Static type checking can be performed using MyPy. Simply run `cd src` followed by `mypy mypy.py`. If you get import implementations errors you may need to adjust the `MYPYPATH` environment variable.
+Static type checking can be performed using MyPy. Simply run `mypy .`. Or for strict: `mypy --strict --disable-error-code no-untyped-call --disable-error-code misc .`
 
 To run the code on Fly.io you will need to copy the values in your `.env` into the Fly.io configuration variables (and make any necessary key changes to reflect your live app), you will also need to setup a PostgreSQL server to interact with whose connection URL should be specified in an environment variable.
 
