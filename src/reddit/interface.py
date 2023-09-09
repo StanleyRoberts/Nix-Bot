@@ -53,8 +53,8 @@ class RedditInterface:
         self.cache: list[praw.models.reddit.submission.Submission] = []
         self._nsub = sub
         self.time = time
-        self.sub: typing.Union[str, None] = None
-        self.error_response: typing.Union[str, None] = None
+        self.sub: str | None = None
+        self.error_response: str | None = None
 
     @staticmethod
     async def valid_sub(subreddit: str) -> bool:

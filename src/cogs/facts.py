@@ -74,7 +74,7 @@ class Facts(commands.Cog):
                     pass  # silently fail if no perms, TODO setup logging channel
 
     @staticmethod
-    def get_fact() -> typing.Union[str, None]:
+    def get_fact() -> str | None:
         """
         Gets random fact from ninjas API
 

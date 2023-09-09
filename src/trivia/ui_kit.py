@@ -71,7 +71,7 @@ class TriviaView(discord.ui.View):
                     else:
                         await msg.channel.send(await self.get_question(), view=self)
 
-    async def get_question(self) -> typing.Union[str, None]:
+    async def get_question(self) -> str | None:
         return await self.state.get_new_question()
 
     def get_current_question(self):

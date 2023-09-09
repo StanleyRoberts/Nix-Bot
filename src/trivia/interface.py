@@ -27,7 +27,7 @@ class TriviaInterface:
     """
 
     def __init__(self, difficulty: str = "4") -> None:
-        self._cache: list[typing.Union[tuple[str, str, str], None]] = []
+        self._cache: list[tuple[str, str, str] | None] = []
         self.difficulty = difficulty
 
     async def _fill_cache(self) -> None:
@@ -54,7 +54,7 @@ class TriviaInterface:
                                  .format(response.status, (await response.content.read(-1)).decode('utf-8')))
                     self._cache = [None]
 
-    async def get_trivia(self) -> typing.Union[tuple[str, str, str], None]:
+    async def get_trivia(self) -> tuple[str, str, str] | None:
         """Get a new triva question, its answer and the question category
 
         Returns:
@@ -83,11 +83,11 @@ class TriviaGame:
     def __init__(self, player_id: str, difficulty: str):
         self._interface = TriviaInterface(difficulty)
         self.players = {player_id: 0}
-        self.question: typing.Union[str, None] = None
-        self.answer: typing.Union[str, None] = None
-        self.category: typing.Union[str, None] = None
+        self.question: str | None = None
+        self.answer: str | None = None
+        self.category: str | None = None
 
-    async def get_new_question(self) -> typing.Union[str, None]:
+    async def get_new_question(self) -> str | None:
         """Generates new question and returns it
 
         Returns:

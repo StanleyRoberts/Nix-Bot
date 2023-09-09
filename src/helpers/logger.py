@@ -24,7 +24,7 @@ class Logger(object):
             cls._instance = super(Logger, cls).__new__(cls)
             cls.print_level = 0
             cls.debug_mode = True
-            cls.command_bot: typing.Union[discord.Bot, None] = None
+            cls.command_bot: discord.Bot | None = None
         return cls._instance
 
     def set_priority(self, priority: str) -> None:
