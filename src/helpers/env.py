@@ -13,7 +13,8 @@ USER_AGENT = os.getenv('USER_AGENT')  # PRAW/Reddit API user agent
 NINJA_API_KEY = os.getenv('NINJA_API_KEY')  # X-API-Key for API-Ninjas
 DATABASE_URL = os.getenv('DATABASE_URL')  # PostgreSQL db
 HF_API = os.getenv('HF_API')  # HuggingFace API key
-
+CAI_CHAR_TOKEN = os.getenv('CAI_CHAR_TOKEN')  # Character AI client token
+CAI_NIX_ID = os.getenv('CAI_NIX_ID')  # Character AI character ID of Nix bot
 
 if __debug__:
     import testing.postgresql as tp  # type: ignore[import]
