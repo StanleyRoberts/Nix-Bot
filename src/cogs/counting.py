@@ -95,10 +95,10 @@ class Counting(commands.Cog):
         await msg.channel.send(f"Counting Failed {Emotes.CRYING} {err_txt}")
         if roleID:
             role = msg.guild.get_role(roleID)
-            if role is None:
+            if not role:
                 return
             try:
-                await msg.author.add_roles(role)
+                await msg.author.add_roles(role, reason="failed the counting")
             except discord.errors.Forbidden:
                 logger.warning("Missing permission to assign fail_role")
                 await msg.channel.send("Whoops! I couldn't set the " +

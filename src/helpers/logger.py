@@ -24,7 +24,7 @@ class Logger(object):
             cls._instance = super(Logger, cls).__new__(cls)
             cls.print_level = 0
             cls.debug_mode = True
-            cls.command_bot = None
+            cls.command_bot: typing.Union[discord.Bot, None] = None
         return cls._instance
 
     def set_priority(self, priority: str) -> None:
@@ -88,18 +88,21 @@ class Logger(object):
             self.error("Commandbot is None")
             return
         if guild_id:
-            try:
-                log += " (server: " + self.command_bot.get_guild(guild_id).name + ")"
-            except AttributeError:
+            guild = self.command_bot.get_guild(guild_id)
+            if guild:
+                log += " (server: " + guild.name + ")"
+            else:
                 self.warning("Logger failed to deduce attribute (server) for the following message:")
         if member_id:
-            try:
-                log += " (user: " + self.command_bot.get_user(member_id).name + ")"
-            except AttributeError:
+            user = self.command_bot.get_user(member_id)
+            if user:
+                log += " (user: " + user.name + ")"
+            else:
                 self.warning("Logger failed to deduce attribute (user) for the following message:")
         if channel_id:
-            try:
-                log += " (channel: " + self.command_bot.get_channel(channel_id).name + ")"
-            except AttributeError:
+            channel = self.command_bot.get_channel(channel_id)
+            if channel and not isinstance(channel, discord.abc.PrivateChannel):
+                log += " (channel: " + channel.name + ")"
+            else:
                 self.warning("Logger failed to deduce attribute (channel) for the following message:")
         print(log)

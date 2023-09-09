@@ -27,7 +27,7 @@ class TriviaInterface:
     """
 
     def __init__(self, difficulty: str = "4") -> None:
-        self._cache: list[tuple[str, str, str]] = []
+        self._cache: list[typing.Union[tuple[str, str, str], None]] = []
         self.difficulty = difficulty
 
     async def _fill_cache(self) -> None:
@@ -51,7 +51,7 @@ class TriviaInterface:
                         logger.debug("Successful cache refill")
                 else:
                     logger.error("{0} Cache refill failed: {1}"
-                                 .format(response.status, await response.content.read(-1)))
+                                 .format(response.status, (await response.content.read(-1)).decode('utf-8')))
                     self._cache = [None]
 
     async def get_trivia(self) -> typing.Union[tuple[str, str, str], None]:
@@ -83,7 +83,9 @@ class TriviaGame:
     def __init__(self, player_id: str, difficulty: str):
         self._interface = TriviaInterface(difficulty)
         self.players = {player_id: 0}
-        self.question, self.answer, self.category = "", "", ""
+        self.question: typing.Union[str, None] = None
+        self.answer: typing.Union[str, None] = None
+        self.category: typing.Union[str, None] = None
 
     async def get_new_question(self) -> typing.Union[str, None]:
         """Generates new question and returns it
@@ -91,7 +93,9 @@ class TriviaGame:
         Returns:
             str: formatted string with the current question
         """
+
         self.question, self.answer, self.category = await self._interface.get_trivia() or (None, None, None)
+
         logger.debug(f"generated trivia, q: {self.question}, a: {self.answer}")
         if self.question:
             return f"**New Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: ||{self.category}||"
@@ -102,6 +106,8 @@ class TriviaGame:
         return f"**Current Question** {Emotes.SNEAKY}\nQuestion: {self.question}\nHint: ||{self.category}||"
 
     def check_guess(self, content: str, id: str) -> GuessValue:
+        if not self.answer:
+            raise RuntimeError("Could not find answer")
         if content.isdigit() and content is self.answer or\
                 get_close_matches(self.answer.lower(), [content.lower()], cutoff=0.8) != []:
             return self._handle_correct(id)
@@ -109,6 +115,8 @@ class TriviaGame:
             return GuessValue.INCORRECT
 
     async def skip(self, id: str) -> str:
+        if not self.answer:
+            raise RuntimeError("Could not find answer")
         value: str = ""
         if ((len(self.players) <= 1) or
                 (id in self.players.keys())):

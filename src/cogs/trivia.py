@@ -20,11 +20,10 @@ class Trivia(commands.Cog):
         self.bot = bot
         self.active_views: typing.Dict[int, TriviaView] = {}
 
-    @commands.slash_command(name='trivia',
-                            description="Start a game of Trivia. The first person to get 5 points wins")
-    async def game_start(self, ctx: discord.ApplicationContext,
-                         difficulty=discord.Option(str, default="all difficulties", required=False,
-                                                   choices=DIFFICULTY_DICT.keys())):
+    @discord.commands.option("difficulty", type=str, default="all difficulties", required=False,
+                             choices=DIFFICULTY_DICT.keys())
+    @commands.slash_command(name='trivia', description="Start a game of Trivia. The first person to get 5 points wins")
+    async def game_start(self, ctx: discord.ApplicationContext, difficulty: str):
         real_difficulty = DIFFICULTY_DICT[difficulty]
         if ctx.channel_id in self.active_views.keys():
             await ctx.respond(f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel")
@@ -48,7 +47,7 @@ class Trivia(commands.Cog):
                                               colour=Colours.PRIMARY, description=f"Difficulty: {difficulty}"))
         text = await view.get_question()
         if not text:
-            await ctx.send(f"An error has acurred within the Trivia game {Emotes.CRYING}")
+            await ctx.send(f"Sorry, I have misplaced my question cards. Maybe come back later {Emotes.CRYING}")
             await self.active_views[ctx.channel_id].on_timeout()
         else:
             await ctx.send(text, view=view)

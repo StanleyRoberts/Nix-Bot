@@ -5,6 +5,7 @@ import aiohttp
 import io
 import discord
 import re
+import typing
 
 from helpers.style import Emotes
 from helpers.env import CLIENT_ID, SECRET_KEY, USER_AGENT
@@ -52,8 +53,8 @@ class RedditInterface:
         self.cache: list[praw.models.reddit.submission.Submission] = []
         self._nsub = sub
         self.time = time
-        self.sub: str = ""
-        self.error_response = ""
+        self.sub: typing.Union[str, None] = None
+        self.error_response: typing.Union[str, None] = None
 
     @staticmethod
     async def valid_sub(subreddit: str) -> bool:
@@ -111,7 +112,7 @@ class RedditInterface:
                     self.cache = [post async for post in await instance.subreddit(self.sub).top(
                         time_filter=self.time, limit=num)]
                     logger.info(f"The subreddit {subreddit} was set for reddit.interface")
-                    self.error_response = ""
+                    self.error_response = None
             except prawcore.exceptions.Redirect:
                 logger.warning(f"Requested subreddit {subreddit} was not found")
                 self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' not found"
@@ -136,9 +137,9 @@ class RedditInterface:
             IndexError: If cache is empty
         """
 
-        if self.sub == "":
+        if not self.sub:
             await self.set_subreddit(self._nsub)
-        if self.error_response != "":
+        if self.error_response:
             logger.warning(f"Error while getting post: {self.error_response}")
             return Post(self.error_response)
         try:

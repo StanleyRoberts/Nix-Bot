@@ -15,21 +15,19 @@ class Reddit(commands.Cog):
         self.bot = bot
         self.daily_post.start()
 
+    @discord.commands.option("time", type=str, default="day", description="Time period to search for top posts",
+                             choices=["month", "hour", "week", "all", "day", "year"])
     @commands.slash_command(name='reddit', description="Displays a random top reddit post from the given subreddit")
-    async def send_reddit_post(self, ctx: discord.ApplicationContext, subreddit: str,
-                               time: discord.Option(str, default="day",  # type: ignore[valid-type]
-                                                    choices=["month", "hour", "week", "all", "day", "year"],
-                                                    description="Time period to search for top posts")):
+    async def send_reddit_post(self, ctx: discord.ApplicationContext, subreddit: str, time: str):
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
         reddit = RedditInterface(subreddit, time)
         post = await reddit.get_post()
         await ctx.interaction.response.send_message(content=post.text, files=post.img, view=ui.PostViewer(reddit))
 
+    @discord.commands.option("channel", type=discord.TextChannel, required=False)
     @commands.slash_command(name='subscribe', description="Subscribe to a subreddit to get daily posts from it")
     @discord.commands.default_permissions(manage_guild=True)
-    async def subscribe_to_sub(self, ctx: discord.ApplicationContext, sub: str,
-                               channel: discord.Option(  # type: ignore[valid-type]
-                                   discord.TextChannel, required=False)) -> None:
+    async def subscribe_to_sub(self, ctx: discord.ApplicationContext, sub: str, channel: discord.TextChannel) -> None:
         if not channel:
             channel = ctx.channel
 
@@ -37,7 +35,8 @@ class Reddit(commands.Cog):
             logger.warning(f"Subreddit {sub} is not valid", guild_id=ctx.guild_id)
             await ctx.respond(f"The subreddit {sub} is not available {Emotes.EVIL}")
         elif (sub.lower(),) in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
-            logger.warning(f"Subreddit {sub} was already subscribed to", guild_id=ctx.guild_id, channel_id=channel.id)
+            logger.warning(f"Subreddit {sub} was already subscribed to",
+                           guild_id=ctx.guild_id, channel_id=channel.id)
             await ctx.respond(f"This server is already subscribed to {sub} {Emotes.SUPRISE}")
         else:
             logger.info(f"Subreddit {sub} got subscribed to", guild_id=ctx.guild_id, channel_id=channel.id)
@@ -45,11 +44,10 @@ class Reddit(commands.Cog):
                                (ctx.guild_id, sub.lower(), channel.id))
             await ctx.respond(f"This server is now subscribed to {sub} {Emotes.HUG}")
 
-    @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
-    @discord.commands.default_permissions(manage_guild=True)
-    async def unsubscribe_from_sub(self, ctx: discord.ApplicationContext,
-                                   sub: discord.Option(required=False)  # type: ignore[valid-type]
-                                   ) -> None:
+    @discord.commands.option("sub", type=str, required=False)
+    @ commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
+    @ discord.commands.default_permissions(manage_guild=True)
+    async def unsubscribe_from_sub(self, ctx: discord.ApplicationContext, sub: str) -> None:
         if not sub:
             await self.get_subs(ctx)
             return
