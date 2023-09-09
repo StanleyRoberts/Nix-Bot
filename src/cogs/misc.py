@@ -33,7 +33,8 @@ class Misc(commands.Cog):
                 " some of these commands may be hidden or disabled\n\n" +
                 "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " +
                                                                    command.description + "\n"
-                                                                   for command in self.bot.cogs[cog].walk_commands()]))
+                                                                   for command in self.bot.cogs[cog].walk_commands()
+                                                                   if isinstance(command, discord.SlashCommand)]))
                         for cog in self.bot.cogs]))  # TODO combine command and groups from walk_commands
         embed = discord.Embed(title="Help Page", description=desc,
                               colour=Colours.PRIMARY)

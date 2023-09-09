@@ -65,8 +65,12 @@ class Reddit(commands.Cog):
         subscriptions = db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
         logger.info("The list of subscripted subreddits was requested",
                     guild_id=ctx.guild_id, channel_id=ctx.channel_id)
+        sub_command = self.bot.get_application_command("subscribe")
+        if (sub_command is None) or (not isinstance(sub_command, discord.SlashCommand)):
+            logger.error("Could not get subscribe command")
+            return
         desc = "You have not subscribed to any subreddits yet\nGet started with {0}!".format(
-            self.bot.get_application_command("subscribe").mention)
+            sub_command.mention)
         if subscriptions:
             desc = "\n".join(["> " + sub[0] for sub in subscriptions])
         embed = discord.Embed(

@@ -23,9 +23,8 @@ class Admin(commands.Cog):
     async def greeting_role(self, ctx: discord.ApplicationContext, text: str,
                             channel: discord.TextChannel, emoji: str, role: discord.Role):
         if emoji:
-            logger.debug(f"emoji1={emoji}")
             try:
-                emoji = Emoji(emoji)
+                true_emoji = Emoji(emoji)
             except ValueError:
                 await ctx.respond(f"Whoops! {Emotes.WTF} That emoji is not a valid discord emoji", ephemeral=True)
                 return
@@ -42,12 +41,12 @@ class Admin(commands.Cog):
             await ctx.respond(f"Message Sent! {Emotes.HEART}", ephemeral=True)
             return
 
-        await message.add_reaction(emoji=emoji.to_partial_emoji())
+        await message.add_reaction(emoji=true_emoji.to_partial_emoji())
         logger.debug(f"role={role}")
         if role:
             logger.debug(f"Message ID on insert: {message.id}")
             db.single_void_SQL("INSERT INTO ReactMessages VALUES (%s, %s, %s, %s)",
-                               (ctx.guild_id, message.id, role.id, emoji.as_text()))
+                               (ctx.guild_id, message.id, role.id, true_emoji.as_text()))
         await ctx.respond(f"Message Sent! {Emotes.HEART}")
 
     @discord.commands.option("role", type=discord.Role, description="The role to remove assignment for")
@@ -127,8 +126,11 @@ class Admin(commands.Cog):
         if (not isinstance(msg.channel, discord.abc.PrivateChannel)):
             logger.info("chain_message activated in Private channel")
             return
+        if msg.guild is None:
+            logger.error("Couldnt get guild", member_id=msg.author.id)
+            return
         if self.bot.user is None:
-            logger.error("Bot offline", channel_id=msg.channel.id)
+            logger.error("Bot is offline", channel_id=msg.channel.id)
             return
         if msg.author.id != self.bot.user.id:
             values = db.single_SQL("SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,))
@@ -149,8 +151,14 @@ class Admin(commands.Cog):
         if (not isinstance(msg.channel, discord.abc.PrivateChannel)):
             logger.info("assign_role activated in Private channel")
             return
+        if msg.guild is None:
+            logger.error("Couldnt get guild", member_id=msg.author.id)
+            return
         if self.bot.user is None:
-            logger.error("bot is offline")
+            logger.error("Bot is offline")
+            return
+        if not isinstance(msg.author, discord.Member):
+            logger.info("Authoer is not member (likely: user not in guild)")
             return
         if msg.author.id != self.bot.user.id:
             vals = db.single_SQL("SELECT RoleID, ToAdd FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
