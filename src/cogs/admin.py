@@ -155,10 +155,14 @@ class Admin(commands.Cog):
         if msg.author.id != self.bot.user.id:
             vals = db.single_SQL("SELECT RoleID, ToAdd FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
             for (role_id, add_role) in vals:
-                if add_role:
-                    await msg.author.add_roles(msg.guild.get_role(role_id))
+                role = msg.guild.get_role(role_id)
+                if role:
+                    if add_role:
+                        await msg.author.add_roles(role)
+                    else:
+                        await msg.author.remove_roles(role)
                 else:
-                    await msg.author.remove_roles(msg.guild.get_role(role_id))
+                    logger.error("Couldnt get role for msg role (un)assign")
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def assign_react_role(self, event: discord.RawReactionActionEvent):
@@ -178,7 +182,10 @@ class Admin(commands.Cog):
             if Emoji(emoji).to_partial_emoji() == event.emoji:
                 logger.debug("adding role")
                 role = event.member.guild.get_role(role_id)
-                await event.member.add_roles(role)
+                if role:
+                    await event.member.add_roles(role)
+                else:
+                    logger.error("Couldnt get role for react role assign")
 
     @commands.Cog.listener('on_raw_reaction_remove')
     async def unassign_react_role(self, event: discord.RawReactionActionEvent):
@@ -192,7 +199,11 @@ class Admin(commands.Cog):
                 logger.debug("removing role")
                 guild = await self.bot.fetch_guild(event.guild_id)
                 member = await guild.fetch_member(event.user_id)
-                await member.remove_roles(guild.get_role(role_id))
+                role = guild.get_role(role_id)
+                if role:
+                    await member.remove_roles(role)
+                else:
+                    logger.error("Couldnt get role for react role unassign")
 
     @staticmethod
     async def send_chained_message(guild: discord.Guild, user: discord.User):

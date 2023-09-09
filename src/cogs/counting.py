@@ -93,10 +93,8 @@ class Counting(commands.Cog):
         db.single_void_SQL("UPDATE Guilds SET CurrentCount=0, LastCounterID=NULL WHERE ID=%s", (msg.guild.id,))
         await msg.add_reaction(Emotes.CRYING)
         await msg.channel.send(f"Counting Failed {Emotes.CRYING} {err_txt}")
-        if roleID:
-            role = msg.guild.get_role(roleID)
-            if not role:
-                return
+        role = msg.guild.get_role(roleID)
+        if role:
             try:
                 await msg.author.add_roles(role, reason="failed the counting")
             except discord.errors.Forbidden:
@@ -106,6 +104,8 @@ class Counting(commands.Cog):
                                        ".\nI won't try again until you set a new fail role"
                                        .format(role.mention, Emotes.CONFUSED))
                 db.single_void_SQL("UPDATE Guilds SET FailRoleID=NULL WHERE ID=%s", (msg.guild.id,))
+        else:
+            logger.error("Couldnt get fail role for counting")
 
 
 def setup(bot: discord.Bot) -> None:
