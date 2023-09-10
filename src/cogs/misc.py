@@ -49,7 +49,7 @@ class Misc(commands.Cog):
         logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.Cog.listener("on_message")
-    async def NLP(self, msg: discord.Message):
+    async def NLP(self, msg: discord.Message) -> None:
         """
         Prints out an AI generated response to the message if it mentions Nix
 
@@ -90,31 +90,35 @@ class Help_Nav(discord.ui.View):
         self.index = 0
         self.pages = ["Front"] + [cogs[cog] for cog in cogs]
 
-    def build_embed(self):
+    def build_embed(self) -> discord.Embed:
         self.index = self.index % len(self.pages)
         page = self.pages[self.index]
 
         compass = "|".join([f" {page.qualified_name} " if page != self.pages[self.index]
-                            else f"** {page.qualified_name} **" for page in self.pages[1:]]) + "\n"
+                            else f"** {page.qualified_name} **" for page in self.pages[1:]
+                            if isinstance(page, discord.Cog)]) + "\n"
         if page == "Front":
             desc = compass + ("\nNote: depending on your server settings and role permissions, " +
                               "some of these commands may be hidden or disabled")
         else:
+            if isinstance(page, str):
+                raise ValueError(f"Unknown page encountered: {page}")
             desc = compass + ("\n***" + page.qualified_name + "***:\n" + ""
                               .join(sorted([command.mention + " : " + command.description + "\n"
-                                            for command in page.walk_commands()])))
+                                            for command in page.walk_commands()
+                                            if isinstance(command, discord.SlashCommand)])))
 
         return discord.Embed(title="Help Page", description=desc,
                              colour=Colours.PRIMARY)
 
     @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
-    async def backward_callback(self, _, interaction: discord.Interaction) -> None:
+    async def backward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
         logger.debug("Back button pressed", member_id=interaction.user.id if interaction.user is not None else 0)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
-    async def forward_callback(self, _, interaction: discord.Interaction) -> None:
+    async def forward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
         logger.debug("Next button pressed", member_id=interaction.user.id if interaction.user is not None else 0)

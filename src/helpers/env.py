@@ -21,7 +21,7 @@ if __debug__:
     DATABASE_URL = postgres.url()
 
 
-def shutdown_db():
+def shutdown_db() -> None:
     if __debug__:
         postgres.stop()
 

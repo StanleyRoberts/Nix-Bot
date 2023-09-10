@@ -4,7 +4,7 @@ import typing
 
 from helpers.style import Emotes
 from helpers.logger import Logger
-from trivia.interface import GuessValue, MAX_POINTS
+from trivia.interface import GuessValue, MAX_POINTS, TriviaGame
 
 logger = Logger()
 
@@ -12,27 +12,26 @@ logger = Logger()
 class TriviaView(discord.ui.View):
     """View for the trivia game
             Args:
-                players (dict[str, int]): the current players ids, mapped to their score
-                difficulty (str): The difficulty of the questions
-                interface (TriviaGame): _description_
+                state (TriviaGame): the current TriviaGame state
+                difficulty (function): function called on view timeout
+                channel_id (int): channel_id for the trivia game
     """
 
-    def __init__(self, state, callback, channel_id):
+    def __init__(self, state: TriviaGame, callback: typing.Callable[[int], None], channel_id: int):
         super().__init__(timeout=300)
         self.lock = asyncio.Lock()
         self.state = state
-        self.channel_id = channel_id
         temp = super().on_timeout
 
-        async def timeout():
+        async def timeout() -> None:
             callback(channel_id)
             await temp()
             self.stop()
-        self.on_timeout = timeout  # TODO timeout needs to be tested
+        self.on_timeout = timeout  # type: ignore[method-assign]
 
     @discord.ui.button(label="Skip", style=discord.ButtonStyle.secondary,
                        emoji='⏩')
-    async def skip_callback(self, _, interaction: discord.Interaction):
+    async def skip_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         if interaction.user is None:
             logger.error("skip_callback interaction has no user")
             return
@@ -50,7 +49,7 @@ class TriviaView(discord.ui.View):
         else:
             logger.debug("Question skip failed", channel_id=channel_id, guild_id=guild_id)
 
-    async def handle_guess(self, msg: discord.Message):
+    async def handle_guess(self, msg: discord.Message) -> None:
         """Checks if a guess is correct
 
         If the guess is a number it has to be exact, otherwise any (spellingwise) close guesses will count too
@@ -74,5 +73,5 @@ class TriviaView(discord.ui.View):
     async def get_question(self) -> str | None:
         return await self.state.get_new_question()
 
-    def get_current_question(self):
+    def get_current_question(self) -> str:  # TODO needs to be able to return None?
         return self.state.get_current_question()

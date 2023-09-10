@@ -10,11 +10,11 @@ logger = Logger()
 
 
 class Counting(commands.Cog):
-    def __init__(self, _) -> None:
+    def __init__(self) -> None:
         self.lock = asyncio.Lock()
 
     @commands.Cog.listener("on_message")
-    async def count(self, msg: discord.Message):
+    async def count(self, msg: discord.Message) -> None:
         """
         Triggered on all messages, used to check for counting game
 
@@ -109,4 +109,4 @@ class Counting(commands.Cog):
 
 
 def setup(bot: discord.Bot) -> None:
-    bot.add_cog(Counting(bot))
+    bot.add_cog(Counting())

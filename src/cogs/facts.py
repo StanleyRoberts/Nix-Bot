@@ -88,7 +88,7 @@ class Facts(commands.Cog):
         response = requests.get(api_url, headers={'X-Api-Key': NINJA_API_KEY})
         cjson = json.loads(response.text)
         if response.status_code == requests.codes.ok:
-            return cjson[0]["fact"]
+            return str(cjson[0]["fact"])
         else:
             err = f"Fact Error {response.status_code}: {cjson['message']}"
             logger.error(err)

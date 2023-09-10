@@ -41,7 +41,7 @@ class TriviaInterface:
                     str(self.difficulty) + '00')
             async with session.get(api_url) as response:
                 if response.ok:
-                    def r(t) -> str: return re.sub('<[^<]+?>', '', t)  # strip HTML tags
+                    def r(t: str) -> str: return re.sub('<[^<]+?>', '', t)  # strip HTML tags
                     self._cache = [(r(cjson['question']), r(cjson['answer']), r(cjson['category']['title']))
                                    for cjson in (await response.json(encoding="utf-8"))[:20]]
                     if not self._cache:

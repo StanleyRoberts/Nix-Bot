@@ -36,7 +36,7 @@ class Birthdays(commands.Cog):
 
     @ commands.slash_command(name='show_birthdays', description="Shows all tracked birthdays for the server")
     @ discord.commands.default_permissions(manage_guild=True)
-    async def show_birthdays(self, ctx: discord.ApplicationContext):
+    async def show_birthdays(self, ctx: discord.ApplicationContext) -> None:
         vals = db.single_SQL("SELECT UserID, Birthdate from Birthdays WHERE GuildID=%s", (ctx.guild_id,))
         if vals:
             out_str = "\n".join([(await self.bot.fetch_user(user[0])).mention + " : " + user[1] for user in vals])

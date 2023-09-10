@@ -83,7 +83,7 @@ async def on_ready() -> None:
         logger.info('Logged in', member_id=bot.user.id)
 
 
-def main():
+def main() -> None:
     if __debug__:
         db.populate()
         bot.load_extension("cogs.debug")

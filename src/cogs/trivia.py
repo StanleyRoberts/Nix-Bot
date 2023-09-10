@@ -23,7 +23,7 @@ class Trivia(commands.Cog):
     @discord.commands.option("difficulty", type=str, default="all difficulties", required=False,
                              choices=DIFFICULTY_DICT.keys())
     @commands.slash_command(name='trivia', description="Start a game of Trivia. The first person to get 5 points wins")
-    async def game_start(self, ctx: discord.ApplicationContext, difficulty: str):
+    async def game_start(self, ctx: discord.ApplicationContext, difficulty: str) -> None:
         real_difficulty = DIFFICULTY_DICT[difficulty]
         if ctx.channel_id in self.active_views.keys():
             await ctx.respond(f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel")
@@ -33,7 +33,7 @@ class Trivia(commands.Cog):
 
         game_state = TriviaGame(ctx.user.id, real_difficulty)
 
-        def remove_view(channel_id: int):
+        def remove_view(channel_id: int) -> None:
             logger.debug("TrivaGame view stopped")
             try:
                 self.active_views.pop(channel_id)
@@ -53,7 +53,7 @@ class Trivia(commands.Cog):
             await ctx.send(text, view=view)
 
     @commands.Cog.listener("on_message")
-    async def on_guess(self, msg: discord.Message):
+    async def on_guess(self, msg: discord.Message) -> None:
         if isinstance(msg.channel, discord.abc.PrivateChannel):
             logger.info("on_guess activated in PrivateChannel", channel_id=msg.channel.id)
             return
@@ -64,7 +64,7 @@ class Trivia(commands.Cog):
             await self.active_views[msg.channel.id].handle_guess(msg)
 
     @commands.slash_command(name='stop_trivia', description='stops the in-progress trivia game in this channel')
-    async def stop_trivia(self, ctx: discord.ApplicationContext):
+    async def stop_trivia(self, ctx: discord.ApplicationContext) -> None:
         if not self.active_views[ctx.channel_id]:
             await ctx.respond(f"There is no Trivia active in this channel {Emotes.CONFUSED}")
         else:

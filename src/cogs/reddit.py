@@ -18,7 +18,7 @@ class Reddit(commands.Cog):
     @discord.commands.option("time", type=str, default="day", description="Time period to search for top posts",
                              choices=["month", "hour", "week", "all", "day", "year"])
     @commands.slash_command(name='reddit', description="Displays a random top reddit post from the given subreddit")
-    async def send_reddit_post(self, ctx: discord.ApplicationContext, subreddit: str, time: str):
+    async def send_reddit_post(self, ctx: discord.ApplicationContext, subreddit: str, time: str) -> None:
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
         reddit = RedditInterface(subreddit, time)
         post = await reddit.get_post()

@@ -25,7 +25,7 @@ class Emoji:
 
     def as_unicode(self) -> str:
         if self.unicode:
-            return emoji_lib.emojize(self.string)
+            return str(emoji_lib.emojize(self.string))
         else:
             raise ValueError(f"{self.string} is not a Unicode emoji")
 

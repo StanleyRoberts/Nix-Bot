@@ -14,7 +14,7 @@ class KeyViolation(Exception):
     pass
 
 
-def select_from_unsafe(table_name: str):
+def select_from_unsafe(table_name: str) -> typing.List[typing.Tuple[typing.Any, ...]]:
     """logs select from table. ONLY FOR TESTING
 
     Args:
@@ -30,7 +30,7 @@ def select_from_unsafe(table_name: str):
     con.commit()
     cur.close()
     con.close()
-    logger.debug(val)
+    return val
 
 
 def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> list[tuple[typing.Any, ...]]:
