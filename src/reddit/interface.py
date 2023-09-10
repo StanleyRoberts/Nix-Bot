@@ -1,10 +1,11 @@
-import asyncpraw as praw
-import asyncprawcore as prawcore
+import asyncpraw as praw  # type: ignore[import]
+import asyncprawcore as prawcore  # type: ignore[import]
 import random
 import aiohttp
 import io
 import discord
 import re
+import typing
 
 from helpers.style import Emotes
 from helpers.env import CLIENT_ID, SECRET_KEY, USER_AGENT
@@ -21,12 +22,12 @@ class Post:
         url (str, optional): Link url. Defaults to None.
     """
 
-    def __init__(self, text: str, url: str = None) -> None:
+    def __init__(self, text: str, url: str = "") -> None:
         self.text = text
         self._url = url
-        self.img = []
+        self.img: list[discord.File] = []
 
-    async def load_img(self) -> None:
+    async def load_img(self) -> 'Post':
         if self._url and re.search(r"\.(png|jpg|gif|jpeg)$", self._url):
             try:
                 async with aiohttp.ClientSession() as session:
@@ -49,17 +50,11 @@ class RedditInterface:
     """
 
     def __init__(self, sub: str, time: str = "day") -> None:
-        try:
-            self.reddit = praw.Reddit(client_id=CLIENT_ID,
-                                      client_secret=SECRET_KEY,
-                                      user_agent=USER_AGENT)
-        except prawcore.AsyncPrawcoreException:
-            logger.error("Failed to initialise PRAW reddit instance")
-        self.cache = []
+        self.cache: list[praw.models.reddit.submission.Submission] = []
         self._nsub = sub
         self.time = time
-        self.sub = None
-        self.error_response = None
+        self.sub: str | None = None
+        self.error_response: str | None = None
 
     @staticmethod
     async def valid_sub(subreddit: str) -> bool:
@@ -72,14 +67,14 @@ class RedditInterface:
             bool: returns True if the sub exists, and False otherwise
         """
         try:
-            interface = RedditInterface(subreddit)
-            temp = await interface.reddit.subreddit(subreddit)
-            [post async for post in temp.top("day", 1)]
+            async with praw.Reddit(client_id=CLIENT_ID,
+                                   client_secret=SECRET_KEY,
+                                   user_agent=USER_AGENT) as interface:
+                temp = await interface.subreddit(subreddit)
+                [post async for post in temp.top("day", 1)]
             return True
         except prawcore.exceptions.AsyncPrawcoreException:
             return False
-        finally:
-            await interface.reddit.close()
 
     @staticmethod
     async def single_post(subreddit: str, time: str) -> Post:
@@ -94,10 +89,9 @@ class RedditInterface:
         """
         reddit = RedditInterface(subreddit, time)
         post = await reddit.get_post()
-        await reddit.reddit.close()
         return post
 
-    async def set_subreddit(self, subreddit: str, num: int = 15) -> Post:
+    async def set_subreddit(self, subreddit: str, num: int = 15) -> None:
         """Sets interface to point to new subreddit
 
         Using this also resets the number of cached reddit posts.
@@ -111,10 +105,14 @@ class RedditInterface:
         """
         if not self.sub == subreddit:
             try:
-                self.sub = await self.reddit.subreddit(subreddit)
-                self.cache = [post async for post in self.sub.top(time_filter=self.time, limit=num)]
-                logger.info(f"The subreddit {subreddit} was set for reddit.interface")
-                self.error_response = None
+                async with praw.Reddit(client_id=CLIENT_ID,
+                                       client_secret=SECRET_KEY,
+                                       user_agent=USER_AGENT) as instance:
+                    self.sub = subreddit
+                    self.cache = [post async for post in await instance.subreddit(self.sub).top(
+                        time_filter=self.time, limit=num)]
+                    logger.info(f"The subreddit {subreddit} was set for reddit.interface")
+                    self.error_response = None
             except prawcore.exceptions.Redirect:
                 logger.warning(f"Requested subreddit {subreddit} was not found")
                 self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' not found"
@@ -129,7 +127,6 @@ class RedditInterface:
                 self.error_response = f"{Emotes.WTF} Unknown error, please try again later"
 
             random.shuffle(self.cache)
-        return self.error_response is None
 
     async def get_post(self) -> Post:
         """Gets a random reddit post from the cache
@@ -140,9 +137,10 @@ class RedditInterface:
             IndexError: If cache is empty
         """
 
-        if self.sub is None:
-            self.sub = await self.set_subreddit(self._nsub)
-        if self.error_response is not None:
+        if not self.sub:
+            await self.set_subreddit(self._nsub)
+        if self.error_response:
+            logger.warning(f"Error while getting post: {self.error_response}")
             return Post(self.error_response)
         try:
             subm = self.cache.pop()
@@ -151,8 +149,4 @@ class RedditInterface:
             return Post(f"Whoops, you ran out of posts! Try a different sub {Emotes.CONFUSED}")
         return await Post("**" + subm.title + "**\t*(r/" + subm.subreddit.display_name + ")*\n" +
                           (subm.selftext if subm.is_self else ""),
-                          None if subm.is_self else subm.url).load_img()
-
-    async def on_timeout(self) -> bool:
-        await self.reddit.close()
-        return super().on_timeout()
+                          "" if subm.is_self else subm.url).load_img()
