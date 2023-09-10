@@ -55,9 +55,10 @@ class Facts(commands.Cog):
         """
         Called daily to print facts to fact channel
         """
-        logger.info("Starting daily birthday loop")
+        logger.info("Starting daily fact loop")
         guilds = db.single_SQL("SELECT FactChannelID FROM Guilds")
         fact = self.get_fact()
+        logger.debug(guilds)  # TODO remove
         for factID in guilds:
             if factID[0]:
                 logger.debug("Attempting to send fact message", channel_id=factID[0])

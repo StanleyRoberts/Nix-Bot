@@ -94,7 +94,7 @@ def main() -> None:
             logger.info("No logging level set, defaulting to all")
     else:
         logger.debug_mode = False
-        logger.set_priority("WARNING")
+        logger.set_priority("DEBUG")  # TODO change to warning
 
     cogs = [cog[: -3] for cog in listdir('./src/cogs')
             if cog[-3:] == ".py" and (cog not in ["__init__.py", "debug.py"])]
