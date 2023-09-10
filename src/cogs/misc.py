@@ -67,15 +67,16 @@ class Misc(commands.Cog):
             client = PyCAI(TOKEN)
             await client.start()
             chat = await client.chat.new_chat(CAI_NIX_ID)
+            if not chat:
+                return
             participants = chat['participants']
             if not participants[0]['is_human']:
                 nix_username = participants[0]['user']['username']
             else:
                 nix_username = participants[1]['user']['username']
-            data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt)
-            name = data['src_char']['participant']['name']
+            data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt, wait=True)
             text = data['replies'][0]['text']
-            await msg.reply(f"{name} : {text}")
+            await msg.reply(text)
 
 
 class Help_Nav(discord.ui.View):
