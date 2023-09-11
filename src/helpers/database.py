@@ -14,7 +14,7 @@ class KeyViolation(Exception):
     pass
 
 
-def select_from_unsafe(table_name: str):
+def select_from_unsafe(table_name: str) -> typing.List[typing.Tuple[typing.Any, ...]]:
     """logs select from table. ONLY FOR TESTING
 
     Args:
@@ -30,10 +30,10 @@ def select_from_unsafe(table_name: str):
     con.commit()
     cur.close()
     con.close()
-    logger.debug(val)
+    return val
 
 
-def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> typing.Optional[typing.Any]:
+def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> list[tuple[typing.Any, ...]]:
     """
     Opens a connection, submits a single SQL query to the database then cleans up
 
@@ -64,18 +64,55 @@ def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> typing.O
         err_mess = f"SQL Warning: {e.__class__.__name__}\n{traceback.format_exc()}"
         logger.warning(err_mess)
 
-    if err_mess:
-        raise RuntimeError(err_mess)
-    val = None
     if cur.description:
         val = cur.fetchall()
+
+    else:
+        err_mess = "Expected return values"
     con.commit()
     cur.close()
     con.close()
+    if err_mess:
+        raise RuntimeError(err_mess)
     return val
 
 
-def multi_void_SQL(commands: list[tuple[str, tuple[typing.Any, ...]]]):
+def single_void_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> None:
+    """
+    Opens a connection, submits a single SQL query to the database then cleans up
+
+    Args:
+        query (string): SQL query to execute.
+        values (tuple, optional): Values to provide to the SQL query (i.e. for %s). Defaults to None.
+
+    Raises:
+        KeyViolation: Raised when key constraint is violated
+    """
+    try:
+        con = psycopg2.connect(DATABASE_URL)
+    except psycopg2.Error:
+        logger.critical("Failed to connect to database")
+    cur = con.cursor()
+    err_mess = None
+    try:
+        cur.execute(query, values if values != (None,) else None)
+    except UniqueViolation:
+        raise KeyViolation("Key constraint violated")
+    except psycopg2.Error as e:
+        err_mess = f"SQL Error: {e.__class__.__name__}\n{traceback.format_exc()}"
+        logger.error(err_mess)
+    except psycopg2.Warning as e:
+        err_mess = f"SQL Warning: {e.__class__.__name__}\n{traceback.format_exc()}"
+        logger.warning(err_mess)
+
+    con.commit()
+    cur.close()
+    con.close()
+    if err_mess:
+        raise RuntimeError(err_mess)
+
+
+def multi_void_SQL(commands: list[tuple[str, tuple[typing.Any, ...]]]) -> None:
     """Executes multiple commands for the database that don't have a return
 
     Args:

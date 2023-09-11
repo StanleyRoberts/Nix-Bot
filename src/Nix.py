@@ -26,9 +26,9 @@ async def on_guild_join(guild: discord.Guild) -> None:
     Args:
         guild (discord.Guild): Guild that triggered the event
     """
-    db.single_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, " +
-                  "FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID)" +
-                  " VALUES (%s, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
+    db.single_void_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, " +
+                       "FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID)" +
+                       " VALUES (%s, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
 
 
 @bot.event
@@ -83,7 +83,7 @@ async def on_ready() -> None:
         logger.info('Logged in', member_id=bot.user.id)
 
 
-def main():
+def main() -> None:
     if __debug__:
         db.populate()
         bot.load_extension("cogs.debug")

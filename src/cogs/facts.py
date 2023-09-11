@@ -1,6 +1,7 @@
 import discord
 import requests
 import json
+import typing
 from discord.ext import commands, tasks
 
 import helpers.database as db
@@ -23,21 +24,20 @@ class Facts(commands.Cog):
 
     @commands.slash_command(name='fact', description="Displays a random fact")
     async def send_fact(self, ctx: discord.ApplicationContext) -> None:
-        try:
-            fact = self.get_fact()
-        except HttpError:
-            logger.error("Couldnt get fact for slash command")
-            return
-        await ctx.respond(fact)
+        fact = self.get_fact()
+        msg = (fact if fact else
+               "Oh no, I can't think of any good facts right now." +
+               f"Maybe I will think of one later{Emotes.CRYING}")
+        await ctx.respond(msg)
         logger.debug("Getting fact", member_id=ctx.user.id, channel_id=ctx.channel_id)
 
+    @discord.commands.option("channel", type=discord.TextChannel, required=False)
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
     @discord.commands.default_permissions(manage_guild=True)
-    async def set_fact_channel(self, ctx: discord.ApplicationContext,
-                               channel: discord.Option(discord.TextChannel, required=False)) -> None:
+    async def set_fact_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel) -> None:
         if not channel:
             channel = ctx.channel
-        db.single_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
+        db.single_void_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s", (channel.id, ctx.guild_id))
         await ctx.respond(f"Facts channel set to {channel.mention} {Emotes.DRINKING}", ephemeral=True)
         logger.debug("Fact channel set", member_id=ctx.user.id, channel_id=channel.id)
 
@@ -45,7 +45,7 @@ class Facts(commands.Cog):
                             description="Disables daily facts (run set_fact_channel to enable again)")
     @discord.commands.default_permissions(manage_guild=True)
     async def toggle_facts(self, ctx: discord.ApplicationContext) -> None:
-        db.single_SQL(
+        db.single_void_SQL(
             "UPDATE Guilds SET FactChannelID=NULL WHERE ID=%s", (ctx.guild_id,))
         await ctx.respond(f"Stopping daily facts {Emotes.NOEMOTION}", ephemeral=True)
         logger.debug("Fact channel unset", member_id=ctx.user.id, guild_id=ctx.guild_id)
@@ -75,22 +75,25 @@ class Facts(commands.Cog):
                     pass  # silently fail if no perms, TODO setup logging channel
 
     @staticmethod
-    def get_fact() -> str:
+    def get_fact() -> str | None:
         """
         Gets random fact from ninjas API
 
         Returns:
-            string: Random fact
+            string: Random fact or None if there was an error getting a fact
         """
         api_url = 'https://api.api-ninjas.com/v1/facts?limit=1'
+        if NINJA_API_KEY is None:
+            logger.error("NINJA_API_KEY variable not available")
+            return None
         response = requests.get(api_url, headers={'X-Api-Key': NINJA_API_KEY})
         cjson = json.loads(response.text)
         if response.status_code == requests.codes.ok:
-            return cjson[0]["fact"]
+            return str(cjson[0]["fact"])
         else:
             err = f"Fact Error {response.status_code}: {cjson['message']}"
             logger.error(err)
-            raise HttpError(err)
+            return None
 
 
 def setup(bot: discord.Bot) -> None:

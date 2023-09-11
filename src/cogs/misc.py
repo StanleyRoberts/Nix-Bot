@@ -32,9 +32,11 @@ class Misc(commands.Cog):
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
         desc = ("Note: depending on your server settings and role permissions," +
                 " some of these commands may be hidden or disabled\n\n" +
-                "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " + command.description + "\n"
-                                                                   for command in self.bot.cogs[cog].walk_commands()]))
-                        for cog in self.bot.cogs]))  # Holy hell
+                "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " +
+                                                                   command.description + "\n"
+                                                                   for command in self.bot.cogs[cog].walk_commands()
+                                                                   if isinstance(command, discord.SlashCommand)]))
+                        for cog in self.bot.cogs]))  # TODO combine command and groups from walk_commands
         embed = discord.Embed(title="Help Page", description=desc,
                               colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
@@ -55,6 +57,9 @@ class Misc(commands.Cog):
         Args:
             msg (discord.Message): Message that triggered event
         """
+        if self.bot.user is None:
+            logger.error("bot.user is None (Bot is offline)")
+            return
         if (self.bot.user.mentioned_in(msg) and msg.reference is None):
             logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
             clean_prompt = re.sub(" @", " ",
@@ -80,34 +85,38 @@ class Help_Nav(discord.ui.View):
         self.index = 0
         self.pages = ["Front"] + [cogs[cog] for cog in cogs]
 
-    def build_embed(self):
+    def build_embed(self) -> discord.Embed:
         self.index = self.index % len(self.pages)
         page = self.pages[self.index]
 
         compass = "|".join([f" {page.qualified_name} " if page != self.pages[self.index]
-                            else f"** {page.qualified_name} **" for page in self.pages[1:]]) + "\n"
+                            else f"** {page.qualified_name} **" for page in self.pages[1:]
+                            if isinstance(page, discord.Cog)]) + "\n"
         if page == "Front":
             desc = compass + ("\nNote: depending on your server settings and role permissions, " +
                               "some of these commands may be hidden or disabled")
         else:
+            if isinstance(page, str):
+                raise ValueError(f"Unknown page encountered: {page}")
             desc = compass + ("\n***" + page.qualified_name + "***:\n" + ""
                               .join(sorted([command.mention + " : " + command.description + "\n"
-                                            for command in page.walk_commands()])))
+                                            for command in page.walk_commands()
+                                            if isinstance(command, discord.SlashCommand)])))
 
         return discord.Embed(title="Help Page", description=desc,
                              colour=Colours.PRIMARY)
 
     @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
-    async def backward_callback(self, _, interaction: discord.Interaction) -> None:
+    async def backward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
-        logger.debug("Back button pressed", member_id=interaction.user.id)
+        logger.debug("Back button pressed", member_id=interaction.user.id if interaction.user is not None else 0)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
-    async def forward_callback(self, _, interaction: discord.Interaction) -> None:
+    async def forward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
-        logger.debug("Next button pressed", member_id=interaction.user.id)
+        logger.debug("Next button pressed", member_id=interaction.user.id if interaction.user is not None else 0)
 
 
 def setup(bot: discord.Bot) -> None:
