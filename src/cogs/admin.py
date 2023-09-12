@@ -123,7 +123,7 @@ class Admin(commands.Cog):
 
     @ commands.Cog.listener('on_message')
     async def chain_message(self, msg: discord.Message) -> None:
-        if (not isinstance(msg.channel, discord.abc.PrivateChannel)):
+        if isinstance(msg.channel, discord.abc.PrivateChannel):
             logger.info("chain_message activated in Private channel")
             return
         if msg.guild is None:
@@ -148,7 +148,7 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message) -> None:
-        if (not isinstance(msg.channel, discord.abc.PrivateChannel)):
+        if isinstance(msg.channel, discord.abc.PrivateChannel):
             logger.info("assign_role activated in Private channel")
             return
         if msg.guild is None:
