@@ -214,7 +214,7 @@ class Admin(commands.Cog):
                     logger.error("Couldnt get role for react role unassign")
 
     @staticmethod
-    async def send_chained_message(guild: discord.Guild, user: discord.User) -> None:
+    async def send_chained_message(guild: discord.Guild, user: discord.User | discord.Member) -> None:
         vals = db.single_SQL(
             "SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
         for (response_channel_id, message) in vals:
