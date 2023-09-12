@@ -2,21 +2,15 @@ from discord.ext import commands
 import discord
 import requests
 import typing
-import json
 import re
 from characterai import PyAsyncCAI as PyCAI  # type: ignore[import]
 
 from helpers.style import Colours
-from helpers.env import HF_API, CAI_CHAR_TOKEN as TOKEN, CAI_NIX_ID
+from helpers.env import CAI_CHAR_TOKEN as TOKEN, CAI_NIX_ID
 from helpers.logger import Logger
 from helpers.style import Emotes
 
 logger = Logger()
-
-USER_QS = ["Who are you?", "Is Stan cool?", "What is your favourite server?", "Where do you live?"]
-NIX_AS = ["I am Nix, a phoenix made of flames", "Yes, I think Stan is the best!",
-          "I love the Watching Racoons server the most!",
-          "I live in a volcano with my friends: DJ the Dragon and Sammy the Firebird."]
 
 
 class Misc(commands.Cog):
