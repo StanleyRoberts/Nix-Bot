@@ -123,7 +123,7 @@ class Admin(commands.Cog):
 
     @ commands.Cog.listener('on_message')
     async def chain_message(self, msg: discord.Message) -> None:
-        if (not isinstance(msg.channel, discord.abc.PrivateChannel)):
+        if isinstance(msg.channel, discord.abc.PrivateChannel):
             logger.info("chain_message activated in Private channel")
             return
         if msg.guild is None:
@@ -134,7 +134,7 @@ class Admin(commands.Cog):
             return
         if msg.author.id != self.bot.user.id:
             values = db.single_SQL("SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,))
-            if values[0] is None:
+            if values is not None:
                 check_vals = [val[0] for val in values]
                 if msg.channel.id in check_vals or -1 in check_vals:
                     try:
@@ -148,7 +148,7 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message) -> None:
-        if (not isinstance(msg.channel, discord.abc.PrivateChannel)):
+        if isinstance(msg.channel, discord.abc.PrivateChannel):
             logger.info("assign_role activated in Private channel")
             return
         if msg.guild is None:
@@ -214,7 +214,7 @@ class Admin(commands.Cog):
                     logger.error("Couldnt get role for react role unassign")
 
     @staticmethod
-    async def send_chained_message(guild: discord.Guild, user: discord.User) -> None:
+    async def send_chained_message(guild: discord.Guild, user: discord.User | discord.Member) -> None:
         vals = db.single_SQL(
             "SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
         for (response_channel_id, message) in vals:
