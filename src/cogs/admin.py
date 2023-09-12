@@ -134,7 +134,7 @@ class Admin(commands.Cog):
             return
         if msg.author.id != self.bot.user.id:
             values = db.single_SQL("SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,))
-            if values is None:
+            if values is not None:
                 check_vals = [val[0] for val in values]
                 if msg.channel.id in check_vals or -1 in check_vals:
                     try:
