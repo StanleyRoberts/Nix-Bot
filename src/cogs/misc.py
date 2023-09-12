@@ -6,7 +6,7 @@ import re
 from characterai import PyAsyncCAI as PyCAI  # type: ignore[import]
 
 from helpers.style import Colours
-from helpers.env import CAI_CHAR_TOKEN as TOKEN, CAI_NIX_ID
+from helpers.env import CAI_TOKEN, CAI_NIX_ID
 from helpers.logger import Logger
 from helpers.style import Emotes
 
@@ -58,7 +58,7 @@ class Misc(commands.Cog):
             logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
             clean_prompt = re.sub(" @", " ",
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
-            client = PyCAI(TOKEN)
+            client = PyCAI(CAI_TOKEN)
             await client.start()
             chat = await client.chat.new_chat(CAI_NIX_ID)
             participants = chat['participants']
