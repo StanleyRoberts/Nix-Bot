@@ -4,7 +4,7 @@ import requests
 import typing
 import json
 import re
-from characterai import PyAsyncCAI as PyCAI
+from characterai import PyAsyncCAI as PyCAI  # type: ignore[import]
 
 from helpers.style import Colours
 from helpers.env import HF_API, CAI_CHAR_TOKEN as TOKEN, CAI_NIX_ID
@@ -67,8 +67,6 @@ class Misc(commands.Cog):
             client = PyCAI(TOKEN)
             await client.start()
             chat = await client.chat.new_chat(CAI_NIX_ID)
-            if not chat:
-                return
             participants = chat['participants']
             if not participants[0]['is_human']:
                 nix_username = participants[0]['user']['username']
