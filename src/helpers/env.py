@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')  # PRAW/Reddit API secret key
 USER_AGENT = os.getenv('USER_AGENT')  # PRAW/Reddit API user agent
 NINJA_API_KEY = os.getenv('NINJA_API_KEY')  # X-API-Key for API-Ninjas
 DATABASE_URL = os.getenv('DATABASE_URL')  # PostgreSQL db
-CAI_CHAR_TOKEN = os.getenv('CAI_CHAR_TOKEN')  # Character AI client token
+CAI_TOKEN = os.getenv('CAI_TOKEN')  # Character AI client token
 CAI_NIX_ID = os.getenv('CAI_NIX_ID')  # Character AI character ID of Nix bot
 
 if __debug__:
@@ -38,7 +38,7 @@ if NINJA_API_KEY is None:
     logger.error("NINJA_API_KEY environment variable missing")
 if DATABASE_URL is None:
     logger.error("DATABASE_URL environment variable missing")
-if CAI_CHAR_TOKEN is None:
-    logger.error("CAI_CHAR_TOKEN environment variable missing")
+if CAI_TOKEN is None:
+    logger.error("CAI_TOKEN environment variable missing")
 if CAI_NIX_ID is None:
     logger.error("CAI_NIX_ID environment variable missing")
