@@ -85,7 +85,7 @@ class Logger(object):
             time = datetime.now().strftime("%H:%M:%S") + " "
             log = time + log
         if self.command_bot is None:
-            print(log + "::: Commandbot is None")
+            print(log + " { bot is not running yet }")
             return
         if guild_id:
             guild = self.command_bot.get_guild(guild_id)
