@@ -3,7 +3,7 @@ name: Lint
 on: [pull_request]
 
 jobs:
-  mypy:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Python
@@ -18,4 +18,5 @@ jobs:
       - name: Run mypy
         run: mypy --strict --disable-error-code no-untyped-call --disable-error-code misc .
       - name: Run pycodestyle
+        if: always()
         run: pycodestyle src --max-line-length=119
