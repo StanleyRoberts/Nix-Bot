@@ -1,11 +1,12 @@
 import discord
 import sys
+import getopt
 from os import listdir
 from discord.ext import commands
 
 import helpers.database as db
-from helpers.env import TOKEN, shutdown_db
 from helpers.logger import Logger, Priority
+from helpers.env import TOKEN, shutdown_db
 
 
 intents = discord.Intents(messages=True, message_content=True,
@@ -84,14 +85,38 @@ async def on_ready() -> None:
 
 
 def main() -> None:
+    opts, _ = getopt.getopt(sys.argv[1:], "iel:", ["logger-level=", "test-deps", "test_env"])
+    for opt, arg in opts:
+        if opt in ["-l", "-logger-level"]:
+            priority = Priority[arg.upper()].name
+        else:
+            priority = None
+        if opt in ["-i", "--test-deps"]:
+            test_req = True
+        else:
+            test_req = False
+        if opt in ["-e", "--test-env"]:
+            test_env = True
+        else:
+            test_env = False
+
     if __debug__:
         db.populate()
         bot.load_extension("cogs.debug")
-        try:
-            priority = Priority[sys.argv[1].upper()].name
+        if priority:
             logger.set_priority(priority)
-        except IndexError:
+        else:
             logger.info("No logging level set, defaulting to all")
+
+        if test_env:
+            import helpers.env as env
+            all = sum([line.split() for line in sys.stdin], [])
+            exit_code = 0
+            for var in env.registered:
+                if var not in all:
+                    logger.error(f"Missing FLY.IO environment variable: {var}")
+                    exit_code = 1
+            exit(exit_code)
     else:
         logger.debug_mode = False
         logger.set_priority("DEBUG")  # TODO change to warning
@@ -100,6 +125,9 @@ def main() -> None:
             if cog[-3:] == ".py" and (cog not in ["__init__.py", "debug.py"])]
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
+
+    if test_req:
+        exit(0)
 
     try:
         bot.run(TOKEN)

@@ -1,7 +1,6 @@
 import discord
 import datetime as dt
 from discord.ext import commands, tasks
-import datetime as dt
 
 import helpers.database as db
 from helpers.style import Emotes, Colours, TIME
