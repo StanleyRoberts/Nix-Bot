@@ -110,7 +110,7 @@ def main() -> None:
 
         if test_env:
             import helpers.env as env
-            all = sum([line.split() for line in sys.stdin], [])
+            all: list[str] = sum([line.split() for line in sys.stdin], [])
             exit_code = 0
             for var in env.registered:
                 if var not in all:

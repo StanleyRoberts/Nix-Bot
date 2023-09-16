@@ -9,10 +9,10 @@ logger = Logger()
 registered = set()
 
 
-def load_env(name: str) -> str:
+def load_env(name: str) -> str | None:
     env = os.getenv('TOKEN')
     if not env:
-        logger.error(f"{name} environment variable missing")
+        logger.warning(f"{name} environment variable missing")
     if __debug__:
         global registered
         registered.add(name)
