@@ -2,20 +2,15 @@ from discord.ext import commands
 import discord
 import requests
 import typing
-import json
 import re
+from characterai import PyAsyncCAI as PyCAI  # type: ignore[import]
 
 from helpers.style import Colours
-from helpers.env import HF_API
+from helpers.env import CAI_TOKEN, CAI_NIX_ID
 from helpers.logger import Logger
 from helpers.style import Emotes
 
 logger = Logger()
-
-USER_QS = ["Who are you?", "Is Stan cool?", "What is your favourite server?", "Where do you live?"]
-NIX_AS = ["I am Nix, a phoenix made of flames", "Yes, I think Stan is the best!",
-          "I love the Watching Racoons server the most!",
-          "I live in a volcano with my friends: DJ the Dragon and Sammy the Firebird."]
 
 
 class Misc(commands.Cog):
@@ -63,25 +58,17 @@ class Misc(commands.Cog):
             logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
             clean_prompt = re.sub(" @", " ",
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
-
-            url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
-            headers = {"Authorization": f"Bearer {HF_API}"}
-
-            prompt = {"past_user_inputs": USER_QS,
-                      "generated_responses": NIX_AS,
-                      "text": clean_prompt}
-
-            data = json.dumps({"inputs": prompt,
-                               "parameters": {"return_full_text": False},
-                               "options": {"use_cache": False}
-                               })
-            response = requests.request("POST", url, headers=headers, data=data)
-            if response.status_code != requests.codes.ok:
-                logger.error(f"AI Error {response.status_code}: {response.content.decode()}")
-                await msg.reply(f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}")
-
-            text = json.loads(response.content.decode('utf-8'))
-            await msg.reply(text['generated_text'])
+            client = PyCAI(CAI_TOKEN)
+            await client.start()
+            chat = await client.chat.new_chat(CAI_NIX_ID, wait=True)
+            participants = chat['participants']
+            if not participants[0]['is_human']:
+                nix_username = participants[0]['user']['username']
+            else:
+                nix_username = participants[1]['user']['username']
+            data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt, wait=True)
+            text = data['replies'][0]['text']
+            await msg.reply(text)
 
 
 class Help_Nav(discord.ui.View):

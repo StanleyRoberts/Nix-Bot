@@ -158,7 +158,7 @@ class Admin(commands.Cog):
             logger.error("Bot is offline")
             return
         if not isinstance(msg.author, discord.Member):
-            logger.info("Authoer is not member (likely: user not in guild)")
+            logger.info("Author is not member (likely: user not in guild)")
             return
         if msg.author.id != self.bot.user.id:
             vals = db.single_SQL("SELECT RoleID, ToAdd FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))

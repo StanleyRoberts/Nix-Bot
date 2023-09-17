@@ -1,7 +1,6 @@
 import discord
 import requests
 import json
-import typing
 from discord.ext import commands, tasks
 
 import helpers.database as db
