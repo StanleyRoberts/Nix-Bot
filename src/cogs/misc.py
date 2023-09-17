@@ -60,7 +60,7 @@ class Misc(commands.Cog):
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
             client = PyCAI(CAI_TOKEN)
             await client.start()
-            chat = await client.chat.new_chat(CAI_NIX_ID)
+            chat = await client.chat.new_chat(CAI_NIX_ID, wait=True)
             participants = chat['participants']
             if not participants[0]['is_human']:
                 nix_username = participants[0]['user']['username']
