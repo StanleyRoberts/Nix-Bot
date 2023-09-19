@@ -85,20 +85,18 @@ async def on_ready() -> None:
 
 
 def main() -> None:
+    priority = None
+    test_req = False
+    test_env = False
+
     opts, _ = getopt.getopt(sys.argv[1:], "iel:", ["logger-level=", "test-deps", "test_env"])
     for opt, arg in opts:
         if opt in ["-l", "-logger-level"]:
             priority = Priority[arg.upper()].name
-        else:
-            priority = None
         if opt in ["-i", "--test-deps"]:
             test_req = True
-        else:
-            test_req = False
         if opt in ["-e", "--test-env"]:
             test_env = True
-        else:
-            test_env = False
 
     if __debug__:
         db.populate()

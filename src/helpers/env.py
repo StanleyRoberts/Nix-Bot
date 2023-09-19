@@ -10,7 +10,7 @@ registered = set()
 
 
 def load_env(name: str) -> str | None:
-    env = os.getenv('TOKEN')
+    env = os.getenv(name)
     if not env:
         logger.warning(f"{name} environment variable missing")
     if __debug__:

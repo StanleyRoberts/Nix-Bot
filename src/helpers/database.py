@@ -49,8 +49,8 @@ def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> list[tup
     """
     try:
         con = psycopg2.connect(DATABASE_URL)
-    except psycopg2.Error:
-        logger.critical("Failed to connect to database")
+    except psycopg2.Error as err:
+        logger.critical(f"Failed to connect to database: {err}")
     cur = con.cursor()
     err_mess = None
     try:
@@ -90,8 +90,8 @@ def single_void_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> Non
     """
     try:
         con = psycopg2.connect(DATABASE_URL)
-    except psycopg2.Error:
-        logger.critical("Failed to connect to database")
+    except psycopg2.Error as err:
+        logger.critical(f"Failed to connect to database: {err}")
     cur = con.cursor()
     err_mess = None
     try:
@@ -126,8 +126,8 @@ def multi_void_SQL(commands: list[tuple[str, tuple[typing.Any, ...]]]) -> None:
     """
     try:
         con = psycopg2.connect(DATABASE_URL)
-    except psycopg2.Error:
-        logger.critical("Failed to connect to database")
+    except psycopg2.Error as err:
+        logger.critical(f"Failed to connect to database: {err}")
     cur = con.cursor()
     err_mess = None
     for (query, values) in commands:
