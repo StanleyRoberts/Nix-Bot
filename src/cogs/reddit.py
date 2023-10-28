@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands, tasks
 
 import helpers.database as db
-from helpers.style import Emotes, Colours, TIME
+from helpers.style import Emotes, Colours, TIME, RESET
 import reddit.ui_kit as ui
 from reddit.interface import RedditInterface
 from helpers.logger import Logger
@@ -14,6 +14,7 @@ class Reddit(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
         self.daily_post.start()
+        self.sent_today = False
 
     @discord.commands.option("time", type=str, default="day", description="Time period to search for top posts",
                              choices=["month", "hour", "week", "all", "day", "year"])
@@ -79,11 +80,18 @@ class Reddit(commands.Cog):
             colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
 
+    @tasks.loop(time=RESET)
+    async def reset_reddit(self) -> None:
+        self.sent_today = False
+
     @tasks.loop(time=TIME)
     async def daily_post(self) -> None:
         """
         Called daily to print random post from subbed sub to linked discord channel
         """
+        if self.sent_today:
+            return
+        self.sent_today = True
         logger.info("Starting daily reddit loop")
         subs = db.single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:

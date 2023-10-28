@@ -3,7 +3,7 @@ import datetime as dt
 from discord.ext import commands, tasks
 
 import helpers.database as db
-from helpers.style import Emotes, Colours, TIME
+from helpers.style import Emotes, Colours, TIME, RESET
 from helpers.logger import Logger
 logger = Logger()
 
@@ -44,11 +44,18 @@ class Birthdays(commands.Cog):
         embed = discord.Embed(title="Birthday List", description=out_str, color=Colours.PRIMARY)
         await ctx.respond(embed=embed)
 
-    @ tasks.loop(time=TIME)  # 1 behind curr time
+    @tasks.loop(time=RESET)
+    async def reset_fact(self) -> None:
+        self.sent_today = False
+
+    @ tasks.loop(time=TIME)
     async def daily_bday(self) -> None:
         """
         Called daily to check for, and congratulate birthdays to birthday channel
         """
+        if self.sent_today:
+            return
+        self.sent_today = True
         logger.info("Starting daily birthday loop")
         today = dt.date.today().strftime("%b%e").replace(" ", "")
         val = db.single_SQL("SELECT BirthdayChannelID, string_agg(UserID::varchar, \' \') FROM Birthdays " +
@@ -60,7 +67,7 @@ class Birthdays(commands.Cog):
                 logger.debug("Attempting to send birthday message", channel_id=guild[0])
                 try:
                     channel = await self.bot.fetch_channel(guild[0])
-                    if not (isinstance(channel, discord.abc.Messageable) and
+                    if (not isinstance(channel, discord.abc.Messageable) or
                             isinstance(channel, discord.abc.PrivateChannel)):
                         logger.error("Birthday channel set to Private Channel", channel_id=channel.id)
                         continue

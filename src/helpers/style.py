@@ -2,6 +2,7 @@ import datetime
 import discord
 
 TIME = datetime.time(hour=7)
+RESET = datetime.time(hour=8)
 
 
 class Colours():

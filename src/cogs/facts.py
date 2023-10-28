@@ -4,7 +4,7 @@ import json
 from discord.ext import commands, tasks
 
 import helpers.database as db
-from helpers.style import Emotes, TIME
+from helpers.style import Emotes, TIME, RESET
 from helpers.env import NINJA_API_KEY
 from helpers.logger import Logger
 
@@ -18,8 +18,8 @@ class HttpError(Exception):
 class Facts(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
-        if not self.daily_fact.is_running():
-            self.daily_fact.start()
+        self.daily_fact.start()
+        self.sent_today = False
 
     @commands.slash_command(name='fact', description="Displays a random fact")
     async def send_fact(self, ctx: discord.ApplicationContext) -> None:
@@ -49,11 +49,18 @@ class Facts(commands.Cog):
         await ctx.respond(f"Stopping daily facts {Emotes.NOEMOTION}", ephemeral=True)
         logger.debug("Fact channel unset", member_id=ctx.user.id, guild_id=ctx.guild_id)
 
+    @tasks.loop(time=RESET)
+    async def reset_fact(self) -> None:
+        self.sent_today = False
+
     @tasks.loop(time=TIME)
     async def daily_fact(self) -> None:
         """
         Called daily to print facts to fact channel
         """
+        if self.sent_today:
+            return
+        self.sent_today = True
         logger.info("Starting daily fact loop")
         guilds = db.single_SQL("SELECT FactChannelID FROM Guilds")
         fact = self.get_fact()
