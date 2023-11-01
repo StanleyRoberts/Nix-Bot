@@ -15,6 +15,7 @@ class Reddit(commands.Cog):
         self.bot = bot
         self.daily_post.start()
         self.sent_today = False
+        self.reset_reddit.start()
 
     @discord.commands.option("time", type=str, default="day", description="Time period to search for top posts",
                              choices=["month", "hour", "week", "all", "day", "year"])

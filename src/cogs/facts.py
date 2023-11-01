@@ -20,6 +20,7 @@ class Facts(commands.Cog):
         self.bot = bot
         self.daily_fact.start()
         self.sent_today = False
+        self.reset_fact.start()
 
     @commands.slash_command(name='fact', description="Displays a random fact")
     async def send_fact(self, ctx: discord.ApplicationContext) -> None:

@@ -12,6 +12,8 @@ class Birthdays(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
         self.daily_bday.start()
+        self.sent_today = False
+        self.reset_bday.start()
 
     @commands.slash_command(name='set_birthday_channel', description="Sets the channel for the birthday messages")
     @discord.commands.default_permissions(manage_guild=True)
@@ -45,7 +47,7 @@ class Birthdays(commands.Cog):
         await ctx.respond(embed=embed)
 
     @tasks.loop(time=RESET)
-    async def reset_fact(self) -> None:
+    async def reset_bday(self) -> None:
         self.sent_today = False
 
     @ tasks.loop(time=TIME)
