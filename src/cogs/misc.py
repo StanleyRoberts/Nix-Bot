@@ -58,17 +58,7 @@ class Misc(commands.Cog):
             logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
             clean_prompt = re.sub(" @", " ",
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
-            client = PyCAI(CAI_TOKEN)
-            await client.start()
-            chat = await client.chat.new_chat(CAI_NIX_ID, wait=True)
-            participants = chat['participants']
-            if not participants[0]['is_human']:
-                nix_username = participants[0]['user']['username']
-            else:
-                nix_username = participants[1]['user']['username']
-            data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt, wait=True)
-            text = data['replies'][0]['text']
-            await msg.reply(text)
+            pass  # TODO
 
 
 class Help_Nav(discord.ui.View):
