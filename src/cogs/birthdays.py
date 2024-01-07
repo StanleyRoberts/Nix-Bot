@@ -23,11 +23,11 @@ class Birthdays(commands.Cog):
         await ctx.respond(f"Birthday channel set to {channel.mention} {Emotes.DRINKING}", ephemeral=True)
         logger.info("Counting channel set", guild_id=ctx.guild_id, channel_id=channel.id)
 
+    @commands.slash_command(name='birthday', description="Set your birthday")
     @discord.commands.option("day", type=int, description="Enter day of the month (as integer)", min_value=0,
                              max_value=31, required=True)
     @discord.commands.option("month", type=str, description="Enter month of the year",
                              choices=MONTHS, required=True)
-    @commands.slash_command(name='birthday', description="Set your birthday")
     async def set_birthday(self, ctx: discord.ApplicationContext, day: int, month: str) -> None:
         db.single_void_SQL("INSERT INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s) ON CONFLICT " +
                            "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
@@ -38,8 +38,8 @@ class Birthdays(commands.Cog):
         await ctx.respond(f"{ctx.author.mention} your birthday is set to {day} {month} {Emotes.UWU}")
         logger.info("Birthday set", member_id=ctx.author.id)
 
-    @ commands.slash_command(name='show_birthdays', description="Shows all tracked birthdays for the server")
-    @ discord.commands.default_permissions(manage_guild=True)
+    @commands.slash_command(name='show_birthdays', description="Shows all tracked birthdays for the server")
+    @discord.commands.default_permissions(manage_guild=True)
     async def show_birthdays(self, ctx: discord.ApplicationContext) -> None:
         vals = db.single_SQL("SELECT UserID, Birthdate from Birthdays WHERE GuildID=%s", (ctx.guild_id,))
         if vals:
@@ -53,7 +53,7 @@ class Birthdays(commands.Cog):
     async def reset_bday(self) -> None:
         self.sent_today = False
 
-    @ tasks.loop(time=TIME)
+    @tasks.loop(time=TIME)
     async def daily_bday(self) -> None:
         """
         Called daily to check for, and congratulate birthdays to birthday channel

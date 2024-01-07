@@ -31,8 +31,8 @@ class Facts(commands.Cog):
         await ctx.respond(msg)
         logger.debug("Getting fact", member_id=ctx.user.id, channel_id=ctx.channel_id)
 
-    @discord.commands.option("channel", type=discord.TextChannel, required=False)
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
+    @discord.commands.option("channel", type=discord.TextChannel, required=False)
     @discord.commands.default_permissions(manage_guild=True)
     async def set_fact_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel) -> None:
         if not channel:
