@@ -10,8 +10,22 @@ from trivia.ui_kit import TriviaView
 
 logger = Logger()
 
-DIFFICULTY_DICT = {"very easy": "2", "easy": "4", "medium": "6",
-                   "hard": "8", "very hard": "10", "all difficulties": "random"}
+CATEGORY_DICT = {
+    "General": "general",
+    "Art & Literature": "artliterature",
+    "Language": "language",
+    "Science & Nature": "sciencenature",
+    "Food & Drink": "fooddrink",
+    "People & Places": "peopleplaces",
+    "Geography": "geography",
+    "History & Holidays": "historyholidays",
+    "Entertainment": "entertainment",
+    "Toys & Games": "toysgames",
+    "Music": "music",
+    "Mathematics": "mathematics",
+    "Religion & Mythology": "religionmythology",
+    "Sports & Leisure": "sportsleisure",
+}
 
 
 class Trivia(commands.Cog):
@@ -20,11 +34,11 @@ class Trivia(commands.Cog):
         self.bot = bot
         self.active_views: typing.Dict[int, TriviaView] = {}
 
-    @discord.commands.option("difficulty", type=str, default="all difficulties", required=False,
-                             choices=DIFFICULTY_DICT.keys())
+    @discord.commands.option("category", type=str, )
     @commands.slash_command(name='trivia', description="Start a game of Trivia. The first person to get 5 points wins")
-    async def game_start(self, ctx: discord.ApplicationContext, difficulty: str) -> None:
-        real_difficulty = DIFFICULTY_DICT[difficulty]
+    async def game_start(self, ctx: discord.ApplicationContext, category: discord.Option(str, default="General", required=False,
+                             choices=CATEGORY_DICT.keys())) -> None:
+        real_difficulty = CATEGORY_DICT[category]
         if ctx.channel_id in self.active_views.keys():
             await ctx.respond(f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel")
             await ctx.respond(self.active_views[ctx.channel_id].get_current_question(),
@@ -44,7 +58,7 @@ class Trivia(commands.Cog):
 
         self.active_views.update({ctx.channel_id: view})
         await ctx.respond(embed=discord.Embed(title=f"{Emotes.UWU} You have started a game of Trivia",
-                                              colour=Colours.PRIMARY, description=f"Difficulty: {difficulty}"))
+                                              colour=Colours.PRIMARY, description=f"Category: {category}"))
         text = await view.get_question()
         if not text:
             await ctx.send(f"Sorry, I have misplaced my question cards. Maybe come back later {Emotes.CRYING}")

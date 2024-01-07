@@ -2,10 +2,12 @@ import aiohttp
 import re
 from difflib import get_close_matches
 from enum import Enum
-import typing
+import requests
+import json
 
 from helpers.logger import Logger
 from helpers.style import Emotes
+from helpers.env import NINJA_API_KEY
 
 logger = Logger()
 
@@ -26,33 +28,31 @@ class TriviaInterface:
 
     """
 
-    def __init__(self, difficulty: str = "4") -> None:
+    def __init__(self, category: str = "general") -> None:
         self._cache: list[tuple[str, str, str] | None] = []
-        self.difficulty = difficulty
+        self.category = category
 
     async def _fill_cache(self) -> None:
         """Refill trivia cache
         """
         async with aiohttp.ClientSession() as session:
-            if self.difficulty == "random":
-                api_url = 'http://jservice.io/api/clues?min_date=2009-01-01'
+            api_url = 'https://api.api-ninjas.com/v1/trivia?category={}&limit=10'.format(self.category)
+            
+        if NINJA_API_KEY is None:
+            logger.error("NINJA_API_KEY variable not available")
+            return None
+        response = requests.get(api_url, headers={'X-Api-Key': NINJA_API_KEY})
+        if response.status_code == requests.codes.ok:
+            self._cache = [((cjson['question']), (cjson['answer']), (cjson['category'])) for cjson in json.loads(response.text)]
+            if not self._cache:
+                logger.error(f"Response of Trivia API empty. url= {api_url}", )
+                self._cache = [None]
             else:
-                api_url = 'http://jservice.io/api/clues?value={}&min_date=2009-01-01'.format(
-                    str(self.difficulty) + '00')
-            async with session.get(api_url) as response:
-                if response.ok:
-                    def r(t: str) -> str: return re.sub('<[^<]+?>', '', t)  # strip HTML tags
-                    self._cache = [(r(cjson['question']), r(cjson['answer']), r(cjson['category']['title']))
-                                   for cjson in (await response.json(encoding="utf-8"))[:20]]
-                    if not self._cache:
-                        logger.error(f"Response of Trivia API empty. url= {api_url}", )
-                        self._cache = [None]
-                    else:
-                        logger.debug("Successful cache refill")
-                else:
-                    logger.error("{0} Cache refill failed: {1}"
-                                 .format(response.status, (await response.content.read(-1)).decode('utf-8')))
-                    self._cache = [None]
+                logger.debug("Successful cache refill")
+        else:
+            logger.error("{0} Cache refill failed: {1}"
+                            .format(response.status_code, (await response.content.read(-1)).decode('utf-8')))
+            self._cache = [None]
 
     async def get_trivia(self) -> tuple[str, str, str] | None:
         """Get a new triva question, its answer and the question category
