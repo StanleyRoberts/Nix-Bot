@@ -51,7 +51,7 @@ class TriviaInterface:
                 logger.debug("Successful cache refill")
         else:
             logger.error("{0} Cache refill failed: {1}"
-                            .format(response.status_code, (await response.content.read(-1)).decode('utf-8')))
+                            .format(response.status_code, response.text))
             self._cache = [None]
 
     async def get_trivia(self) -> tuple[str, str, str] | None:
