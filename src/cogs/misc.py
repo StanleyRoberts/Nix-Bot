@@ -3,9 +3,10 @@ import discord
 import requests
 import typing
 import re
+from tls_client.exceptions import TLSClientExeption as TLSClientException # type: ignore[import]
 from characterai import PyAsyncCAI as PyCAI  # type: ignore[import]
 
-from helpers.style import Colours
+from helpers.style import Colours, Emotes
 from helpers.env import CAI_TOKEN, CAI_NIX_ID
 from helpers.logger import Logger
 
@@ -64,8 +65,11 @@ class Misc(commands.Cog):
                 nix_username = participants[0]['user']['username']
             else:
                 nix_username = participants[1]['user']['username']
-            data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt, wait=True)
-            text = data['replies'][0]['text']
+            try:
+                data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt, wait=True)
+                text = data['replies'][0]['text']
+            except TLSClientException:
+                text = f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
             await msg.reply(text)
 
 
