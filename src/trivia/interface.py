@@ -1,5 +1,3 @@
-import aiohttp
-import re
 from difflib import get_close_matches
 from enum import Enum
 import requests

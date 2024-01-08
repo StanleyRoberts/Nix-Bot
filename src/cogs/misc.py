@@ -3,12 +3,9 @@ import discord
 import requests
 import typing
 import re
-from characterai import PyAsyncCAI as PyCAI  # type: ignore[import]
 
 from helpers.style import Colours
-from helpers.env import CAI_TOKEN, CAI_NIX_ID
 from helpers.logger import Logger
-from helpers.style import Emotes
 
 logger = Logger()
 
