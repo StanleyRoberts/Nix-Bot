@@ -78,7 +78,7 @@ class TriviaGame:
 
     """
 
-    def __init__(self, player_id: str, category: str):
+    def __init__(self, player_id: str, category: str | None):
         self._interface = TriviaInterface(category)
         self.players = {player_id: 0}
         self.question: str | None = None
