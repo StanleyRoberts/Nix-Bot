@@ -1,0 +1,22 @@
+name: Lint
+
+on: [pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.11.7
+          architecture: x64
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Run mypy
+        run: mypy --strict --disable-error-code no-untyped-call --disable-error-code misc .
+      - name: Run pycodestyle
+        if: always()
+        run: pycodestyle src --max-line-length=119
