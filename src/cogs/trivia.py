@@ -35,8 +35,8 @@ class Trivia(commands.Cog):
         self.active_views: typing.Dict[int, TriviaView] = {}
 
     @commands.slash_command(name='trivia', description="Start a game of Trivia. The first person to get 5 points wins")
-    @discord.commands.option("category", type=str, description="Category for questions", default="General", required=False,
-                             choices=CATEGORY_DICT.keys())
+    @discord.commands.option("category", type=str, description="Category for questions",
+                             default="General", required=False, choices=CATEGORY_DICT.keys())
     async def game_start(self, ctx: discord.ApplicationContext, category: str) -> None:
         real_difficulty = CATEGORY_DICT[category]
         if ctx.channel_id in self.active_views.keys():

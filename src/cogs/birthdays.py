@@ -9,6 +9,7 @@ logger = Logger()
 
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
+
 class Birthdays(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot

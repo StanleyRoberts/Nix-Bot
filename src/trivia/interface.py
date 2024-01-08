@@ -35,23 +35,22 @@ class TriviaInterface:
     async def _fill_cache(self) -> None:
         """Refill trivia cache
         """
-        async with aiohttp.ClientSession() as session:
-            api_url = 'https://api.api-ninjas.com/v1/trivia?category={}&limit=10'.format(self.category)
-            
+        api_url = 'https://api.api-ninjas.com/v1/trivia?category={}&limit=10'.format(self.category)
+
         if NINJA_API_KEY is None:
             logger.error("NINJA_API_KEY variable not available")
             return None
         response = requests.get(api_url, headers={'X-Api-Key': NINJA_API_KEY})
         if response.status_code == requests.codes.ok:
-            self._cache = [((cjson['question']), (cjson['answer']), (cjson['category'])) for cjson in json.loads(response.text)]
+            self._cache = [((cjson['question']), (cjson['answer']), (cjson['category']))
+                           for cjson in json.loads(response.text)]
             if not self._cache:
                 logger.error(f"Response of Trivia API empty. url= {api_url}", )
                 self._cache = [None]
             else:
                 logger.debug("Successful cache refill")
         else:
-            logger.error("{0} Cache refill failed: {1}"
-                            .format(response.status_code, response.text))
+            logger.error("{0} Cache refill failed: {1}".format(response.status_code, response.text))
             self._cache = [None]
 
     async def get_trivia(self) -> tuple[str, str, str] | None:
