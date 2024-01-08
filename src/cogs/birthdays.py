@@ -25,17 +25,18 @@ class Birthdays(commands.Cog):
         logger.info("Counting channel set", guild_id=ctx.guild_id, channel_id=channel.id)
 
     @commands.slash_command(name='birthday', description="Set your birthday")
-    @discord.commands.option("day", type=int, description="Enter day of the month (as integer)", min_value=0,
+    @discord.commands.option("day", type=int, description="Enter day of the month (as integer)", min_value=1,
                              max_value=31, required=True)
     @discord.commands.option("month", type=str, description="Enter month of the year",
                              choices=MONTHS, required=True)
     async def set_birthday(self, ctx: discord.ApplicationContext, day: int, month: str) -> None:
+        if (month in ['Apr', 'Jun', 'Sep', 'Nov'] and day > 30) or (month == 'Feb' and day > 29):
+            await ctx.respond(f"Sorry, I didn't understand the birthday '{day} {month}'"
+                              + f" Are you sure it a valid day? {Emotes.CONFUSED}")
+            return
         db.single_void_SQL("INSERT INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s) ON CONFLICT " +
                            "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
                            (ctx.guild.id, ctx.author.id, month + str(day), month + str(day)))
-        if day > 31 or day < 1 or month not in MONTHS:
-            await ctx.respond(f"Sorry, I didn't understand the birthday '{day} {month}' {Emotes.CONFUSED}")
-            return
         await ctx.respond(f"{ctx.author.mention} your birthday is set to {day} {month} {Emotes.UWU}")
         logger.info("Birthday set", member_id=ctx.author.id)
 

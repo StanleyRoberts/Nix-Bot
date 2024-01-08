@@ -5,7 +5,6 @@ import aiohttp
 import io
 import discord
 import re
-import typing
 
 from helpers.style import Emotes
 from helpers.env import CLIENT_ID, SECRET_KEY, USER_AGENT

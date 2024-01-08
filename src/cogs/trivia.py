@@ -11,20 +11,16 @@ from trivia.ui_kit import TriviaView
 logger = Logger()
 
 CATEGORY_DICT = {
-    "General": "general",
-    "Art & Literature": "artliterature",
-    "Language": "language",
-    "Science & Nature": "sciencenature",
-    "Food & Drink": "fooddrink",
-    "People & Places": "peopleplaces",
-    "Geography": "geography",
-    "History & Holidays": "historyholidays",
-    "Entertainment": "entertainment",
-    "Toys & Games": "toysgames",
+    "General Knowledge": "general_knowledge",
     "Music": "music",
-    "Mathematics": "mathematics",
-    "Religion & Mythology": "religionmythology",
-    "Sports & Leisure": "sportsleisure",
+    "Sports & Leisure": "sports_and_leisure",
+    "Film & TV": "film_and_tv",
+    "Art & Literature": "arts_and_literature",
+    "History": "history",
+    "Society & Culture": "society_and_culture",
+    "Science": "science",
+    "Geography": "geography",
+    "Food & Drink": "food_and_drink",
 }
 
 
@@ -38,14 +34,14 @@ class Trivia(commands.Cog):
     @discord.commands.option("category", type=str, description="Category for questions",
                              default="General", required=False, choices=CATEGORY_DICT.keys())
     async def game_start(self, ctx: discord.ApplicationContext, category: str) -> None:
-        real_difficulty = CATEGORY_DICT[category]
+        real_category = CATEGORY_DICT.get(category) or None
         if ctx.channel_id in self.active_views.keys():
             await ctx.respond(f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel")
             await ctx.respond(self.active_views[ctx.channel_id].get_current_question(),
                               view=self.active_views[ctx.channel_id])
             return
 
-        game_state = TriviaGame(ctx.user.id, real_difficulty)
+        game_state = TriviaGame(ctx.user.id, real_category)
 
         def remove_view(channel_id: int) -> None:
             logger.debug("TrivaGame view stopped")

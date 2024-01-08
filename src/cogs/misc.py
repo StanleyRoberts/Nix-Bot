@@ -8,7 +8,6 @@ from characterai import PyAsyncCAI as PyCAI  # type: ignore[import]
 from helpers.style import Colours
 from helpers.env import CAI_TOKEN, CAI_NIX_ID
 from helpers.logger import Logger
-from helpers.style import Emotes
 
 logger = Logger()
 
@@ -58,7 +57,16 @@ class Misc(commands.Cog):
             logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
             clean_prompt = re.sub(" @", " ",
                                   re.sub("@" + self.bot.user.name, "", msg.clean_content))
-            pass  # TODO
+            client = PyCAI(CAI_TOKEN)
+            chat = await client.chat.new_chat(CAI_NIX_ID, token=CAI_TOKEN)
+            participants = chat['participants']
+            if not participants[0]['is_human']:
+                nix_username = participants[0]['user']['username']
+            else:
+                nix_username = participants[1]['user']['username']
+            data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt, wait=True)
+            text = data['replies'][0]['text']
+            await msg.reply(text)
 
 
 class Help_Nav(discord.ui.View):
