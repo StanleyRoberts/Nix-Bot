@@ -12,14 +12,14 @@ class Admin(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
 
-    @discord.commands.option("channel", type=discord.TextChannel, required=False)
-    @discord.commands.option("emoji", type=str, required=False)
-    @discord.commands.option("role", type=discord.Role, required=False)
     @commands.slash_command(
         name="send_react_message",
         description="sends a message to the given channel. " +
         "reacting with the given emoji will assign the given role")
     @discord.commands.default_permissions(manage_guild=True)
+    @discord.commands.option('channel', parameter_name="channel", required=False)
+    @discord.commands.option("emoji", required=False)
+    @discord.commands.option("role", type=discord.Role, required=False)
     async def greeting_role(self, ctx: discord.ApplicationContext, text: str,
                             channel: discord.TextChannel, emoji: str, role: discord.Role) -> None:
         if emoji:
@@ -49,9 +49,9 @@ class Admin(commands.Cog):
                                (ctx.guild_id, message.id, role.id, true_emoji.as_text()))
         await ctx.respond(f"Message Sent! {Emotes.HEART}")
 
-    @discord.commands.option("role", type=discord.Role, description="The role to remove assignment for")
     @discord.slash_command(name="remove_single_role_assignment", description="Takes out all of Nix's role " +
                            "assigning behaviour for this role")
+    @discord.commands.option("role", type=discord.Role, description="The role to remove assignment for")
     async def remove_single_role(self, ctx: discord.ApplicationContext, role: discord.Role) -> None:
         db.multi_void_SQL([
             ("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id)),
@@ -91,6 +91,9 @@ class Admin(commands.Cog):
                            (ctx.guild_id, role.id, channel.id))
         await ctx.respond(f"Role remove channel was set to {channel.mention}")
 
+    @discord.commands.slash_command(
+        name="set_chain_message",
+        description="allows Nix to follow up with custom messages whenever a user send a message")
     @discord.commands.option("message", type=str, description="The message text that will be sent as a follow up. " +
                              "Write <<user>> to ping the user")
     @discord.commands.option("response_channel", type=discord.TextChannel,
@@ -98,9 +101,6 @@ class Admin(commands.Cog):
     @discord.commands.option("message_channel", type=discord.TextChannel,
                              description="The channel Nix watches for new messages " +
                              "If not provided then Nix follows up all messages", required=False)
-    @discord.commands.slash_command(
-        name="set_chain_message",
-        description="allows Nix to follow up with custom messages whenever a user send a message")
     @discord.commands.default_permissions(manage_guild=True)
     async def set_chain_message(self, ctx: discord.ApplicationContext,
                                 message: str,
@@ -114,14 +114,14 @@ class Admin(commands.Cog):
         except db.KeyViolation:
             await ctx.respond(f"You already set this as a message for this channel {Emotes.CONFUSED}")
 
-    @ commands.slash_command(name="clear_chain_messages", description="Clears all chain message behaviours")
-    @ discord.commands.default_permissions(manage_guild=True)
+    @commands.slash_command(name="clear_chain_messages", description="Clears all chain message behaviours")
+    @discord.commands.default_permissions(manage_guild=True)
     async def clear_chain_message(self, ctx: discord.ApplicationContext) -> None:
         db.multi_void_SQL([
             ("DELETE FROM ChainedUsers WHERE GuildID=%s", (ctx.guild_id,)),
             ("DELETE FROM MessageChain WHERE GuildID=%s", (ctx.guild_id,))])
 
-    @ commands.Cog.listener('on_message')
+    @commands.Cog.listener('on_message')
     async def chain_message(self, msg: discord.Message) -> None:
         if isinstance(msg.channel, discord.abc.PrivateChannel):
             logger.info("chain_message activated in Private channel")
