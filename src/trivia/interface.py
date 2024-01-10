@@ -56,7 +56,7 @@ class TriviaInterface:
         """Get a new triva question, its answer and the question category
 
         Returns:
-            tuple[str, str, str]: question, answer, category
+            tuple[str, str]: question, answer, category
         """
         if not self._cache:
             logger.debug("refilling cache")

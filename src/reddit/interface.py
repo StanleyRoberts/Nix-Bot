@@ -108,7 +108,7 @@ class RedditInterface:
                                        client_secret=SECRET_KEY,
                                        user_agent=USER_AGENT) as instance:
                     self.sub = subreddit
-                    self.cache = [post async for post in await instance.subreddit(self.sub).top(
+                    self.cache = [post async for post in (await instance.subreddit(self.sub)).top(
                         time_filter=self.time, limit=num)]
                     logger.info(f"The subreddit {subreddit} was set for reddit.interface")
                     self.error_response = None
