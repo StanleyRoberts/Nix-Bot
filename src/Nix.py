@@ -6,13 +6,17 @@ from discord.ext import commands
 
 import helpers.database as db
 from helpers.logger import Logger, Priority
-from helpers.env import TOKEN, shutdown_db
+from helpers.env import DEBUG_GUILDS, TOKEN, shutdown_db
 
 
 intents = discord.Intents(messages=True, message_content=True,
                           guilds=True, members=True, reactions=True)
+
+debugs = DEBUG_GUILDS.split('|') if DEBUG_GUILDS else None
+
 bot = commands.Bot(intents=intents, command_prefix='%s',
-                   activity=discord.Game(name="/help"))
+                   activity=discord.Game(name="/help"),
+                   debug_guilds=debugs)
 
 
 logger = Logger()

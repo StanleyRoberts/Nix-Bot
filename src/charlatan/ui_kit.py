@@ -91,7 +91,6 @@ class CharlatanLobby(discord.ui.View):
     @ discord.ui.button(label="Confirm Lobby", row=1, style=discord.ButtonStyle.primary)
     async def start_callback(self, _, interaction: discord.Interaction) -> None:
         self.game_state.wordlist = self.game_state.wordlist[:16]
-        self.game_state.choose_charlatan()
         await interaction.response.edit_message(view=CharlatanView(self.game_state))
 
 
@@ -105,8 +104,9 @@ class CharlatanView(discord.ui.View):
     async def start_game(self, _, interaction: discord.Interaction):
         await interaction.response.defer()
         self.clear_items()
-        self.messsage = await self.message.edit(
+        self.message = await (await interaction.original_response()).edit(
             embed=discord.Embed(description="Game is ongoing", title="Charlatan", colour=Colours.PRIMARY), view=self)
+        self.game_state.reset_game()
         await self.game_state.send_dms()
         await self.score_players(await self.vote())
         await self.leaderboard()
@@ -177,9 +177,8 @@ class CharlatanView(discord.ui.View):
         play_again_button = discord.ui.Button(label="Play Again", style=discord.ButtonStyle.primary)
 
         async def play_again(interaction: discord.Interaction):
-            # TODO \/ send message, is edit more coherent (NotFound: Unknown Webhook 404 in edit)?
             self.game_state.remake_players_with_score()
-            view = CharlatanView(game_state=self.game_state)
+            view = CharlatanView(self.game_state)
             await interaction.response.edit_message(view=view)
         play_again_button.callback = play_again
         self.add_item(play_again_button)

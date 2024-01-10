@@ -35,12 +35,19 @@ class CharlatanGame:
                  wordlist: list[str] = helper.DEFAULT_WORDLIST.split("\n")) -> None:
         self.wordlist = wordlist
         self.players = [Player(player, 0)]
-        self.word = random.choice(self.wordlist)
+        self.reset_game()
 
-    def choose_charlatan(self):
+    def _choose_charlatan(self):
         charlatan = self.players[random.randint(0, len(self.players) - 1)]
         charlatan.is_charlatan = True
         logger.debug(f"Random Charlatan was selected Charlatan: {charlatan.user.id}")
+
+    def _choose_word(self):
+        self.word = random.choice(self.wordlist)
+
+    def reset_game(self):
+        self._choose_charlatan()
+        self._choose_word()
 
     def add_player(self, new_player: discord.User):
         self.players.append(Player(new_player, 0))
