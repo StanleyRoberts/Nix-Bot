@@ -22,5 +22,6 @@ class Debug(commands.Cog):
         await self.bot.sync_commands()
         await ctx.respond("Synced")
 
+
 def setup(bot: discord.Bot) -> None:
     bot.add_cog(Debug(bot))

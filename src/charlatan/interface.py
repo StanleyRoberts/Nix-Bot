@@ -22,7 +22,7 @@ class Player:
             is_charlatan (bool):
     """
 
-    def __init__(self, user: discord.User, score: int) -> None:
+    def __init__(self, user: discord.User | discord.Member, score: int) -> None:
         self.user = user
         self.score = score
         self.votee = -1
@@ -31,28 +31,28 @@ class Player:
 
 
 class CharlatanGame:
-    def __init__(self, player: discord.User,
+    def __init__(self, player: discord.User | discord.Member,
                  wordlist: list[str] = helper.DEFAULT_WORDLIST.split("\n")) -> None:
         self.wordlist = wordlist
         self.players = [Player(player, 0)]
         self.reset_game()
 
-    def _choose_charlatan(self):
+    def _choose_charlatan(self) -> None:
         charlatan = self.players[random.randint(0, len(self.players) - 1)]
         charlatan.is_charlatan = True
         logger.debug(f"Random Charlatan was selected Charlatan: {charlatan.user.id}")
 
-    def _choose_word(self):
+    def _choose_word(self) -> None:
         self.word = random.choice(self.wordlist)
 
-    def reset_game(self):
+    def reset_game(self) -> None:
         self._choose_charlatan()
         self._choose_word()
 
-    def add_player(self, new_player: discord.User):
+    def add_player(self, new_player: discord.User | discord.Member) -> None:
         self.players.append(Player(new_player, 0))
 
-    async def send_dms(self):
+    async def send_dms(self) -> None:
         """Send dms to players and charlatan displaying wordlist
         """
         info = "> This is the wordlist for this round:\n"
@@ -63,7 +63,7 @@ class CharlatanGame:
             title = "You are a normal player" if not player.is_charlatan else "You are the Charlatan"
             await player.user.send(embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY))
 
-    async def score_players(self, voted_player: discord.User) -> bool:
+    async def score_players(self, voted_player: discord.User | discord.Member) -> bool:
         """Handles voting results for players
 
         Args:
@@ -71,15 +71,18 @@ class CharlatanGame:
             channel (discord.TextChannel): Channel to send result message to
         """
         player = self.find_player(voted_player)
+        if player is None:
+            logger.warning("Attempted to find player not in lobby")
+            return False
         if not player.is_charlatan:
-            logger.debug("Players incorrectly guessed charlatan")
+            logger.debug("Players didn't find charlatan")
             self.get_charlatan().score += 2
             return False
         else:
             logger.debug("Correctly guessed charlatan")
             return True
 
-    def charlatan_result(self, correct_guess: bool):
+    def charlatan_result(self, correct_guess: bool) -> None:
         if correct_guess:
             logger.debug("Charlatan guessed correctly")
             self.get_charlatan().score += 1
@@ -88,7 +91,7 @@ class CharlatanGame:
             for player in self.players:
                 player.score += 1 if not player.is_charlatan else 0
 
-    async def vote(self) -> discord.User:
+    async def vote(self) -> discord.User | discord.Member:
         """Waits and then returns the most voted player
 
         Returns:
@@ -97,8 +100,10 @@ class CharlatanGame:
         await helper.start_timer(PLAYER_VOTE_TIME)
         return sorted(self.players, key=lambda x: x.times_voted_for)[::-1][0].user  # TODO handle ties
 
-    def cast_vote(self, user: discord.User, button_id: int) -> str:
+    def cast_vote(self, user: discord.User | discord.Member, button_id: int) -> str:
         player = self.find_player(user)
+        if player is None:
+            return "You aren't in this game! Wait for the next round to join..."
         if not player.votee == -1:
             # TODO the voted player should probably be part of the callback,
             # rather than relying on hackily storing data in the id
@@ -110,10 +115,12 @@ class CharlatanGame:
         self.players[player.votee].times_voted_for += 1
         return "You voted for {}".format(self.players[player.votee].user.display_name)
 
-    def find_player(self, user: discord.User) -> Player:
+    def find_player(self, user: discord.User | discord.Member) -> Player | None:
         for player in self.players:
             if player.user == user:
                 return player
+        else:
+            return None
 
     def make_embed(self, title: str) -> discord.Embed:
         """Constructs an embed showing the current players in the lobby
@@ -123,16 +130,18 @@ class CharlatanGame:
             """
         desc = "Playing now:\n " + "\n".join(player.user.display_name + " : " + str(
             player.score) for player in self.players)
-        embed = discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
-        return embed
+        return discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
 
     def get_charlatan(self) -> Player:
         for player in self.players:
             if player.is_charlatan:
                 return player
+        else:
+            logger.error("Attempted to get charlatan but no charlatan set")
+            return self.players[0]
 
-    def remake_players_with_score(self):
+    def remake_players_with_score(self) -> None:
         self.players = [Player(player.user, player.score) for player in self.players]
 
-    def remake_players_without_score(self):
+    def remake_players_without_score(self) -> None:
         self.players = [Player(player.user, 0) for player in self.players]
