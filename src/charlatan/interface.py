@@ -1,9 +1,9 @@
 import discord
 import random
 
-from helpers.style import Emotes, Colours
+from helpers.style import Colours
 from helpers.logger import Logger
-import helpers.charlatan_helpers as helper
+import helpers.charlatan as helper
 
 logger = Logger()
 
@@ -32,7 +32,7 @@ class Player:
 
 class CharlatanGame:
     def __init__(self, player: discord.User | discord.Member,
-                 wordlist: list[str] = helper.DEFAULT_WORDLIST.split("\n")) -> None:
+                 wordlist: list[str] = random.choice(helper.WORDLISTS).wordlist) -> None:
         self.wordlist = wordlist
         self.players = [Player(player, 0)]
         self.reset_game()

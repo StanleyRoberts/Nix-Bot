@@ -1,4 +1,6 @@
 import asyncio
+import json
+from dataclasses import dataclass
 
 
 async def start_timer(time: int) -> None:
@@ -26,6 +28,15 @@ If the *Charlatan* is correct they get 1pt and the other players get zero
 > - if they eliminate the *Charlatan* and the *Chalartan* incorrectly guesses the marked word,
 the other players each get 1pt"""
 
-DEFAULT_WORDLIST = """Indiana Jones\nDr Who\nSpiderman\nDarth Vader\nSherlock Holmes\nGandalf
-Superman\nBatman\nJames Bond\nDracula\nHomer Simpson\nFrankenstein
-Robin Hood\nSuper Mario\nTarzan\nDumbledore"""
+
+@dataclass
+class WordList:
+    title: str
+    wordlist: list[str]
+
+
+# schema: list[dict{title: str, wordlist: list[str]}]
+WORDLISTS: list[WordList] = []
+
+with open("src/charlatan/wordlists.json", "r") as f:
+    WORDLISTS = list(map(lambda x: WordList(x["title"], x["wordlist"]), json.loads(f.read())["wordlists"]))

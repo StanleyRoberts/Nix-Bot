@@ -1,11 +1,11 @@
-import typing
+import random
 import discord
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .interface import CharlatanGame
 from helpers.logger import Logger
-import helpers.charlatan_helpers as helper
+import helpers.charlatan as helper
 from helpers.style import Emotes, Colours
 logger = Logger()
 
@@ -22,7 +22,6 @@ class PlayerVoting(discord.ui.View):
 
     def __init__(self, game_state: "CharlatanGame") -> None:
         logger.debug("New PlayerVoting view created")
-        # {player: [player_voted_for, times_voted_for]}
         super().__init__(timeout=None)
         self.game_state = game_state
         for i in range(0, len(self.game_state.players)):
@@ -192,7 +191,7 @@ class CharlatanView(discord.ui.View):
         async def back_to_lobby(interaction: discord.Interaction) -> None:
             play_again_button.disabled = True
             self.game_state.remake_players_without_score()
-            self.game_state.wordlist = helper.DEFAULT_WORDLIST.split("\n")
+            self.game_state.wordlist = random.choice(helper.WORDLISTS).wordlist
             await interaction.response.edit_message(view=CharlatanLobby(self.game_state))
         lobby_button.callback = back_to_lobby  # type: ignore[method-assign]
         self.add_item(lobby_button)
@@ -264,7 +263,7 @@ class WordSelection(discord.ui.Modal):
         super().__init__(title=title)
         self.add_item(discord.ui.InputText(label="Add 16 words for the game here:",
                                            style=discord.InputTextStyle.long,
-                                           placeholder=helper.DEFAULT_WORDLIST[:97] + "..."))
+                                           placeholder="".join(random.choice(helper.WORDLISTS).wordlist)[:97] + "..."))
         self.game_state = game_state
 
     async def callback(self, interaction: discord.Interaction) -> None:
