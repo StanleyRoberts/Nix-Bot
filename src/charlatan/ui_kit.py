@@ -69,7 +69,7 @@ class CharlatanLobby(discord.ui.View):
 
     @discord.ui.button(label="Word List", row=0, style=discord.ButtonStyle.secondary)
     async def wordlist_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message(view=WordSelection(game_state=self.game_state, message=self.message),
+        await interaction.response.send_message(view=WordSelection(game_state=self.game_state),
                                                 ephemeral=True)
 
     @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
@@ -80,9 +80,8 @@ class CharlatanLobby(discord.ui.View):
         if self.game_state.find_player(interaction.user) is None:
             logger.debug("New player joined game", member_id=interaction.user.id)
             self.game_state.add_player(interaction.user)
-            view = CharlatanLobby(self.game_state)
             await interaction.response.edit_message(embed=self.game_state.make_embed("Charlatan"),
-                                                    view=view)
+                                                    view=self)
         else:
             logger.info("User double login into Charlatan lobby detected",
                         member_id=interaction.user.id, channel_id=interaction.channel.id if interaction.channel else 0)
@@ -139,13 +138,17 @@ class CharlatanView(discord.ui.View):
             await self.message.edit(
                 embed=discord.Embed(description="The players have found the charlatan, it was {} {}"
                                     .format(self.game_state.get_charlatan().user.mention, Emotes.HUG),
-                                    title="Charlatan", colour=Colours.PRIMARY), view=self)
+                                    title="Charlatan", colour=Colours.PRIMARY),
+                view=self
+            )
             await self.charlatan_guess()
         else:
             await self.message.edit(
                 embed=discord.Embed(description="The players did not find the charlatan, it was {} {}"
                                     .format(self.game_state.get_charlatan().user.mention, Emotes.CRYING),
-                                    title="Charlatan", colour=Colours.PRIMARY), view=self)
+                                    title="Charlatan", colour=Colours.PRIMARY),
+                view=self
+            )
 
     async def charlatan_guess(self) -> None:
         """Handles scoring for the charlatan voting for the secret word.
@@ -181,8 +184,7 @@ class CharlatanView(discord.ui.View):
 
         async def play_again(interaction: discord.Interaction) -> None:
             self.game_state.remake_players_with_score()
-            view = CharlatanView(self.game_state)
-            await interaction.response.edit_message(view=view)
+            await interaction.response.edit_message(view=self)
         play_again_button.callback = play_again  # type: ignore[method-assign]
         self.add_item(play_again_button)
 
@@ -259,11 +261,10 @@ class WordSelection(discord.ui.View):
         game_state (CharlatanGame): The current state of the game
     """
 
-    def __init__(self, game_state: "CharlatanGame", message: discord.Message) -> None:
+    def __init__(self, game_state: "CharlatanGame") -> None:
         logger.debug("New WordSelection modal created")
         super().__init__()
         self.game_state = game_state
-        self.lobby_message = message
 
     @staticmethod
     def random_selection() -> list[discord.SelectOption]:
@@ -293,10 +294,4 @@ class WordSelection(discord.ui.View):
             logger.warning("Received a non-str type for selected list")
             return
         self.game_state.wordlist = helper.WORDLISTS[selected_list]
-        view = CharlatanLobby(self.game_state)
-        if interaction.message is None:
-            logger.warning("Interaction message is none, could not return to lobby")
-            return
         await interaction.response.defer()
-        await self.lobby_message.edit(embed=self.game_state.make_embed("Charlatan"),
-                                      view=view)

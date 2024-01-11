@@ -38,6 +38,8 @@ class CharlatanGame:
         self.reset_game()
 
     def _choose_charlatan(self) -> None:
+        for p in self.players:
+            p.is_charlatan = False
         charlatan = self.players[random.randint(0, len(self.players) - 1)]
         charlatan.is_charlatan = True
         logger.debug(f"Random Charlatan was selected Charlatan: {charlatan.user.id}")
