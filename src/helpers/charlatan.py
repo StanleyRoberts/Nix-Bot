@@ -1,6 +1,5 @@
 import asyncio
 import json
-from dataclasses import dataclass
 
 
 async def start_timer(time: int) -> None:
@@ -29,14 +28,7 @@ If the *Charlatan* is correct they get 1pt and the other players get zero
 the other players each get 1pt"""
 
 
-@dataclass
-class WordList:
-    title: str
-    wordlist: list[str]
-
-
-# schema: list[dict{title: str, wordlist: list[str]}]
-WORDLISTS: list[WordList] = []
+WORDLISTS: dict[str, list[str]] = {}
 
 with open("src/charlatan/wordlists.json", "r") as f:
-    WORDLISTS = list(map(lambda x: WordList(x["title"], x["wordlist"]), json.loads(f.read())["wordlists"]))
+    WORDLISTS = dict(map(lambda x: (x["title"], x["wordlist"]), json.loads(f.read())["wordlists"]))

@@ -1,17 +1,17 @@
 {
-  "python.linting.pycodestyleEnabled": true,
-  "python.linting.enabled": true,
   "editor.tabSize": 4,
   "editor.insertSpaces": true,
-  "python.linting.pycodestyleArgs": [
-    "--max-line-length=119"
-  ],
-  "python.formatting.provider": "autopep8",
-  "python.formatting.autopep8Args": [
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "ms-python.autopep8",
+  "autopep8.args": [
     "--select=E,W",
     "--max-line-length",
     "119",
     "--experimental"
   ],
-  "editor.formatOnSave": true
+  "mypy-type-checker.args": [
+    "--strict",
+    "--disable-error-code no-untyped-call",
+    "--disable-error-code misc"
+  ],
 }

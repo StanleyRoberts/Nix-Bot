@@ -32,7 +32,7 @@ class Player:
 
 class CharlatanGame:
     def __init__(self, player: discord.User | discord.Member,
-                 wordlist: list[str] = random.choice(helper.WORDLISTS).wordlist) -> None:
+                 wordlist: list[str] = random.choice(list(helper.WORDLISTS.values()))) -> None:
         self.wordlist = wordlist
         self.players = [Player(player, 0)]
         self.reset_game()
@@ -59,7 +59,7 @@ class CharlatanGame:
         words = "\n".join(["- " + i if (i is not self.word)
                           else "- **" + i + "** [SECRET WORD]" for i in self.wordlist])
         for player in self.players:  # Sends the wordlist to everyone (altered for Charlatan)
-            desc = info + (words if not player.is_charlatan else "\n".join(self.wordlist))
+            desc = info + (words if not player.is_charlatan else "\n".join(["- " + i for i in self.wordlist]))
             title = "You are a normal player" if not player.is_charlatan else "You are the Charlatan"
             await player.user.send(embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY))
 

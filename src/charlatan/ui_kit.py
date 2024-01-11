@@ -69,7 +69,7 @@ class CharlatanLobby(discord.ui.View):
 
     @discord.ui.button(label="Word List", row=0, style=discord.ButtonStyle.secondary)
     async def wordlist_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
-        await interaction.response.send_modal(WordSelection(title="Word List", game_state=self.game_state))
+        await interaction.response.send_message(view=WordSelection(game_state=self.game_state))
 
     @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
     async def join_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
@@ -191,7 +191,7 @@ class CharlatanView(discord.ui.View):
         async def back_to_lobby(interaction: discord.Interaction) -> None:
             play_again_button.disabled = True
             self.game_state.remake_players_without_score()
-            self.game_state.wordlist = random.choice(helper.WORDLISTS).wordlist
+            self.game_state.wordlist = random.choice(list(helper.WORDLISTS.values()))
             await interaction.response.edit_message(view=CharlatanLobby(self.game_state))
         lobby_button.callback = back_to_lobby  # type: ignore[method-assign]
         self.add_item(lobby_button)
@@ -251,22 +251,33 @@ class CharlatanChoice(discord.ui.View):
         self.add_item(button)
 
 
-class WordSelection(discord.ui.Modal):
+class WordSelection(discord.ui.View):
     """ Modal to choose a custom wordlist
 
     Args:
         game_state (CharlatanGame): The current state of the game
     """
 
-    def __init__(self, title: str, game_state: "CharlatanGame") -> None:
+    def __init__(self, game_state: "CharlatanGame") -> None:
         logger.debug("New WordSelection modal created")
-        super().__init__(title=title)
-        self.add_item(discord.ui.InputText(label="Add 16 words for the game here:",
-                                           style=discord.InputTextStyle.long,
-                                           placeholder="".join(random.choice(helper.WORDLISTS).wordlist)[:97] + "..."))
+        super().__init__()
         self.game_state = game_state
 
-    async def callback(self, interaction: discord.Interaction) -> None:
+    @staticmethod
+    def random_selection() -> list[discord.SelectOption]:
+        wordlists = list(map(lambda x: discord.SelectOption(label=x), list(helper.WORDLISTS.keys())))
+        random.shuffle(wordlists)
+        return wordlists[:25]
+
+    @discord.ui.select(
+        placeholder="Choose a word list!",
+        min_values=0,
+        max_values=1,
+        options=random_selection()
+    )
+    async def callback(self,
+                       select: discord.ui.Select,  # type: ignore[type-arg]
+                       interaction: discord.Interaction) -> None:
         """ Changes interaction view to CharlatanLobby
 
         Edits the interaction message to use the CharlatanLobby view with the new wordlist
@@ -275,10 +286,11 @@ class WordSelection(discord.ui.Modal):
             interaction (discord.Interaction): Interaction containing the message to change the view of
         """
         logger.debug("WordSelection complete, returning to lobby")
-        new_wordlist = self.children[0].value
-        if new_wordlist is None:
+        selected_list = select.values[0]
+        if not isinstance(selected_list, str):
+            logger.warning("Received a non-str type for selected list")
             return
-        self.game_state.wordlist = new_wordlist.split('\n')
+        self.game_state.wordlist = helper.WORDLISTS[selected_list]
         view = CharlatanLobby(self.game_state)
         if interaction.message is None:
             logger.warning("Interaction message is none, could not return to lobby")
