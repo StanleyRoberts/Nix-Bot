@@ -65,7 +65,6 @@ class Facts(commands.Cog):
         logger.info("Starting daily fact loop")
         guilds = db.single_SQL("SELECT FactChannelID FROM Guilds")
         fact = self.get_fact()
-        logger.debug(guilds)  # TODO remove
         for factID in guilds:
             if factID[0]:
                 logger.debug("Attempting to send fact message", channel_id=factID[0])
@@ -79,7 +78,6 @@ class Facts(commands.Cog):
                         logger.info("Channel for daily fact not messageable", channel_id=factID[0])
                 except discord.errors.Forbidden:
                     logger.info("Permission failure for sending fact message", channel_id=factID[0])
-                    pass  # silently fail if no perms, TODO setup logging channel
 
     @staticmethod
     def get_fact() -> str | None:

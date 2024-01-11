@@ -31,4 +31,4 @@ the other players each get 1pt"""
 WORDLISTS: dict[str, list[str]] = {}
 
 with open("src/charlatan/wordlists.json", "r") as f:
-    WORDLISTS = dict(map(lambda x: (x["title"], x["wordlist"]), json.loads(f.read())["wordlists"]))
+    WORDLISTS = {x["title"]: x["wordlist"] for x in json.loads(f.read())["wordlists"]}

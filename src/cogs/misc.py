@@ -31,7 +31,7 @@ class Misc(commands.Cog):
                                                                    command.description + "\n"
                                                                    for command in self.bot.cogs[cog].walk_commands()
                                                                    if isinstance(command, discord.SlashCommand)]))
-                        for cog in self.bot.cogs]))  # TODO combine command and groups from walk_commands
+                        for cog in self.bot.cogs]))
         embed = discord.Embed(title="Help Page", description=desc,
                               colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)

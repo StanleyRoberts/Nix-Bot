@@ -61,6 +61,7 @@ class CharlatanLobby(discord.ui.View):
     Args:
         game_state (CharlatanGame): The current state of the game
     """
+    # TODO leave lobby
 
     def __init__(self, game_state: "CharlatanGame") -> None:
         logger.debug("New CharlatanLobby view created")
@@ -268,7 +269,7 @@ class WordSelection(discord.ui.View):
 
     @staticmethod
     def random_selection() -> list[discord.SelectOption]:
-        wordlists = list(map(lambda x: discord.SelectOption(label=x), list(helper.WORDLISTS.keys())))
+        wordlists = [discord.SelectOption(label=x) for x in helper.WORDLISTS.keys()]
         random.shuffle(wordlists)
         return wordlists[:25]
 
@@ -295,3 +296,4 @@ class WordSelection(discord.ui.View):
             return
         self.game_state.wordlist = helper.WORDLISTS[selected_list]
         await interaction.response.defer()
+        # TODO add submit button?

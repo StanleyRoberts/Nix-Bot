@@ -108,7 +108,6 @@ class Reddit(commands.Cog):
             except discord.errors.Forbidden:
                 logger.info("Permission failure for daily reddit post <subreddit: {0}>".format(
                     entry[1]), guild_id=entry[0], channel_id=entry[2])
-                pass  # silently fail if no perms, TODO setup logging channel
 
 
 def setup(bot: discord.Bot) -> None:

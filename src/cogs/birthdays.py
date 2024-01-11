@@ -31,8 +31,8 @@ class Birthdays(commands.Cog):
                              choices=MONTHS, required=True)
     async def set_birthday(self, ctx: discord.ApplicationContext, day: int, month: str) -> None:
         if (month in ['Apr', 'Jun', 'Sep', 'Nov'] and day > 30) or (month == 'Feb' and day > 29):
-            await ctx.respond(f"Sorry, I didn't understand the birthday '{day} {month}'"
-                              + f" Are you sure it a valid day? {Emotes.CONFUSED}")
+            await ctx.respond(f"Sorry, I didn't understand the birthday '{day} {month}'" +
+                              f" Are you sure it a valid day? {Emotes.CONFUSED}")
             return
         db.single_void_SQL("INSERT INTO Birthdays (GuildID, UserID, Birthdate) VALUES (%s, %s, %s) ON CONFLICT " +
                            "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
@@ -83,8 +83,6 @@ class Birthdays(commands.Cog):
                               f"!\nHope you have a brilliant day {Emotes.HEART}"))
                 except discord.errors.Forbidden:
                     logger.info("Permission failure for sending birthday message", channel_id=guild[0])
-                    # silently fail if no perms, TODO setup logging channel
-                    pass
 
 
 def setup(bot: discord.Bot) -> None:

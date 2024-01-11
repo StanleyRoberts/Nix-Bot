@@ -121,7 +121,7 @@ def main() -> None:
             exit(exit_code)
     else:
         logger.debug_mode = False
-        logger.set_priority("DEBUG")  # TODO change to warning
+        logger.set_priority("WARNING")
 
     cogs = [cog[: -3] for cog in listdir('./src/cogs')
             if cog[-3:] == ".py" and (cog not in ["__init__.py", "debug.py"])]

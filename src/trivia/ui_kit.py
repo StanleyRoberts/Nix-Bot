@@ -73,5 +73,5 @@ class TriviaView(discord.ui.View):
     async def get_question(self) -> str | None:
         return await self.state.get_new_question()
 
-    def get_current_question(self) -> str:  # TODO needs to be able to return None?
+    def get_current_question(self) -> str:
         return self.state.get_current_question()

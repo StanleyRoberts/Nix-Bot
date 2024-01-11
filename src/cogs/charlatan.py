@@ -1,7 +1,3 @@
-# TODO this needs a lot of review before merge
-# Ive put some todo comments around things I
-# think might be issues.
-
 from discord.ext import commands
 import discord
 
