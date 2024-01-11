@@ -69,7 +69,8 @@ class CharlatanLobby(discord.ui.View):
 
     @discord.ui.button(label="Word List", row=0, style=discord.ButtonStyle.secondary)
     async def wordlist_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message(view=WordSelection(game_state=self.game_state))
+        await interaction.response.send_message(view=WordSelection(game_state=self.game_state, message=self.message),
+                                                ephemeral=True)
 
     @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
     async def join_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
@@ -258,10 +259,11 @@ class WordSelection(discord.ui.View):
         game_state (CharlatanGame): The current state of the game
     """
 
-    def __init__(self, game_state: "CharlatanGame") -> None:
+    def __init__(self, game_state: "CharlatanGame", message: discord.Message) -> None:
         logger.debug("New WordSelection modal created")
         super().__init__()
         self.game_state = game_state
+        self.lobby_message = message
 
     @staticmethod
     def random_selection() -> list[discord.SelectOption]:
@@ -296,5 +298,5 @@ class WordSelection(discord.ui.View):
             logger.warning("Interaction message is none, could not return to lobby")
             return
         await interaction.response.defer()
-        await interaction.message.edit(embed=self.game_state.make_embed("Charlatan"),
-                                       view=view)
+        await self.lobby_message.edit(embed=self.game_state.make_embed("Charlatan"),
+                                      view=view)
