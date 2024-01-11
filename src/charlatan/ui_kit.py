@@ -283,5 +283,6 @@ class WordSelection(discord.ui.Modal):
         if interaction.message is None:
             logger.warning("Interaction message is none, could not return to lobby")
             return
+        await interaction.response.defer()
         await interaction.message.edit(embed=self.game_state.make_embed("Charlatan"),
                                        view=view)
