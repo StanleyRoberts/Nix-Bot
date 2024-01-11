@@ -295,5 +295,5 @@ class WordSelection(discord.ui.View):
             logger.warning("Received a non-str type for selected list")
             return
         self.game_state.wordlist = helper.WORDLISTS[selected_list]
+        await self.message.edit(f"Wordlist changed to {selected_list} {Emotes.TEEHEE}", view=None)
         await interaction.response.defer()
-        # TODO add submit button?
