@@ -20,10 +20,17 @@ class Birthdays(commands.Cog):
     @commands.slash_command(name='set_birthday_channel',
                             description="Sets the channel for the birthday messages")
     @discord.commands.default_permissions(manage_guild=True)
-    async def set_counting_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel) -> None:
+    async def set_counting_channel(
+        self,
+        ctx: discord.ApplicationContext,
+        channel: discord.TextChannel
+    ) -> None:
         db.single_void_SQL("UPDATE Guilds SET BirthdayChannelID=%s WHERE ID=%s",
                            (channel.id, ctx.guild_id))
-        await ctx.respond(f"Birthday channel set to {channel.mention} {Emotes.DRINKING}", ephemeral=True)
+        await ctx.respond(
+            f"Birthday channel set to {channel.mention} {Emotes.DRINKING}",
+            ephemeral=True
+        )
         logger.info("Counting channel set", guild_id=ctx.guild_id, channel_id=channel.id)
 
     @commands.slash_command(name='birthday', description="Set your birthday")
@@ -41,7 +48,9 @@ class Birthdays(commands.Cog):
             "(GuildID, UserID) DO UPDATE SET Birthdate=%s",
             (ctx.guild.id, ctx.author.id, month + str(day),
              month + str(day)))
-        await ctx.respond(f"{ctx.author.mention} your birthday is set to {day} {month} {Emotes.UWU}")
+        await ctx.respond(
+            f"{ctx.author.mention} your birthday is set to {day} {month} {Emotes.UWU}"
+        )
         logger.info("Birthday set", member_id=ctx.author.id)
 
     @commands.slash_command(name='show_birthdays',
@@ -51,9 +60,12 @@ class Birthdays(commands.Cog):
         vals = db.single_sql(
             "SELECT UserID, Birthdate from Birthdays WHERE GuildID=%s", (ctx.guild_id,))
         if vals:
-            out_str = "\n".join([(await self.bot.fetch_user(user[0])).mention + " : " + user[1] for user in vals])
+            out_str = "\n".join(
+                [(await self.bot.fetch_user(user[0])).mention + " : " + user[1] for user in vals]
+            )
         else:
-            out_str = "No users have entered their birthday yet! Get started with " + self.set_birthday.mention
+            out_str = "No users have entered their birthday yet! Get started with " +\
+                self.set_birthday.mention
         embed = discord.Embed(title="Birthday List", description=out_str, color=Colours.PRIMARY)
         await ctx.respond(embed=embed)
 
@@ -76,7 +88,9 @@ class Birthdays(commands.Cog):
             "INNER JOIN Guilds ON Birthdays.GuildID=Guilds.ID WHERE Birthdays.Birthdate=%s " +
             "GROUP BY ID;", (today,))
         for guild in val:
-            users = " ".join([(await self.bot.fetch_user(int(user))).mention for user in guild[1].split(" ")])
+            users = " ".join(
+                [(await self.bot.fetch_user(int(user))).mention for user in guild[1].split(" ")]
+            )
             if guild[0]:
                 logger.debug("Attempting to send birthday message", channel_id=guild[0])
                 try:

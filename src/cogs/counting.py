@@ -59,7 +59,11 @@ class Counting(commands.Cog):
     @commands.slash_command(name='set_counting_channel',
                             description="Sets the channel for the counting game")
     @discord.commands.default_permissions(manage_guild=True)
-    async def set_counting_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel) -> None:
+    async def set_counting_channel(
+        self,
+        ctx: discord.ApplicationContext,
+        channel: discord.TextChannel
+    ) -> None:
         logger.info("counting_channel set")
         db.single_void_SQL("UPDATE Guilds SET CountingChannelID=%s WHERE ID=%s",
                            (channel.id, ctx.guild_id))

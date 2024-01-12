@@ -84,12 +84,17 @@ class CharlatanLobby(discord.ui.View):
             logger.info("User double login into Charlatan lobby detected",
                         member_id=interaction.user.id, channel_id=interaction.channel.id
                         if interaction.channel else 0)
-            await interaction.response.send_message(content=f"You have already joined the game {Emotes.NOEMOTION}",
-                                                    ephemeral=True)
+            await interaction.response.send_message(
+                content=f"You have already joined the game {Emotes.NOEMOTION}",
+                ephemeral=True
+            )
 
     @discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
     async def rules_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message(ephemeral=True, embed=discord.Embed(description=helper.RULES))
+        await interaction.response.send_message(
+            ephemeral=True,
+            embed=discord.Embed(description=helper.RULES)
+        )
 
     @discord.ui.button(label="Word List", row=1, style=discord.ButtonStyle.secondary)
     async def wordlist_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
@@ -103,7 +108,8 @@ class CharlatanLobby(discord.ui.View):
 
     @discord.ui.button(label="Leave", row=0, style=discord.ButtonStyle.secondary)
     async def leave_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
-        self.game_state.remove_player(interaction.user)
+        if interaction.user:
+            self.game_state.remove_player(interaction.user)
         await interaction.response.edit_message(view=self)
 
 
@@ -120,7 +126,13 @@ class CharlatanView(discord.ui.View):
         await interaction.response.defer()
         self.clear_items()
         self.message = await (await interaction.original_response()).edit(
-            embed=discord.Embed(description="Game is ongoing", title="Charlatan", colour=Colours.PRIMARY), view=self)
+            embed=discord.Embed(
+                description="Game is ongoing",
+                title="Charlatan",
+                colour=Colours.PRIMARY
+            ),
+            view=self
+        )
         self.game_state.reset_game()
         await self.game_state.send_dms()
         await self.score_players(await self.vote())
@@ -137,9 +149,18 @@ class CharlatanView(discord.ui.View):
         """
         logger.debug("Begin player voting")
         view = PlayerVoting(self.game_state)
-        await self.message.edit(view=view, embed=discord.Embed(description="Vote for a Charlatan:\n" + "\n".join(
-            [self.game_state.players[button_id].user.mention + ": " + str(button_id + 1) for button_id in
-                range(0, len(self.game_state.players))]), title="Charlatan", colour=Colours.PRIMARY))
+        await self.message.edit(
+            view=view,
+            embed=discord.Embed(
+                description="Vote for a Charlatan:\n" + "\n".join(
+                    [self.game_state.players[button_id].user.mention + ": " +
+                        str(button_id + 1) for button_id in
+                        range(0, len(self.game_state.players))]
+                ),
+                title="Charlatan",
+                colour=Colours.PRIMARY
+            )
+        )
         self.clear_items()
         return await view.vote()
 
@@ -154,7 +175,8 @@ class CharlatanView(discord.ui.View):
         if charlatan_found:
             await self.message.edit(
                 embed=discord.Embed(
-                    description=f"The players have found the charlatan, it was {charlatan} {Emotes.HUG}",
+                    description="The players have found the charlatan, " +
+                    f"it was {charlatan} {Emotes.HUG}",
                     title="Charlatan",
                     colour=Colours.PRIMARY),
                 view=self
@@ -163,7 +185,8 @@ class CharlatanView(discord.ui.View):
         else:
             await self.message.edit(
                 embed=discord.Embed(
-                    description=f"The players did not find the charlatan, it was {charlatan} {Emotes.CRYING}",
+                    description="The players did not find the charlatan, " +
+                    f"it was {charlatan} {Emotes.CRYING}",
                     title="Charlatan",
                     colour=Colours.PRIMARY),
                 view=self
@@ -214,7 +237,9 @@ class CharlatanView(discord.ui.View):
         self.clear_items()
 
         play_again_button = discord.ui.Button(
-            label="Play Again", style=discord.ButtonStyle.primary)  # type: ignore[var-annotated]
+            label="Play Again",
+            style=discord.ButtonStyle.primary
+        )  # type: ignore[var-annotated]
 
         async def play_again(interaction: discord.Interaction) -> None:
             await interaction.response.edit_message(view=self)
@@ -222,7 +247,9 @@ class CharlatanView(discord.ui.View):
         self.add_item(play_again_button)
 
         lobby_button = discord.ui.Button(
-            label="Back to Lobby", style=discord.ButtonStyle.secondary)  # type: ignore[var-annotated]
+            label="Back to Lobby",
+            style=discord.ButtonStyle.secondary
+        )  # type: ignore[var-annotated]
 
         async def back_to_lobby(interaction: discord.Interaction) -> None:
             play_again_button.disabled = True

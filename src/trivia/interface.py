@@ -38,9 +38,13 @@ class TriviaInterface:
 
         response = requests.get(api_url, timeout=10)
         if response.status_code == requests.codes.ok:
-            self._cache = [((cjson['question']['text']), (cjson['correctAnswer']))
-                           for cjson in json.loads(response.text)
-                           if not any(map(cjson['question']['text'].__contains__, ["these", "following"]))]
+            self._cache = [
+                ((cjson['question']['text']), (cjson['correctAnswer']))
+                for cjson in json.loads(response.text)
+                if not any(
+                    map(cjson['question']['text'].__contains__, ["these", "following"])
+                )
+            ]
             if not self._cache:
                 logger.error(f"Response of Trivia API empty. url= {api_url}", )
                 self._cache = [None]

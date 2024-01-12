@@ -17,8 +17,10 @@ class Misc(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
 
-    @commands.slash_command(name='quote',
-                            description="Displays an AI-generated quote over an inspirational image")
+    @commands.slash_command(
+        name='quote',
+        description="Displays an AI-generated quote over an inspirational image"
+    )
     async def send_quote(self, ctx: discord.ApplicationContext) -> None:
         await ctx.respond(requests.get("https://inspirobot.me/api?generate=true", timeout=10).text)
         logger.info("Generating quote", member_id=ctx.author.id, channel_id=ctx.channel_id)
@@ -27,11 +29,18 @@ class Misc(commands.Cog):
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
         desc = ("Note: depending on your server settings and role permissions," +
                 " some of these commands may be hidden or disabled\n\n" +
-                "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " +
-                                                                   command.description + "\n"
-                                                                   for command in self.bot.cogs[cog].walk_commands()
-                                                                   if isinstance(command, discord.SlashCommand)]))
-                        for cog in self.bot.cogs]))
+                "".join(
+                    ["\n***" + cog + "***\n" + "".join(
+                        sorted(
+                            [command.mention + " : " +
+                                command.description + "\n"
+                                for command in self.bot.cogs[cog].walk_commands()
+                                if isinstance(command, discord.SlashCommand)
+                             ]
+                        )
+                    )
+                        for cog in self.bot.cogs]
+                ))
         embed = discord.Embed(title="Help Page", description=desc,
                               colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
@@ -73,7 +82,8 @@ class Misc(commands.Cog):
                 )
                 text = data['replies'][0]['text']
             except TLSClientException:
-                text = f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
+                text = f"Uh-oh! I'm having trouble at the moment, " +\
+                    "please try again later {Emotes.CLOWN}"
             await msg.reply(text)
 
 

@@ -17,29 +17,52 @@ class Reddit(commands.Cog):
         self.sent_today = False
         self.reset_reddit.start()
 
-    @commands.slash_command(name='reddit',
-                            description="Displays a random top reddit post from the given subreddit")
-    @discord.commands.option("time", type=str, default="day",
-                             description="Time period to search for top posts",
-                             choices=["month", "hour", "week", "all", "day", "year"])
-    async def send_reddit_post(self, ctx: discord.ApplicationContext, subreddit: str, time: str) -> None:
+    @commands.slash_command(
+        name='reddit',
+        description="Displays a random top reddit post from the given subreddit"
+    )
+    @discord.commands.option(
+        "time",
+        type=str,
+        default="day",
+        description="Time period to search for top posts",
+        choices=["month", "hour", "week", "all", "day", "year"]
+    )
+    async def send_reddit_post(
+        self,
+        ctx: discord.ApplicationContext,
+        subreddit: str,
+        time: str
+    ) -> None:
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
         reddit = RedditInterface(subreddit, time)
         post = await reddit.get_post()
-        await ctx.interaction.response.send_message(content=post.text, files=post.img, view=ui.PostViewer(reddit))
+        await ctx.interaction.response.send_message(
+            content=post.text,
+            files=post.img,
+            view=ui.PostViewer(reddit)
+        )
 
     @commands.slash_command(name='subscribe',
                             description="Subscribe to a subreddit to get daily posts from it")
     @discord.commands.option("channel", type=discord.TextChannel, required=False)
     @discord.commands.default_permissions(manage_guild=True)
-    async def subscribe_to_sub(self, ctx: discord.ApplicationContext, sub: str, channel: discord.TextChannel) -> None:
+    async def subscribe_to_sub(
+        self,
+        ctx: discord.ApplicationContext,
+        sub: str,
+        channel: discord.TextChannel
+    ) -> None:
         if not channel:
             channel = ctx.channel
 
         if not await RedditInterface.valid_sub(sub):
             logger.warning(f"Subreddit {sub} is not valid", guild_id=ctx.guild_id)
             await ctx.respond(f"The subreddit {sub} is not available {Emotes.EVIL}")
-        elif (sub.lower(),) in db.single_sql("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        elif (sub.lower(),) in db.single_sql(
+            "SELECT Subreddit FROM Subreddits WHERE GuildID=%s",
+            (ctx.guild_id,)
+        ):
             logger.warning(f"Subreddit {sub} was already subscribed to",
                            guild_id=ctx.guild_id, channel_id=channel.id)
             await ctx.respond(f"This server is already subscribed to {sub} {Emotes.SUPRISE}")
@@ -47,7 +70,8 @@ class Reddit(commands.Cog):
             logger.info(f"Subreddit {sub} got subscribed to",
                         guild_id=ctx.guild_id, channel_id=channel.id)
             db.single_void_SQL(
-                "INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
+                "INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) " +
+                "VALUES (%s, %s, %s)",
                 (ctx.guild_id, sub.lower(),
                  channel.id))
             await ctx.respond(f"This server is now subscribed to {sub} {Emotes.HUG}")
@@ -60,7 +84,10 @@ class Reddit(commands.Cog):
         if not sub:
             await self.get_subs(ctx)
             return
-        if (sub.lower(),) not in db.single_sql("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        if (sub.lower(),) not in db.single_sql(
+            "SELECT Subreddit FROM Subreddits WHERE GuildID=%s",
+            (ctx.guild_id,)
+        ):
             logger.warning(f"Subreddit {sub} was never subscribed to", guild_id=ctx.guild_id)
             await ctx.respond(f"This server is not subscribed to r/{sub} {Emotes.SUPRISE}")
         else:

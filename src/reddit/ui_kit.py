@@ -35,7 +35,11 @@ class PostViewer(discord.ui.View):
 
     @discord.ui.button(label="Change Subreddit", style=discord.ButtonStyle.secondary,
                        emoji=PartialEmoji.from_str(Emotes.HUG))
-    async def change_sub_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def change_sub_callback(
+        self,
+        _: discord.Button,
+        interaction: discord.Interaction
+    ) -> None:
         await interaction.response.send_modal(ChangeSubModal(title="Change Subreddit",
                                                              caller=self))
         logger.debug("PostViewer - Change subreddit")

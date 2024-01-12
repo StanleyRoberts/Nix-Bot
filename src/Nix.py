@@ -66,7 +66,10 @@ async def on_guild_channel_delete(channel: discord.TextChannel) -> None:
     db.multi_void_sql([
         ("DELETE FROM Subreddits WHERE SubredditChannelID=%s", (channel.id,)),
         ("DELETE FROM ChainedUsers WHERE ChannelID=%s", (channel.id,)),
-        ("DELETE FROM MessageChain WHERE ChannelID=%s OR ResponseChannelID=%s", (channel.id, channel.id)),
+        (
+            "DELETE FROM MessageChain WHERE ChannelID=%s OR ResponseChannelID=%s",
+            (channel.id, channel.id)
+        ),
         ("DELETE FROM RoleChannel WHERE ChannelID=%s", (channel.id,))])
 
 

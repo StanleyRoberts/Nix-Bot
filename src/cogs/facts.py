@@ -30,16 +30,25 @@ class Facts(commands.Cog):
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
     @discord.commands.option("channel", type=discord.TextChannel, required=False)
     @discord.commands.default_permissions(manage_guild=True)
-    async def set_fact_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel) -> None:
+    async def set_fact_channel(
+        self,
+        ctx: discord.ApplicationContext,
+        channel: discord.TextChannel
+    ) -> None:
         if not channel:
             channel = ctx.channel
         db.single_void_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s",
                            (channel.id, ctx.guild_id))
-        await ctx.respond(f"Facts channel set to {channel.mention} {Emotes.DRINKING}", ephemeral=True)
+        await ctx.respond(
+            f"Facts channel set to {channel.mention} {Emotes.DRINKING}",
+            ephemeral=True
+        )
         logger.debug("Fact channel set", member_id=ctx.user.id, channel_id=channel.id)
 
-    @commands.slash_command(name='stop_facts',
-                            description="Disables daily facts (run set_fact_channel to enable again)")
+    @commands.slash_command(
+        name='stop_facts',
+        description="Disables daily facts (run set_fact_channel to enable again)"
+    )
     @discord.commands.default_permissions(manage_guild=True)
     async def toggle_facts(self, ctx: discord.ApplicationContext) -> None:
         db.single_void_SQL(
@@ -66,8 +75,9 @@ class Facts(commands.Cog):
             if factID[0]:
                 logger.debug("Attempting to send fact message", channel_id=factID[0])
                 try:
-                    msg = (("__Daily fact__\n" + fact) if fact else "Oh no, I can't think" +
-                           f"of any good facts right now. Maybe I will think of one later {Emotes.CRYING}")
+                    msg = (("__Daily fact__\n" + fact) if fact else
+                           "Oh no, I can't think of any good facts right now. " +
+                           f"Maybe I will think of one later {Emotes.CRYING}")
                     channel = await self.bot.fetch_channel(factID[0])
                     if isinstance(channel, discord.abc.Messageable):
                         await channel.send(msg)

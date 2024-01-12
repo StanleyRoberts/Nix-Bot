@@ -32,13 +32,17 @@ def select_from_unsafe(table_name: str) -> typing.List[typing.Tuple[typing.Any, 
     return val
 
 
-def single_sql(query: str, values: tuple[typing.Any, ...] = (None,)) -> list[tuple[typing.Any, ...]]:
+def single_sql(
+    query: str,
+    values: tuple[typing.Any, ...] = (None,)
+) -> list[tuple[typing.Any, ...]]:
     """
     Opens a connection, submits a single SQL query to the database then cleans up
 
     Args:
         query (string): SQL query to execute.
-        values (tuple, optional): Values to provide to the SQL query (i.e. for %s). Defaults to None.
+        values (tuple, optional):
+            Values to provide to the SQL query (i.e. for %s). Defaults to None.
 
     Raises:
         KeyViolation: Raised when key constraint is violated
@@ -82,7 +86,8 @@ def single_void_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> Non
 
     Args:
         query (string): SQL query to execute.
-        values (tuple, optional): Values to provide to the SQL query (i.e. for %s). Defaults to None.
+        values (tuple, optional):
+            Values to provide to the SQL query (i.e. for %s). Defaults to None.
 
     Raises:
         KeyViolation: Raised when key constraint is violated
