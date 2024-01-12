@@ -5,7 +5,6 @@ import json
 
 from helpers.logger import Logger
 from helpers.style import Emotes
-from helpers.env import NINJA_API_KEY
 
 logger = Logger()
 

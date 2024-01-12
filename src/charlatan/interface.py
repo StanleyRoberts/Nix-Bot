@@ -1,5 +1,5 @@
-import discord
 import random
+import discord
 
 from helpers.style import Colours
 from helpers.logger import Logger
@@ -54,6 +54,9 @@ class CharlatanGame:
     def add_player(self, new_player: discord.User | discord.Member) -> None:
         self.players.append(Player(new_player, 0))
 
+    def remove_player(self, player: discord.User | discord.Member) -> None:
+        self.players = [p for p in self.players if p.user.id != player.id]
+
     async def send_dms(self) -> None:
         """Send dms to players and charlatan displaying wordlist
         """
@@ -107,13 +110,10 @@ class CharlatanGame:
         if player is None:
             return "You aren't in this game! Wait for the next round to join..."
         if not player.votee == -1:
-            # TODO the voted player should probably be part of the callback,
-            # rather than relying on hackily storing data in the id
-
             # Reset the previous vote
             self.players[player.votee].times_voted_for -= 1
             player.votee = -1
-        player.votee = int(button_id)  # TODO this cant be a good idea
+        player.votee = int(button_id)
         self.players[player.votee].times_voted_for += 1
         return "You voted for {}".format(self.players[player.votee].user.display_name)
 
@@ -142,8 +142,5 @@ class CharlatanGame:
             logger.error("Attempted to get charlatan but no charlatan set")
             return self.players[0]
 
-    def remake_players_with_score(self) -> None:
-        self.players = [Player(player.user, player.score) for player in self.players]
-
-    def remake_players_without_score(self) -> None:
+    def reset_scores(self) -> None:
         self.players = [Player(player.user, 0) for player in self.players]

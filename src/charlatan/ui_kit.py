@@ -61,17 +61,11 @@ class CharlatanLobby(discord.ui.View):
     Args:
         game_state (CharlatanGame): The current state of the game
     """
-    # TODO leave lobby
 
     def __init__(self, game_state: "CharlatanGame") -> None:
         logger.debug("New CharlatanLobby view created")
         super().__init__(timeout=300)
         self.game_state = game_state
-
-    @discord.ui.button(label="Word List", row=0, style=discord.ButtonStyle.secondary)
-    async def wordlist_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message(view=WordSelection(game_state=self.game_state),
-                                                ephemeral=True)
 
     @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
     async def join_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
@@ -93,10 +87,20 @@ class CharlatanLobby(discord.ui.View):
     async def rules_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         await interaction.response.send_message(ephemeral=True, embed=discord.Embed(description=helper.RULES))
 
-    @discord.ui.button(label="Confirm Lobby", row=1, style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Word List", row=1, style=discord.ButtonStyle.secondary)
+    async def wordlist_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+        await interaction.response.send_message(view=WordSelection(game_state=self.game_state),
+                                                ephemeral=True)
+
+    @discord.ui.button(label="Confirm Lobby", row=2, style=discord.ButtonStyle.primary)
     async def start_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.game_state.wordlist = self.game_state.wordlist[:16]
         await interaction.response.edit_message(view=CharlatanView(self.game_state))
+
+    @discord.ui.button(label="Leave", row=0, style=discord.ButtonStyle.secondary)
+    async def leave_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+        self.game_state.remove_player(interaction.user)
+        await interaction.response.edit_message(view=self)
 
 
 class CharlatanView(discord.ui.View):
@@ -184,7 +188,6 @@ class CharlatanView(discord.ui.View):
                                               style=discord.ButtonStyle.primary)  # type: ignore[var-annotated]
 
         async def play_again(interaction: discord.Interaction) -> None:
-            self.game_state.remake_players_with_score()
             await interaction.response.edit_message(view=self)
         play_again_button.callback = play_again  # type: ignore[method-assign]
         self.add_item(play_again_button)
@@ -194,7 +197,7 @@ class CharlatanView(discord.ui.View):
 
         async def back_to_lobby(interaction: discord.Interaction) -> None:
             play_again_button.disabled = True
-            self.game_state.remake_players_without_score()
+            self.game_state.reset_scores()
             self.game_state.wordlist = random.choice(list(helper.WORDLISTS.values()))
             await interaction.response.edit_message(view=CharlatanLobby(self.game_state))
         lobby_button.callback = back_to_lobby  # type: ignore[method-assign]
