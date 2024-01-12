@@ -20,7 +20,7 @@ class Misc(commands.Cog):
     @commands.slash_command(name='quote',
                             description="Displays an AI-generated quote over an inspirational image")
     async def send_quote(self, ctx: discord.ApplicationContext) -> None:
-        await ctx.respond(requests.get("https://inspirobot.me/api?generate=true").text)
+        await ctx.respond(requests.get("https://inspirobot.me/api?generate=true", timeout=10).text)
         logger.info("Generating quote", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.slash_command(name='all_commands', description="Displays all of Nix's commands")
@@ -45,7 +45,7 @@ class Misc(commands.Cog):
         logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.Cog.listener("on_message")
-    async def NLP(self, msg: discord.Message) -> None:
+    async def nlp(self, msg: discord.Message) -> None:
         """
         Prints out an AI generated response to the message if it mentions Nix
 
@@ -56,13 +56,15 @@ class Misc(commands.Cog):
             logger.error("bot.user is None (Bot is offline)")
             return
         if (self.bot.user.mentioned_in(msg) and msg.reference is None):
-            logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
-            clean_prompt = re.sub(" @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
+            logger.info("Generating AI response", member_id=msg.author.id,
+                        channel_id=msg.channel.id)
+            clean_prompt = re.sub(
+                " @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
             client = PyCAI(CAI_TOKEN)
             chat = await client.chat.new_chat(CAI_NIX_ID, token=CAI_TOKEN)
             participants = chat['participants']
             nix_username = participants[1 if participants[0]['is_human'] else 0]['user']['username']
-            try:
+            try:  # TODO cleanup
                 data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt, wait=True)
                 text = data['replies'][0]['text']
             except TLSClientException:
@@ -101,13 +103,15 @@ class Help_Nav(discord.ui.View):
     async def backward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
-        logger.debug("Back button pressed", member_id=interaction.user.id if interaction.user is not None else 0)
+        logger.debug("Back button pressed", member_id=interaction.user.id
+                     if interaction.user is not None else 0)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
     async def forward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
-        logger.debug("Next button pressed", member_id=interaction.user.id if interaction.user is not None else 0)
+        logger.debug("Next button pressed", member_id=interaction.user.id
+                     if interaction.user is not None else 0)
 
 
 def setup(bot: discord.Bot) -> None:

@@ -17,8 +17,10 @@ class Reddit(commands.Cog):
         self.sent_today = False
         self.reset_reddit.start()
 
-    @commands.slash_command(name='reddit', description="Displays a random top reddit post from the given subreddit")
-    @discord.commands.option("time", type=str, default="day", description="Time period to search for top posts",
+    @commands.slash_command(name='reddit',
+                            description="Displays a random top reddit post from the given subreddit")
+    @discord.commands.option("time", type=str, default="day",
+                             description="Time period to search for top posts",
                              choices=["month", "hour", "week", "all", "day", "year"])
     async def send_reddit_post(self, ctx: discord.ApplicationContext, subreddit: str, time: str) -> None:
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
@@ -26,7 +28,8 @@ class Reddit(commands.Cog):
         post = await reddit.get_post()
         await ctx.interaction.response.send_message(content=post.text, files=post.img, view=ui.PostViewer(reddit))
 
-    @commands.slash_command(name='subscribe', description="Subscribe to a subreddit to get daily posts from it")
+    @commands.slash_command(name='subscribe',
+                            description="Subscribe to a subreddit to get daily posts from it")
     @discord.commands.option("channel", type=discord.TextChannel, required=False)
     @discord.commands.default_permissions(manage_guild=True)
     async def subscribe_to_sub(self, ctx: discord.ApplicationContext, sub: str, channel: discord.TextChannel) -> None:
@@ -36,35 +39,42 @@ class Reddit(commands.Cog):
         if not await RedditInterface.valid_sub(sub):
             logger.warning(f"Subreddit {sub} is not valid", guild_id=ctx.guild_id)
             await ctx.respond(f"The subreddit {sub} is not available {Emotes.EVIL}")
-        elif (sub.lower(),) in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        elif (sub.lower(),) in db.single_sql("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             logger.warning(f"Subreddit {sub} was already subscribed to",
                            guild_id=ctx.guild_id, channel_id=channel.id)
             await ctx.respond(f"This server is already subscribed to {sub} {Emotes.SUPRISE}")
         else:
-            logger.info(f"Subreddit {sub} got subscribed to", guild_id=ctx.guild_id, channel_id=channel.id)
-            db.single_void_SQL("INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
-                               (ctx.guild_id, sub.lower(), channel.id))
+            logger.info(f"Subreddit {sub} got subscribed to",
+                        guild_id=ctx.guild_id, channel_id=channel.id)
+            db.single_void_SQL(
+                "INSERT INTO Subreddits (GuildID, Subreddit, SubredditChannelID) VALUES (%s, %s, %s)",
+                (ctx.guild_id, sub.lower(),
+                 channel.id))
             await ctx.respond(f"This server is now subscribed to {sub} {Emotes.HUG}")
 
-    @commands.slash_command(name='unsubscribe', description="Unsubscribe to daily posts from the given subreddit")
+    @commands.slash_command(name='unsubscribe',
+                            description="Unsubscribe to daily posts from the given subreddit")
     @discord.commands.option("sub", type=str, required=False)
     @discord.commands.default_permissions(manage_guild=True)
     async def unsubscribe_from_sub(self, ctx: discord.ApplicationContext, sub: str) -> None:
         if not sub:
             await self.get_subs(ctx)
             return
-        if (sub.lower(),) not in db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
+        if (sub.lower(),) not in db.single_sql("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,)):
             logger.warning(f"Subreddit {sub} was never subscribed to", guild_id=ctx.guild_id)
             await ctx.respond(f"This server is not subscribed to r/{sub} {Emotes.SUPRISE}")
         else:
             logger.info(f"Subreddit {sub} was unsubscribed from",
                         guild_id=ctx.guild_id, channel_id=ctx.channel_id)
-            db.single_void_SQL("DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub))
+            db.single_void_SQL(
+                "DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub))
             await ctx.respond(f"This server is now unsubscribed from r/{sub} {Emotes.SNEAKY}")
 
-    @commands.slash_command(name='subscriptions', description="Get a list of the subscriptions of the server")
+    @commands.slash_command(name='subscriptions',
+                            description="Get a list of the subscriptions of the server")
     async def get_subs(self, ctx: discord.ApplicationContext) -> None:
-        subscriptions = db.single_SQL("SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
+        subscriptions = db.single_sql(
+            "SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
         logger.info("The list of subscripted subreddits was requested",
                     guild_id=ctx.guild_id, channel_id=ctx.channel_id)
         sub_command = self.bot.get_application_command("subscribe")
@@ -94,7 +104,7 @@ class Reddit(commands.Cog):
             return
         self.sent_today = True
         logger.info("Starting daily reddit loop")
-        subs = db.single_SQL("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
+        subs = db.single_sql("SELECT GuildID, Subreddit, SubredditChannelID FROM Subreddits")
         for entry in subs:
             logger.info(f"Attempting to send reddit daily post <subreddit: {entry[1]}>",
                         guild_id=entry[0], channel_id=entry[2])
@@ -106,8 +116,8 @@ class Reddit(commands.Cog):
                     continue
                 await channel.send("__Daily post__\n" + post.text, files=post.img)
             except discord.errors.Forbidden:
-                logger.info("Permission failure for daily reddit post <subreddit: {0}>".format(
-                    entry[1]), guild_id=entry[0], channel_id=entry[2])
+                logger.info(f"Permission failure for daily reddit post <subreddit: {entry[1]}>",
+                            guild_id=entry[0], channel_id=entry[2])
 
 
 def setup(bot: discord.Bot) -> None:

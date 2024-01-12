@@ -30,13 +30,16 @@ class Trivia(commands.Cog):
         self.bot = bot
         self.active_views: typing.Dict[int, TriviaView] = {}
 
-    @commands.slash_command(name='trivia', description="Start a game of Trivia. The first person to get 5 points wins")
+    @commands.slash_command(name='trivia',
+                            description="Start a game of Trivia. The first person to get 5 points wins")
     @discord.commands.option("category", type=str, description="Category for questions",
                              default="General", required=False, choices=CATEGORY_DICT.keys())
     async def game_start(self, ctx: discord.ApplicationContext, category: str) -> None:
         real_category = CATEGORY_DICT.get(category) or None
-        if ctx.channel_id in self.active_views.keys():
-            await ctx.respond(f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel")
+        if ctx.channel_id in self.active_views:
+            await ctx.respond(
+                f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel"
+            )
             await ctx.respond(self.active_views[ctx.channel_id].get_current_question(),
                               view=self.active_views[ctx.channel_id])
             return
@@ -53,11 +56,18 @@ class Trivia(commands.Cog):
         view = TriviaView(game_state, remove_view, ctx.channel_id)
 
         self.active_views.update({ctx.channel_id: view})
-        await ctx.respond(embed=discord.Embed(title=f"{Emotes.UWU} You have started a game of Trivia",
-                                              colour=Colours.PRIMARY, description=f"Category: {category}"))
+        await ctx.respond(
+            embed=discord.Embed(
+                title=f"{Emotes.UWU} You have started a game of Trivia",
+                colour=Colours.PRIMARY,
+                description=f"Category: {category}"
+            )
+        )
         text = await view.get_question()
         if not text:
-            await ctx.send(f"Sorry, I have misplaced my question cards. Maybe come back later {Emotes.CRYING}")
+            await ctx.send(
+                f"Sorry, I have misplaced my question cards. Maybe come back later {Emotes.CRYING}"
+            )
             await self.active_views[ctx.channel_id].on_timeout()
         else:
             await ctx.send(text, view=view)
@@ -73,7 +83,8 @@ class Trivia(commands.Cog):
         if msg.author.id != self.bot.user.id and msg.channel.id in self.active_views.keys():
             await self.active_views[msg.channel.id].handle_guess(msg)
 
-    @commands.slash_command(name='stop_trivia', description='stops the in-progress trivia game in this channel')
+    @commands.slash_command(name='stop_trivia',
+                            description='stops the in-progress trivia game in this channel')
     async def stop_trivia(self, ctx: discord.ApplicationContext) -> None:
         if not self.active_views[ctx.channel_id]:
             await ctx.respond(f"There is no Trivia active in this channel {Emotes.CONFUSED}")

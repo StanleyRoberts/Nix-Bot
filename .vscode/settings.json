@@ -6,7 +6,7 @@
   "autopep8.args": [
     "--select=E,W",
     "--max-line-length",
-    "119",
+    "100",
     "--experimental"
   ],
   "mypy-type-checker.args": [

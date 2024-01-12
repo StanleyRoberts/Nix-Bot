@@ -2,11 +2,13 @@ import random
 import discord
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .interface import CharlatanGame
 from helpers.logger import Logger
 import helpers.charlatan as helper
 from helpers.style import Emotes, Colours
+if TYPE_CHECKING:
+    from .interface import CharlatanGame
+
+
 logger = Logger()
 
 CHARLATAN_VOTE_TIME = 20
@@ -41,7 +43,8 @@ class PlayerVoting(discord.ui.View):
         Args:
             i (int): Button label and unique ID
         """
-        button = discord.ui.Button(label=str(i + 1), custom_id=str(i))  # type: ignore[var-annotated]
+        button = discord.ui.Button(label=str(i + 1), custom_id=str(i)
+                                   )  # type: ignore[var-annotated]
 
         async def cast_vote(interaction: discord.Interaction) -> None:
             user = interaction.user
@@ -79,7 +82,8 @@ class CharlatanLobby(discord.ui.View):
                                                     view=self)
         else:
             logger.info("User double login into Charlatan lobby detected",
-                        member_id=interaction.user.id, channel_id=interaction.channel.id if interaction.channel else 0)
+                        member_id=interaction.user.id, channel_id=interaction.channel.id
+                        if interaction.channel else 0)
             await interaction.response.send_message(content=f"You have already joined the game {Emotes.NOEMOTION}",
                                                     ephemeral=True)
 
@@ -104,6 +108,8 @@ class CharlatanLobby(discord.ui.View):
 
 
 class CharlatanView(discord.ui.View):
+    """View that represent the main flow of the charlatan game"""
+
     def __init__(self, game_state: "CharlatanGame"):
         logger.debug("Created new CharlatanGame view")
         super().__init__(timeout=300)
@@ -138,20 +144,28 @@ class CharlatanView(discord.ui.View):
         return await view.vote()
 
     async def score_players(self, voted_player: discord.User | discord.Member) -> None:
+        """Update view based on voted player
+
+        Args:
+            voted_player (discord.User | discord.Member): Player that was voted as charlatan
+        """
         charlatan_found = await self.game_state.score_players(voted_player)
+        charlatan = self.game_state.get_charlatan().user.mention
         if charlatan_found:
             await self.message.edit(
-                embed=discord.Embed(description="The players have found the charlatan, it was {} {}"
-                                    .format(self.game_state.get_charlatan().user.mention, Emotes.HUG),
-                                    title="Charlatan", colour=Colours.PRIMARY),
+                embed=discord.Embed(
+                    description=f"The players have found the charlatan, it was {charlatan} {Emotes.HUG}",
+                    title="Charlatan",
+                    colour=Colours.PRIMARY),
                 view=self
             )
             await self.charlatan_guess()
         else:
             await self.message.edit(
-                embed=discord.Embed(description="The players did not find the charlatan, it was {} {}"
-                                    .format(self.game_state.get_charlatan().user.mention, Emotes.CRYING),
-                                    title="Charlatan", colour=Colours.PRIMARY),
+                embed=discord.Embed(
+                    description=f"The players did not find the charlatan, it was {charlatan} {Emotes.CRYING}",
+                    title="Charlatan",
+                    colour=Colours.PRIMARY),
                 view=self
             )
 
@@ -171,29 +185,44 @@ class CharlatanView(discord.ui.View):
             await self.charlatan_result(False)
 
     async def charlatan_result(self, correct_guess: bool) -> None:
+        """Handles the charlatan guessing the secret word
+
+        Args:
+            correct_guess (bool): Whether the charlatan guessed the secret word correctly
+        """
         self.game_state.charlatan_result(correct_guess)
         if correct_guess:
-            await self.message.edit(embed=discord.Embed(description="\nThe Charlatan guessed the correct word {}"
-                                    .format(Emotes.WHOA), title="Charlatan", colour=Colours.PRIMARY), view=self)
+            await self.message.edit(
+                embed=discord.Embed(
+                    description=f"\nThe Charlatan guessed the correct word {Emotes.WHOA}",
+                    title="Charlatan",
+                    colour=Colours.PRIMARY),
+                view=self
+            )
         else:
-            await self.message.edit(embed=discord.Embed(description="\nThe Charlatan did not guess the correct word {}"
-                                    .format(Emotes.CONFUSED), title="Charlatan", colour=Colours.PRIMARY), view=self)
+            await self.message.edit(
+                embed=discord.Embed(
+                    description=f"\nThe Charlatan did not guess the correct word {Emotes.CONFUSED}",
+                    title="Charlatan",
+                    colour=Colours.PRIMARY),
+                view=self
+            )
 
     async def leaderboard(self) -> None:
         """Adds Play Again and Back to Lobby buttons to the interaction message
         """
         self.clear_items()
 
-        play_again_button = discord.ui.Button(label="Play Again",
-                                              style=discord.ButtonStyle.primary)  # type: ignore[var-annotated]
+        play_again_button = discord.ui.Button(
+            label="Play Again", style=discord.ButtonStyle.primary)  # type: ignore[var-annotated]
 
         async def play_again(interaction: discord.Interaction) -> None:
             await interaction.response.edit_message(view=self)
         play_again_button.callback = play_again  # type: ignore[method-assign]
         self.add_item(play_again_button)
 
-        lobby_button = discord.ui.Button(label="Back to Lobby",
-                                         style=discord.ButtonStyle.secondary)  # type: ignore[var-annotated]
+        lobby_button = discord.ui.Button(
+            label="Back to Lobby", style=discord.ButtonStyle.secondary)  # type: ignore[var-annotated]
 
         async def back_to_lobby(interaction: discord.Interaction) -> None:
             play_again_button.disabled = True
@@ -220,9 +249,11 @@ class CharlatanChoice(discord.ui.View):
         super().__init__(timeout=120)
         self.parent = parent
         self.guess_made = False
-        for i in range(len(self.parent.game_state.wordlist)):
+        for i, button_word in enumerate(self.parent.game_state.wordlist):
             self.add_button(
-                i, False if self.parent.game_state.wordlist[i] is not self.parent.game_state.word else True)
+                i,
+                False if button_word is not self.parent.game_state.secret_word else True
+            )
 
     def add_button(self, i: int, correct_button: bool) -> None:
         """Adds a button to the view
@@ -243,13 +274,13 @@ class CharlatanChoice(discord.ui.View):
                 self.guess_made = True
                 if correct_button:
                     logger.debug("CharlatanChoice, correct button callback triggered")
-                    response = "You guessed the correct word good job. It was \"{}\" {}".format(
-                        self.parent.game_state.word, Emotes.HUG)
+                    response = "You guessed the correct word good job. " + \
+                        f"It was \"{self.parent.game_state.secret_word}\" {Emotes.HUG}"
                     await self.parent.charlatan_result(True)
                 else:
                     logger.debug("CharlatanChoice, incorrect button callback triggered")
-                    response = "You did not guess the correct word. It was \"{}\" {}".format(
-                        self.parent.game_state.word, Emotes.CRYING)
+                    response = "You did not guess the correct word. " + \
+                        f"It was \"{self.parent.game_state.secret_word}\" {Emotes.CRYING}"
                     await self.parent.charlatan_result(False)
                 self.children = [button]
                 button.disabled = True
@@ -272,6 +303,11 @@ class WordSelection(discord.ui.View):
 
     @staticmethod
     def random_selection() -> list[discord.SelectOption]:
+        """Return a random selection of the possible wordlists
+
+        Returns:
+            list[discord.SelectOption]: List of options for each wordlist in the random subset
+        """
         wordlists = [discord.SelectOption(label=x) for x in helper.WORDLISTS.keys()]
         random.shuffle(wordlists)
         return wordlists[:25]
@@ -290,7 +326,8 @@ class WordSelection(discord.ui.View):
         Edits the interaction message to use the CharlatanLobby view with the new wordlist
 
         Args:
-            interaction (discord.Interaction): Interaction containing the message to change the view of
+            interaction (discord.Interaction):
+                Interaction containing the message to change the view of
         """
         logger.debug("WordSelection complete, returning to lobby")
         selected_list = select.values[0]

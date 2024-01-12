@@ -31,9 +31,10 @@ async def on_guild_join(guild: discord.Guild) -> None:
     Args:
         guild (discord.Guild): Guild that triggered the event
     """
-    db.single_void_SQL("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, " +
-                       "FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID)" +
-                       " VALUES (%s, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
+    db.single_void_SQL(
+        "INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, " +
+        "FactChannelID, CurrentCount, LastCounterID, HighScoreCounting, FailRoleID)" +
+        " VALUES (%s, NULL, NULL, NULL, 0, NULL, 0, NULL);", (guild.id,))
 
 
 @bot.event
@@ -44,7 +45,7 @@ async def on_guild_remove(guild: discord.Guild) -> None:
     Args:
         guild (discord.Guild): Guild that triggered the event
     """
-    db.multi_void_SQL([
+    db.multi_void_sql([
         ("DELETE FROM Birthdays WHERE GuildID=%s", (guild.id,)),
         ("DELETE FROM Subreddits WHERE GuildID=%s", (guild.id,)),
         ("DELETE FROM ChainedUsers WHERE GuildID=%s", (guild.id,)),
@@ -62,7 +63,7 @@ async def on_guild_channel_delete(channel: discord.TextChannel) -> None:
     Args:
         channel (discord.Channel): Channel that triggered the event
     """
-    db.multi_void_SQL([
+    db.multi_void_sql([
         ("DELETE FROM Subreddits WHERE SubredditChannelID=%s", (channel.id,)),
         ("DELETE FROM ChainedUsers WHERE ChannelID=%s", (channel.id,)),
         ("DELETE FROM MessageChain WHERE ChannelID=%s OR ResponseChannelID=%s", (channel.id, channel.id)),
@@ -77,7 +78,7 @@ async def on_member_remove(member: discord.Member) -> None:
     Args:
         member (discord.Member): Member that triggered the event
     """
-    db.multi_void_SQL([
+    db.multi_void_sql([
         ("DELETE FROM Birthdays WHERE GuildID=%s AND UserID=%s", (member.guild.id, member.id)),
         ("DELETE FROM ChainedUsers WHERE GuildID=%s AND UserID=%s", (member.guild.id, member.id))])
 
@@ -112,10 +113,10 @@ def main() -> None:
 
         if test_env:
             import helpers.env as env
-            all: list[str] = sum([line.split() for line in sys.stdin], [])
+            all_envs: list[str] = sum([line.split() for line in sys.stdin], [])
             exit_code = 0
             for var in env.registered:
-                if var not in all:
+                if var not in all_envs:
                     logger.error(f"Missing FLY.IO environment variable: {var}")
                     exit_code = 1
             exit(exit_code)

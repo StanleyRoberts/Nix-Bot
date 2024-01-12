@@ -71,7 +71,17 @@ class TriviaView(discord.ui.View):
                         await msg.channel.send(await self.get_question(), view=self)
 
     async def get_question(self) -> str | None:
+        """Generate and return new question
+
+        Returns:
+            str | None: New question (None if failed to generate)
+        """
         return await self.state.get_new_question()
 
     def get_current_question(self) -> str:
+        """Return current question
+
+        Returns:
+            str: current question
+        """
         return self.state.get_current_question()
