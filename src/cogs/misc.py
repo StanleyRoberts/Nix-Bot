@@ -61,11 +61,16 @@ class Misc(commands.Cog):
             clean_prompt = re.sub(
                 " @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
             client = PyCAI(CAI_TOKEN)
-            chat = await client.chat.new_chat(CAI_NIX_ID, token=CAI_TOKEN)
+            chat = await client.chat.new_chat(CAI_NIX_ID)
             participants = chat['participants']
             nix_username = participants[1 if participants[0]['is_human'] else 0]['user']['username']
-            try:  # TODO cleanup
-                data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt, wait=True)
+            try:
+                data = await client.chat.send_message(
+                    tgt=nix_username,
+                    history_id=chat['external_id'],
+                    text=clean_prompt,
+                    wait=True
+                )
                 text = data['replies'][0]['text']
             except TLSClientException:
                 text = f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
