@@ -17,7 +17,7 @@ class Admin(commands.Cog):
         description="sends a message to the given channel. " +
         "reacting with the given emoji will assign the given role")
     @discord.commands.default_permissions(manage_guild=True)
-    @discord.commands.option('channel', parameter_name="channel", required=False)
+    @discord.commands.option('channel', type=discord.TextChannel, parameter_name="channel", required=False)
     @discord.commands.option("emoji", required=False)
     @discord.commands.option("role", type=discord.Role, required=False)
     async def greeting_role(
@@ -26,7 +26,7 @@ class Admin(commands.Cog):
         text: str,
         channel: discord.TextChannel | None,
         emoji: str,
-        role: discord.Role
+        role: discord.Role | None
     ) -> None:
         if channel is None:
             channel = ctx.channel
@@ -59,8 +59,10 @@ class Admin(commands.Cog):
         logger.debug(f"role={role}")
         if role:
             logger.debug(f"Message ID on insert: {message.id}")
-            db.single_void_SQL("INSERT INTO ReactMessages VALUES (%s, %s, %s, %s)",
-                               (ctx.guild_id, message.id, role.id, true_emoji.as_text()))
+            db.single_void_SQL(
+                "INSERT INTO ReactMessages VALUES (%s, %s, %s, %s)",
+                (ctx.guild_id, message.id, role.id, true_emoji.as_text())
+            )
         await ctx.respond(f"Message Sent! {Emotes.HEART}")
 
     @discord.slash_command(name="edit_react_message", description="Edit the react_message")
@@ -122,9 +124,12 @@ class Admin(commands.Cog):
     @discord.commands.option("role", type=discord.Role,
                              description="The role to remove assignment for")
     async def remove_single_role(self, ctx: discord.ApplicationContext, role: discord.Role) -> None:
-        db.multi_void_sql([
-            ("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id)),
-            ("DELETE FROM ReactMessages WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id))])
+        db.multi_void_SQL([
+            ("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s",
+             (ctx.guild_id, role.id)),
+            ("DELETE FROM ReactMessages WHERE GuildID=%s AND RoleID=%s",
+             (ctx.guild_id, role.id))
+        ])
         await ctx.respond(f"All role assign behaviours have been cleared for {role.name}")
 
     @discord.slash_command(name="clear_role_setting",
@@ -135,29 +140,38 @@ class Admin(commands.Cog):
         logger.info("Dropping react entries", guild_id=ctx.guild_id)
         db.multi_void_sql([
             ("DELETE FROM ReactMessages WHERE GuildID=%s", (ctx.guild_id,)),
-            ("DELETE FROM RoleChannel WHERE GuildID=%s", (ctx.guild_id,))])
+            ("DELETE FROM RoleChannel WHERE GuildID=%s", (ctx.guild_id,))
+        ])
         await ctx.respond("All role assign behaviours have been cleared")
 
     @discord.slash_command(name='set_role_channel',
                            description="sets role channel, anyone who sends a message in " +
                            "the channel will be assigned the given role")
     @discord.commands.default_permissions(manage_guild=True)
-    async def role_channel(self, ctx: discord.ApplicationContext,
-                           channel: discord.TextChannel,
-                           role: discord.Role) -> None:
-        db.single_void_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s, TRUE)",
-                           (ctx.guild_id, role.id, channel.id))
+    async def role_channel(
+        self,
+        ctx: discord.ApplicationContext,
+        channel: discord.TextChannel,
+        role: discord.Role
+    ) -> None:
+        db.single_void_SQL(
+            "INSERT INTO RoleChannel VALUES (%s, %s, %s, TRUE)",
+            (ctx.guild_id, role.id, channel.id))
         await ctx.respond(f"Role channel was set to {channel.mention}")
 
     @discord.slash_command(name='set_remove_role_channel',
                            description="sets role remove channel, anyone who sends a message " +
                            "will have the given role removed")
     @discord.commands.default_permissions(manage_guild=True)
-    async def remove_role_channel(self, ctx: discord.ApplicationContext,
-                                  channel: discord.TextChannel,
-                                  role: discord.Role) -> None:
-        db.single_void_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s, FALSE)",
-                           (ctx.guild_id, role.id, channel.id))
+    async def remove_role_channel(
+        self,
+        ctx: discord.ApplicationContext,
+        channel: discord.TextChannel,
+        role: discord.Role
+    ) -> None:
+        db.single_void_SQL(
+            "INSERT INTO RoleChannel VALUES (%s, %s, %s, FALSE)",
+            (ctx.guild_id, role.id, channel.id))
         await ctx.respond(f"Role remove channel was set to {channel.mention}")
 
     @discord.commands.slash_command(
@@ -172,14 +186,19 @@ class Admin(commands.Cog):
                              description="The channel Nix watches for new messages " +
                              "If not provided then Nix follows up all messages", required=False)
     @discord.commands.default_permissions(manage_guild=True)
-    async def set_chain_message(self, ctx: discord.ApplicationContext,
-                                message: str,
-                                response_channel: discord.TextChannel,
-                                message_channel: discord.TextChannel) -> None:
+    async def set_chain_message(
+        self,
+        ctx: discord.ApplicationContext,
+        message: str,
+        response_channel: discord.TextChannel,
+        message_channel: discord.TextChannel
+    ) -> None:
         channel_id = message_channel.id if message_channel is not None else -1
         try:
-            db.single_void_SQL("INSERT INTO MessageChain VALUES (%s,%s,%s,%s)",
-                               (ctx.guild_id, channel_id, response_channel.id, message))
+            db.single_void_SQL(
+                "INSERT INTO MessageChain VALUES (%s,%s,%s,%s)",
+                (ctx.guild_id, channel_id, response_channel.id, message)
+            )
             await ctx.respond(f"You set a chain_message for the channel {response_channel}")
         except db.KeyViolation:
             await ctx.respond(
@@ -192,7 +211,8 @@ class Admin(commands.Cog):
     async def clear_chain_message(self, ctx: discord.ApplicationContext) -> None:
         db.multi_void_sql([
             ("DELETE FROM ChainedUsers WHERE GuildID=%s", (ctx.guild_id,)),
-            ("DELETE FROM MessageChain WHERE GuildID=%s", (ctx.guild_id,))])
+            ("DELETE FROM MessageChain WHERE GuildID=%s", (ctx.guild_id,))
+        ])
 
     @commands.Cog.listener('on_message')
     async def chain_message(self, msg: discord.Message) -> None:
@@ -212,13 +232,16 @@ class Admin(commands.Cog):
                 check_vals = [val[0] for val in values]
                 if msg.channel.id in check_vals or -1 in check_vals:
                     try:
-                        db.single_void_SQL("INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
-                                           (msg.guild.id, msg.author.id, msg.channel.id
-                                            if msg.channel.id in check_vals else -1))
+                        db.single_void_SQL(
+                            "INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
+                            (msg.guild.id, msg.author.id, msg.channel.id
+                             if msg.channel.id in check_vals else -1))
                         await self.send_chained_message(msg.guild, msg.author)
                     except db.KeyViolation:
-                        logger.info("User that is already chained has written in the channel again",
-                                    member_id=msg.author.id, guild_id=msg.guild.id)
+                        logger.info(
+                            "User that is already chained has written in the channel again",
+                            member_id=msg.author.id, guild_id=msg.guild.id
+                        )
 
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message) -> None:
@@ -258,7 +281,7 @@ class Admin(commands.Cog):
             logger.info("reaction event has no member (likely: user not in guild)")
             return
         logger.debug(f"Message ID on reaction: {event.message_id}")
-        vals = db.single_sql(
+        vals = db.single_SQL(
             "SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
         logger.debug(f"SQL values: {vals}")
         for (emoji, role_id) in vals:
@@ -276,7 +299,7 @@ class Admin(commands.Cog):
             logger.info("unassign_react_role detected outside of guild",
                         channel_id=event.channel_id)
             return
-        vals = db.single_sql(
+        vals = db.single_SQL(
             "SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
         for (emoji, role_id) in vals:
             if Emoji(emoji).to_partial_emoji() == event.emoji:
@@ -290,11 +313,8 @@ class Admin(commands.Cog):
                     logger.error("Couldnt get role for react role unassign")
 
     @staticmethod
-    async def send_chained_message(
-        guild: discord.Guild,
-        user: discord.User | discord.Member
-    ) -> None:
-        vals = db.single_sql(
+    async def send_chained_message(guild: discord.Guild, user: discord.User | discord.Member) -> None:
+        vals = db.single_SQL(
             "SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
         for (response_channel_id, message) in vals:
             msg = message.replace("<<user>>", user.mention)
@@ -308,6 +328,7 @@ class Admin(commands.Cog):
             except discord.errors.Forbidden:
                 logger.info("Permission failure for chain_message",
                             guild_id=guild.id, channel_id=response_channel_id)
+                pass
 
 
 def setup(bot: discord.Bot) -> None:
