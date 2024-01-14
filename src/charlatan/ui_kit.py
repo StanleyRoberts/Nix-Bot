@@ -5,14 +5,12 @@ from typing import TYPE_CHECKING
 from helpers.logger import Logger
 import helpers.charlatan as helper
 from helpers.style import Emotes, Colours
+from charlatan.interface import CHARLATAN_VOTE_TIME, DISCUSSION_TIME
 if TYPE_CHECKING:
     from .interface import CharlatanGame
 
 
 logger = Logger()
-
-CHARLATAN_VOTE_TIME = 20
-PLAYER_VOTE_TIME = 20
 
 
 class PlayerVoting(discord.ui.View):
@@ -30,12 +28,34 @@ class PlayerVoting(discord.ui.View):
             self.add_button(i)
 
     async def vote(self) -> discord.User | discord.Member:
-        """Waits and then returns the most voted player
+        """Returns the most voted player
 
         Returns:
             discord.User | discord.Member: The most voted player
         """
-        return await self.game_state.vote()  # TODO handle ties
+        most_voted = await self.game_state.vote()
+        while len(most_voted) > 1:
+            logger.info("Restarting loop")
+            self.clear_items()
+            for i, p in enumerate(self.game_state.players):
+                if p.user in most_voted:
+                    self.add_button(i)
+            await self.message.edit(
+                embed=discord.Embed(
+                    title="Tied vote!",
+                    description="Vote for a Charlatan:\n" + "\n".join(
+                        [self.game_state.players[button_id].user.mention + ": " +
+                            str(button_id + 1) for button_id, player in
+                            enumerate(self.game_state.players)
+                            if player.user in most_voted]
+                    ),
+                    colour=Colours.PRIMARY
+                ),
+                view=self
+            )
+            self.game_state.reset_votes()
+            most_voted = await self.game_state.vote()
+        return most_voted[0]
 
     def add_button(self, i: int) -> None:
         """ Adds voting buttons to the view
@@ -43,8 +63,10 @@ class PlayerVoting(discord.ui.View):
         Args:
             i (int): Button label and unique ID
         """
-        button = discord.ui.Button(label=str(i + 1), custom_id=str(i)
-                                   )  # type: ignore[var-annotated]
+        button = discord.ui.Button(
+            label=str(i + 1),
+            custom_id=str(i)
+        )  # type: ignore[var-annotated]
 
         async def cast_vote(interaction: discord.Interaction) -> None:
             user = interaction.user
@@ -161,7 +183,9 @@ class CharlatanView(discord.ui.View):
                 colour=Colours.PRIMARY
             )
         )
+        view.message = self.message
         self.clear_items()
+        await helper.start_timer(DISCUSSION_TIME)
         return await view.vote()
 
     async def score_players(self, voted_player: discord.User | discord.Member) -> None:

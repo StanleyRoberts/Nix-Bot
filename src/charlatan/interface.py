@@ -7,8 +7,9 @@ import helpers.charlatan as helper
 
 logger = Logger()
 
-CHARLATAN_VOTE_TIME = 20
-PLAYER_VOTE_TIME = 20
+CHARLATAN_VOTE_TIME = 15
+PLAYER_VOTE_TIME = 15
+DISCUSSION_TIME = 30
 
 
 class Player:
@@ -118,16 +119,22 @@ class CharlatanGame:
             for player in self.players:
                 player.score += 1 if not player.is_charlatan else 0
 
-    async def vote(self) -> discord.User | discord.Member:
+    async def vote(self) -> list[discord.User | discord.Member]:
         """Waits and then returns the most voted player
 
         Returns:
-            discord.User: The most voted player
+            list[discord.User | discord.Member]:
+                List containing the player with most votes (multiple if tie)
         """
         await helper.start_timer(PLAYER_VOTE_TIME)
-        return sorted(
-            self.players, key=lambda x: x.times_voted_for)[
-            :: -1][0].user  # TODO handle ties
+        sort = sorted(self.players, key=lambda x: x.times_voted_for)[::-1]
+        return [x.user for x in sort if x.times_voted_for == sort[0].times_voted_for]
+
+    def reset_votes(self) -> None:
+        """Reset votes for each player
+        """
+        for p in self.players:
+            p.times_voted_for = 0
 
     def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> str:
         """Handles player voting for charlatan
