@@ -5,6 +5,7 @@ from helpers.logger import Logger
 import helpers.database as db
 from helpers.style import Emotes
 from helpers.emoji import Emoji
+from Nix import NIX_ID
 logger = Logger()
 
 
@@ -244,6 +245,8 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_message')
     async def chain_message(self, msg: discord.Message) -> None:
+        if msg.author.id == NIX_ID:
+            return
         if isinstance(msg.channel, discord.abc.PrivateChannel):
             logger.info("chain_message activated in Private channel")
             return
@@ -253,26 +256,30 @@ class Admin(commands.Cog):
         if self.bot.user is None:
             logger.error("Bot is offline", channel_id=msg.channel.id)
             return
-        if msg.author.id != self.bot.user.id:
-            values = db.single_sql(
-                "SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,))
-            if values is not None:
-                check_vals = [val[0] for val in values]
-                if msg.channel.id in check_vals or -1 in check_vals:
-                    try:
-                        db.single_void_SQL(
-                            "INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
-                            (msg.guild.id, msg.author.id, msg.channel.id
-                             if msg.channel.id in check_vals else -1))
-                        await self.send_chained_message(msg.guild, msg.author)
-                    except db.KeyViolation:
-                        logger.info(
-                            "User that is already chained has written in the channel again",
-                            member_id=msg.author.id, guild_id=msg.guild.id
-                        )
+        values = db.single_sql(
+            "SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,)
+        )
+        if values is not None:
+            check_vals = [val[0] for val in values]
+            if msg.channel.id in check_vals or -1 in check_vals:
+                try:
+                    db.single_void_SQL(
+                        "INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
+                        (msg.guild.id, msg.author.id, msg.channel.id
+                         if msg.channel.id in check_vals else -1)
+                    )
+                    await self.send_chained_message(msg.guild, msg.author)
+                except db.KeyViolation:
+                    logger.info(
+                        "User that is already chained has written in the channel again",
+                        member_id=msg.author.id,
+                        guild_id=msg.guild.id
+                    )
 
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message) -> None:
+        if msg.author.id == NIX_ID:
+            return
         if isinstance(msg.channel, discord.abc.PrivateChannel):
             logger.info("assign_role activated in Private channel")
             return
@@ -285,25 +292,26 @@ class Admin(commands.Cog):
         if not isinstance(msg.author, discord.Member):
             logger.info("Author is not member (likely: user not in guild)")
             return
-        if msg.author.id != self.bot.user.id:
-            vals = db.single_sql(
-                "SELECT RoleID, ToAdd FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
-            for (role_id, add_role) in vals:
-                role = msg.guild.get_role(role_id)
-                if role:
-                    if add_role:
-                        await msg.author.add_roles(role)
-                    else:
-                        await msg.author.remove_roles(role)
+        vals = db.single_sql(
+            "SELECT RoleID, ToAdd FROM RoleChannel WHERE ChannelID=%s",
+            (msg.channel.id,)
+        )
+        for (role_id, add_role) in vals:
+            role = msg.guild.get_role(role_id)
+            if role:
+                if add_role:
+                    await msg.author.add_roles(role)
                 else:
-                    logger.error("Couldnt get role for msg role (un)assign")
+                    await msg.author.remove_roles(role)
+            else:
+                logger.error("Couldnt get role for msg role (un)assign")
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def assign_react_role(self, event: discord.RawReactionActionEvent) -> None:
+        if event.user_id == NIX_ID:
+            return
         if self.bot.user is None:
             logger.error("Bot is offline")
-            return
-        if event.user_id == self.bot.user.id:
             return
         if event.member is None:
             logger.info("reaction event has no member (likely: user not in guild)")
@@ -323,12 +331,18 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener('on_raw_reaction_remove')
     async def unassign_react_role(self, event: discord.RawReactionActionEvent) -> None:
+        if event.user_id == NIX_ID:
+            return
         if event.guild_id is None:
-            logger.info("unassign_react_role detected outside of guild",
-                        channel_id=event.channel_id)
+            logger.info(
+                "unassign_react_role detected outside of guild",
+                channel_id=event.channel_id
+            )
             return
         vals = db.single_SQL(
-            "SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
+            "SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s",
+            (event.message_id,)
+        )
         for (emoji, role_id) in vals:
             if Emoji(emoji).to_partial_emoji() == event.emoji:
                 logger.debug("removing role")
@@ -343,7 +357,9 @@ class Admin(commands.Cog):
     @staticmethod
     async def send_chained_message(guild: discord.Guild, user: discord.User | discord.Member) -> None:
         vals = db.single_SQL(
-            "SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s", (guild.id,))
+            "SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s",
+            (guild.id,)
+        )
         for (response_channel_id, message) in vals:
             msg = message.replace("<<user>>", user.mention)
             try:

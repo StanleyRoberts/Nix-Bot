@@ -18,6 +18,7 @@ bot = commands.Bot(intents=intents, command_prefix='%s',
                    activity=discord.Game(name="/help"),
                    debug_guilds=debugs)
 
+NIX_ID = bot.user.id
 
 logger = Logger()
 logger.set_bot(bot)

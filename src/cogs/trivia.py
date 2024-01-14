@@ -4,9 +4,10 @@ from discord.ext import commands
 
 from helpers.logger import Logger
 from helpers.style import Emotes, Colours
-
 from trivia.interface import TriviaGame
 from trivia.ui_kit import TriviaView
+from Nix import NIX_ID
+
 
 logger = Logger()
 
@@ -76,13 +77,15 @@ class Trivia(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def on_guess(self, msg: discord.Message) -> None:
+        if msg.author.id == NIX_ID:
+            return
         if isinstance(msg.channel, discord.abc.PrivateChannel):
             logger.info("on_guess activated in PrivateChannel", channel_id=msg.channel.id)
             return
         if self.bot.user is None:
             logger.error("Bot is offline")
             return
-        if msg.author.id != self.bot.user.id and msg.channel.id in self.active_views.keys():
+        if self.active_views.get(msg.channel.id) is not None:
             await self.active_views[msg.channel.id].handle_guess(msg)
 
     @commands.slash_command(name='stop_trivia',

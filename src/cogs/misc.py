@@ -9,6 +9,7 @@ from characterai import PyAsyncCAI as PyCAI  # type: ignore[import]
 from helpers.style import Colours, Emotes
 from helpers.env import CAI_TOKEN, CAI_NIX_ID
 from helpers.logger import Logger
+from Nix import NIX_ID
 
 logger = Logger()
 
@@ -61,6 +62,8 @@ class Misc(commands.Cog):
         Args:
             msg (discord.Message): Message that triggered event
         """
+        if event.user_id == NIX_ID:
+            return
         if self.bot.user is None:
             logger.error("bot.user is None (Bot is offline)")
             return

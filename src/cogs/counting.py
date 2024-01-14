@@ -5,6 +5,7 @@ from discord.ext import commands
 import helpers.database as db
 from helpers.style import Emotes
 from helpers.logger import Logger
+from Nix import NIX_ID
 
 logger = Logger()
 
@@ -21,29 +22,34 @@ class Counting(commands.Cog):
         Args:
             msg (discord.Message): Message that triggered function
         """
+        if msg.author.id == NIX_ID:
+            return
+        if not msg.content.isdigit():
+            return
+        if msg.guild is None:
+            return
         async with self.lock:
-            if msg.content.isdigit():
-                if msg.guild is None:
-                    return
-                values = db.single_sql(
-                    "SELECT CountingChannelID, CurrentCount, LastCounterID, "
-                    "FailRoleID FROM Guilds WHERE ID=%s", (msg.guild.id,))
-                (chnl_id, curr_ct, last_ctr_id, fail_id) = values[0]
-                if msg.channel.id == chnl_id:
-                    logger.debug("Integer message detacted in counting channel")
-                    if int(msg.content) != curr_ct + 1:
-                        logger.debug("Wrong number detected in counting channel")
-                        await self.fail(msg, "Wrong number", fail_id)
-                    elif msg.author.id == last_ctr_id:
-                        logger.debug("Double-user-input detected in counting channel")
-                        await self.fail(msg, "Same user entered two numbers", fail_id)
-                    else:
-                        await msg.add_reaction(Emotes.BLEP)
-                        db.single_void_SQL(
-                            "UPDATE Guilds SET LastCounterID =%s, CurrentCount = CurrentCount+1, " +
-                            "HighScoreCounting=(CASE WHEN %s>HighScoreCounting THEN %s ELSE " +
-                            "HighScoreCounting END) WHERE ID =%s",
-                            (msg.author.id, msg.content, msg.content, msg.guild.id))
+            values = db.single_sql(
+                "SELECT CountingChannelID, CurrentCount, LastCounterID, "
+                "FailRoleID FROM Guilds WHERE ID=%s",
+                (msg.guild.id,)
+            )
+            (chnl_id, curr_ct, last_ctr_id, fail_id) = values[0]
+            if msg.channel.id == chnl_id:
+                logger.debug("Integer message detacted in counting channel")
+                if int(msg.content) != curr_ct + 1:
+                    logger.debug("Wrong number detected in counting channel")
+                    await self.fail(msg, "Wrong number", fail_id)
+                elif msg.author.id == last_ctr_id:
+                    logger.debug("Double-user-input detected in counting channel")
+                    await self.fail(msg, "Same user entered two numbers", fail_id)
+                else:
+                    await msg.add_reaction(Emotes.BLEP)
+                    db.single_void_SQL(
+                        "UPDATE Guilds SET LastCounterID =%s, CurrentCount = CurrentCount+1, " +
+                        "HighScoreCounting=(CASE WHEN %s>HighScoreCounting THEN %s ELSE " +
+                        "HighScoreCounting END) WHERE ID =%s",
+                        (msg.author.id, msg.content, msg.content, msg.guild.id))
 
     @commands.slash_command(name='set_fail_role',
                             description="Sets the role the given to users who fail at counting")
