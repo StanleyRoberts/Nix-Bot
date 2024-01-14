@@ -88,7 +88,7 @@ class Trivia(commands.Cog):
     @commands.slash_command(name='stop_trivia',
                             description='stops the in-progress trivia game in this channel')
     async def stop_trivia(self, ctx: discord.ApplicationContext) -> None:
-        if not self.active_views[ctx.channel_id]:
+        if self.active_views.get(ctx.channel_id) is None:
             await ctx.respond(f"There is no Trivia active in this channel {Emotes.CONFUSED}")
         else:
             await ctx.respond(f"Trivia has been stopped by {ctx.user.mention} {Emotes.DRINKING}")
