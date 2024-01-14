@@ -26,7 +26,7 @@ NINJA_API_KEY = load_env('NINJA_API_KEY')  # X-API-Key for API-Ninjas
 DATABASE_URL = load_env('DATABASE_URL')  # PostgreSQL db
 CAI_TOKEN = load_env('CAI_TOKEN')  # Character AI client token
 CAI_NIX_ID = load_env('CAI_NIX_ID')  # Character AI character ID of Nix bot
-DEBUG_GUILDS = load_env('DEBUG_GUILDS')  # Debug guilds (not required)
+DEBUG_GUILDS = os.getenv('DEBUG_GUILDS')  # Debug guilds (not required)
 
 if __debug__:
     import testing.postgresql as tp  # type: ignore[import]
