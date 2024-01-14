@@ -17,11 +17,17 @@ class Admin(commands.Cog):
         description="sends a message to the given channel. " +
         "reacting with the given emoji will assign the given role")
     @discord.commands.default_permissions(manage_guild=True)
-    @discord.commands.option('channel', parameter_name="channel", required=False)
+    @discord.commands.option('channel', type=discord.TextChannel, parameter_name="channel", required=False)
     @discord.commands.option("emoji", required=False)
     @discord.commands.option("role", type=discord.Role, required=False)
-    async def greeting_role(self, ctx: discord.ApplicationContext, text: str,
-                            channel: discord.TextChannel | None, emoji: str, role: discord.Role) -> None:
+    async def greeting_role(
+        self,
+        ctx: discord.ApplicationContext,
+        text: str,
+        channel: discord.TextChannel | None,
+        emoji: str,
+        role: discord.Role | None
+    ) -> None:
         if channel is None:
             channel = ctx.channel
         if emoji:
@@ -35,7 +41,8 @@ class Admin(commands.Cog):
         try:
             message = await channel.send(text)
         except discord.errors.Forbidden:
-            logger.info("Permission failure for chain_message", guild_id=ctx.guild_id, channel_id=channel.id)
+            logger.info("Permission failure for chain_message",
+                        guild_id=ctx.guild_id, channel_id=channel.id)
             await ctx.respond(f"Whoops! {Emotes.WTF} I don't have permissions to write in {channel.mention}",
                               ephemeral=True)
             return
@@ -56,7 +63,8 @@ class Admin(commands.Cog):
     @discord.commands.option("role", type=discord.Role, description="The role to remove assignment for")
     async def remove_single_role(self, ctx: discord.ApplicationContext, role: discord.Role) -> None:
         db.multi_void_SQL([
-            ("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id)),
+            ("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s",
+             (ctx.guild_id, role.id)),
             ("DELETE FROM ReactMessages WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id))])
         await ctx.respond(f"All role assign behaviours have been cleared for {role.name}")
 
@@ -135,7 +143,8 @@ class Admin(commands.Cog):
             logger.error("Bot is offline", channel_id=msg.channel.id)
             return
         if msg.author.id != self.bot.user.id:
-            values = db.single_SQL("SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,))
+            values = db.single_SQL(
+                "SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,))
             if values is not None:
                 check_vals = [val[0] for val in values]
                 if msg.channel.id in check_vals or -1 in check_vals:
@@ -163,7 +172,8 @@ class Admin(commands.Cog):
             logger.info("Author is not member (likely: user not in guild)")
             return
         if msg.author.id != self.bot.user.id:
-            vals = db.single_SQL("SELECT RoleID, ToAdd FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
+            vals = db.single_SQL(
+                "SELECT RoleID, ToAdd FROM RoleChannel WHERE ChannelID=%s", (msg.channel.id,))
             for (role_id, add_role) in vals:
                 role = msg.guild.get_role(role_id)
                 if role:
@@ -182,7 +192,8 @@ class Admin(commands.Cog):
         if event.user_id == self.bot.user.id:
             return
         if event.member is None:
-            logger.info("reaction event has no member (likely: user not in guild)")
+            logger.info(
+                "reaction event has no member (likely: user not in guild)")
             return
         logger.debug(f"Message ID on reaction: {event.message_id}")
         vals = db.single_SQL(
@@ -200,7 +211,8 @@ class Admin(commands.Cog):
     @commands.Cog.listener('on_raw_reaction_remove')
     async def unassign_react_role(self, event: discord.RawReactionActionEvent) -> None:
         if event.guild_id is None:
-            logger.info("unassign_react_role detected outside of guild", channel_id=event.channel_id)
+            logger.info("unassign_react_role detected outside of guild",
+                        channel_id=event.channel_id)
             return
         vals = db.single_SQL(
             "SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
@@ -224,7 +236,8 @@ class Admin(commands.Cog):
             try:
                 channel = guild.get_channel(response_channel_id)
                 if not isinstance(channel, discord.abc.Messageable):
-                    logger.error("Chained message channel not sendable", channel_id=guild.id, guild_id=guild.id)
+                    logger.error("Chained message channel not sendable",
+                                 channel_id=guild.id, guild_id=guild.id)
                     continue
                 await channel.send(msg)
             except discord.errors.Forbidden:

@@ -3,7 +3,7 @@ import discord
 import requests
 import typing
 import re
-from tls_client.exceptions import TLSClientExeption as TLSClientException # type: ignore[import]
+from tls_client.exceptions import TLSClientExeption as TLSClientException  # type: ignore[import]
 from characterai import PyAsyncCAI as PyCAI  # type: ignore[import]
 
 from helpers.style import Colours, Emotes
