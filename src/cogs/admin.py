@@ -20,8 +20,14 @@ class Admin(commands.Cog):
     @discord.commands.option('channel', parameter_name="channel", required=False)
     @discord.commands.option("emoji", required=False)
     @discord.commands.option("role", type=discord.Role, required=False)
-    async def greeting_role(self, ctx: discord.ApplicationContext, text: str,
-                            channel: discord.TextChannel | None, emoji: str, role: discord.Role) -> None:
+    async def greeting_role(
+        self,
+        ctx: discord.ApplicationContext,
+        text: str,
+        channel: discord.TextChannel | None,
+        emoji: str,
+        role: discord.Role
+    ) -> None:
         if channel is None:
             channel = ctx.channel
         if emoji:
@@ -29,7 +35,8 @@ class Admin(commands.Cog):
                 true_emoji = Emoji(emoji)
             except ValueError:
                 await ctx.respond(
-                    f"Whoops! {Emotes.WTF} That emoji is not a valid discord emoji", ephemeral=True
+                    f"Whoops! {Emotes.WTF} That emoji is not a valid discord emoji",
+                    ephemeral=True
                 )
                 return
 
@@ -56,10 +63,47 @@ class Admin(commands.Cog):
                                (ctx.guild_id, message.id, role.id, true_emoji.as_text()))
         await ctx.respond(f"Message Sent! {Emotes.HEART}")
 
+    @discord.slash_command(name="edit_react_message", description="Edit the react_message")
+    @discord.commands.default_permissions(manage_guild=True)
+    async def edit_message(
+        self,
+        ctx: discord.ApplicationContext,
+        new_text: str,
+        message_id: int
+    ) -> None:
+        if db.single_sql(
+            "SELECT COUNT(DISTINCT MessageID) FROM ReactMessages WHERE MessageID=%s AND GuildID=%s",
+                (message_id, int(ctx.guild_id)))[0][0] == 0:
+            logger.debug("Unfamiliar MessageID entered into edit_message",
+                         guild_id=ctx.guild_id, channel_id=ctx.channel_id)
+            await ctx.respond(f"Whoops! {Emotes.WTF} the message ID is not saved as a reactmessage")
+            return
+        try:
+            message = await ctx.fetch_message(message_id)
+        except discord.Forbidden:
+            logger.warning("react_message is in forbidden channel",
+                           guild_id=ctx.guild_id, channel_id=ctx.channel_id)
+            await ctx.respond(
+                f"Whoops! {Emotes.WTF} that message seems to be in a channel I can't access " +
+                f"{Emotes.BRUH}"
+            )
+        except discord.NotFound:
+            logger.warning("react_message was not found",
+                           guild_id=ctx.guild_id, channel_id=ctx.channel_id)
+            await ctx.respond(f"Whoops! {Emotes.WTF} that message was not found")
+        await message.edit(new_text)
+
     @discord.slash_command(name="send_message", description="Sends message to the channel")
     @discord.commands.default_permissions(manage_guild=True)
     @discord.commands.option('channel', parameter_name="channel", required=False)
-    async def send_message(self, ctx:discord.ApplicationContext, text: str, channel: discord.TextChannel) -> None:
+    async def send_message(
+        self,
+        ctx: discord.ApplicationContext,
+        text: str,
+        channel: discord.TextChannel | None
+    ) -> None:
+        if channel is None:
+            channel = ctx.channel
         text = text.replace("<<nl>>", "\n")
         try:
             message = await channel.send(text)
