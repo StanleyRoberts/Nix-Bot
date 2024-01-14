@@ -98,7 +98,7 @@ class Admin(commands.Cog):
 
     @discord.slash_command(name="send_message", description="Sends message to the channel")
     @discord.commands.default_permissions(manage_guild=True)
-    @discord.commands.option('channel', parameter_name="channel", required=False)
+    @discord.commands.option('channel', type=discord.TextChannel, parameter_name="channel", required=False)
     async def send_message(
         self,
         ctx: discord.ApplicationContext,
@@ -110,6 +110,7 @@ class Admin(commands.Cog):
         text = text.replace("<<nl>>", "\n")
         try:
             message = await channel.send(text)
+            await ctx.respond(f"Message Sent! {Emotes.HEART}", ephemeral=True)
         except discord.errors.Forbidden:
             logger.info("Permission failure for send_message",
                         guild_id=ctx.guild_id, channel_id=channel.id)
