@@ -83,9 +83,12 @@ class Admin(commands.Cog):
                            description="sets role channel, anyone who sends a message in " +
                            "the channel will be assigned the given role")
     @discord.commands.default_permissions(manage_guild=True)
-    async def role_channel(self, ctx: discord.ApplicationContext,
-                           channel: discord.TextChannel,
-                           role: discord.Role) -> None:
+    async def role_channel(
+        self,
+        ctx: discord.ApplicationContext,
+        channel: discord.TextChannel,
+        role: discord.Role
+    ) -> None:
         db.single_void_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s, TRUE)",
                            (ctx.guild_id, role.id, channel.id))
         await ctx.respond(f"Role channel was set to {channel.mention}")
@@ -94,9 +97,12 @@ class Admin(commands.Cog):
                            description="sets role remove channel, anyone who sends a message " +
                            "will have the given role removed")
     @discord.commands.default_permissions(manage_guild=True)
-    async def remove_role_channel(self, ctx: discord.ApplicationContext,
-                                  channel: discord.TextChannel,
-                                  role: discord.Role) -> None:
+    async def remove_role_channel(
+        self,
+        ctx: discord.ApplicationContext,
+        channel: discord.TextChannel,
+        role: discord.Role
+    ) -> None:
         db.single_void_SQL("INSERT INTO RoleChannel VALUES (%s, %s, %s, FALSE)",
                            (ctx.guild_id, role.id, channel.id))
         await ctx.respond(f"Role remove channel was set to {channel.mention}")
@@ -112,10 +118,13 @@ class Admin(commands.Cog):
                              description="The channel Nix watches for new messages " +
                              "If not provided then Nix follows up all messages", required=False)
     @discord.commands.default_permissions(manage_guild=True)
-    async def set_chain_message(self, ctx: discord.ApplicationContext,
-                                message: str,
-                                response_channel: discord.TextChannel,
-                                message_channel: discord.TextChannel) -> None:
+    async def set_chain_message(
+        self,
+        ctx: discord.ApplicationContext,
+        message: str,
+        response_channel: discord.TextChannel,
+        message_channel: discord.TextChannel
+    ) -> None:
         channel_id = message_channel.id if message_channel is not None else -1
         try:
             db.single_void_SQL("INSERT INTO MessageChain VALUES (%s,%s,%s,%s)",
