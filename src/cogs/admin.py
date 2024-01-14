@@ -156,7 +156,8 @@ class Admin(commands.Cog):
     ) -> None:
         db.single_void_SQL(
             "INSERT INTO RoleChannel VALUES (%s, %s, %s, TRUE)",
-            (ctx.guild_id, role.id, channel.id))
+            (ctx.guild_id, role.id, channel.id)
+        )
         await ctx.respond(f"Role channel was set to {channel.mention}")
 
     @discord.slash_command(name='set_remove_role_channel',
@@ -171,7 +172,8 @@ class Admin(commands.Cog):
     ) -> None:
         db.single_void_SQL(
             "INSERT INTO RoleChannel VALUES (%s, %s, %s, FALSE)",
-            (ctx.guild_id, role.id, channel.id))
+            (ctx.guild_id, role.id, channel.id)
+        )
         await ctx.respond(f"Role remove channel was set to {channel.mention}")
 
     @discord.commands.slash_command(
