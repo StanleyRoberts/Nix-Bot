@@ -21,7 +21,9 @@ class Admin(commands.Cog):
     @discord.commands.option("emoji", required=False)
     @discord.commands.option("role", type=discord.Role, required=False)
     async def greeting_role(self, ctx: discord.ApplicationContext, text: str,
-                            channel: discord.TextChannel, emoji: str, role: discord.Role) -> None:
+                            channel: discord.TextChannel | None, emoji: str, role: discord.Role) -> None:
+        if channel is None:
+            channel = ctx.channel
         if emoji:
             try:
                 true_emoji = Emoji(emoji)
