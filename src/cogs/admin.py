@@ -15,7 +15,8 @@ class Admin(commands.Cog):
     @commands.slash_command(
         name="send_react_message",
         description="sends a message to the given channel. " +
-        "reacting with the given emoji will assign the given role")
+        "reacting with the given emoji will assign the given role"
+    )
     @discord.commands.default_permissions(manage_guild=True)
     @discord.commands.option('channel', type=discord.TextChannel, parameter_name="channel", required=False)
     @discord.commands.option("emoji", required=False)
@@ -118,11 +119,16 @@ class Admin(commands.Cog):
             )
             return
 
-    @discord.slash_command(name="remove_single_role_assignment",
-                           description="Takes out all of Nix's role " +
-                           "assigning behaviour for this role")
-    @discord.commands.option("role", type=discord.Role,
-                             description="The role to remove assignment for")
+    @discord.slash_command(
+        name="remove_single_role_assignment",
+        description="Takes out all of Nix's role " +
+        "assigning behaviour for this role"
+    )
+    @discord.commands.option(
+        name="role",
+        type=discord.Role,
+        description="The role to remove assignment for"
+    )
     async def remove_single_role(self, ctx: discord.ApplicationContext, role: discord.Role) -> None:
         db.multi_void_SQL([
             ("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s",
@@ -132,9 +138,11 @@ class Admin(commands.Cog):
         ])
         await ctx.respond(f"All role assign behaviours have been cleared for {role.name}")
 
-    @discord.slash_command(name="clear_role_setting",
-                           description="resets all role assigning behaviour" +
-                           "note this will not clear existing roles, or delete Nix messages")
+    @discord.slash_command(
+        name="clear_role_setting",
+        description="resets all role assigning behaviour" +
+        "note this will not clear existing roles, or delete Nix messages"
+    )
     @discord.commands.default_permissions(manage_guild=True)
     async def delete_react_entry(self, ctx: discord.ApplicationContext) -> None:
         logger.info("Dropping react entries", guild_id=ctx.guild_id)
@@ -144,9 +152,11 @@ class Admin(commands.Cog):
         ])
         await ctx.respond("All role assign behaviours have been cleared")
 
-    @discord.slash_command(name='set_role_channel',
-                           description="sets role channel, anyone who sends a message in " +
-                           "the channel will be assigned the given role")
+    @discord.slash_command(
+        name='set_role_channel',
+        description="sets role channel, anyone who sends a message in " +
+        "the channel will be assigned the given role"
+    )
     @discord.commands.default_permissions(manage_guild=True)
     async def role_channel(
         self,
@@ -160,9 +170,11 @@ class Admin(commands.Cog):
         )
         await ctx.respond(f"Role channel was set to {channel.mention}")
 
-    @discord.slash_command(name='set_remove_role_channel',
-                           description="sets role remove channel, anyone who sends a message " +
-                           "will have the given role removed")
+    @discord.slash_command(
+        name='set_remove_role_channel',
+        description="sets role remove channel, anyone who sends a message " +
+        "will have the given role removed"
+    )
     @discord.commands.default_permissions(manage_guild=True)
     async def remove_role_channel(
         self,
@@ -178,15 +190,26 @@ class Admin(commands.Cog):
 
     @discord.commands.slash_command(
         name="set_chain_message",
-        description="allows Nix to follow up with custom messages whenever a user send a message")
-    @discord.commands.option("message", type=str,
-                             description="The message text that will be sent as a follow up. " +
-                             "Write <<user>> to ping the user")
-    @discord.commands.option("response_channel", type=discord.TextChannel,
-                             description="The channel where Nix sends its follow up")
-    @discord.commands.option("message_channel", type=discord.TextChannel,
-                             description="The channel Nix watches for new messages " +
-                             "If not provided then Nix follows up all messages", required=False)
+        description="allows Nix to follow up with custom messages whenever a user send a message"
+    )
+    @discord.commands.option(
+        name="message",
+        type=str,
+        description="The message text that will be sent as a follow up. " +
+        "Write <<user>> to ping the user"
+    )
+    @discord.commands.option(
+        name="response_channel",
+        type=discord.TextChannel,
+        description="The channel where Nix sends its follow up"
+    )
+    @discord.commands.option(
+        name="message_channel",
+        type=discord.TextChannel,
+        description="The channel Nix watches for new messages " +
+        "If not provided then Nix follows up all messages",
+        required=False
+    )
     @discord.commands.default_permissions(manage_guild=True)
     async def set_chain_message(
         self,
@@ -207,8 +230,10 @@ class Admin(commands.Cog):
                 f"You already set this as a message for this channel {Emotes.CONFUSED}"
             )
 
-    @commands.slash_command(name="clear_chain_messages",
-                            description="Clears all chain message behaviours")
+    @commands.slash_command(
+        name="clear_chain_messages",
+        description="Clears all chain message behaviours"
+    )
     @discord.commands.default_permissions(manage_guild=True)
     async def clear_chain_message(self, ctx: discord.ApplicationContext) -> None:
         db.multi_void_sql([
