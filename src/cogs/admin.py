@@ -54,6 +54,22 @@ class Admin(commands.Cog):
                                (ctx.guild_id, message.id, role.id, true_emoji.as_text()))
         await ctx.respond(f"Message Sent! {Emotes.HEART}")
 
+    @discord.slash_command(name="send_message", description="Sends message to the channel")
+    @discord.commands.default_permissions(manage_guild=True)
+    @discord.commands.option('channel', parameter_name="channel", required=False)
+    async def send_message(self, ctx:discord.ApplicationContext, text: str, channel: discord.TextChannel) -> None:
+        text = text.replace("<<nl>>", "\n")
+        try:
+            message = await channel.send(text)
+        except discord.errors.Forbidden:
+            logger.info("Permission failure for send_message",
+                        guild_id=ctx.guild_id, channel_id=channel.id)
+            await ctx.respond(
+                f"Whoops! {Emotes.WTF} I don't have permissions to write in {channel.mention}",
+                ephemeral=True
+            )
+            return
+
     @discord.slash_command(name="remove_single_role_assignment",
                            description="Takes out all of Nix's role " +
                            "assigning behaviour for this role")
