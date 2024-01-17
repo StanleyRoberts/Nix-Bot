@@ -132,7 +132,7 @@ class Admin(commands.Cog):
         description="The role to remove assignment for"
     )
     async def remove_single_role(self, ctx: discord.ApplicationContext, role: discord.Role) -> None:
-        db.multi_void_SQL([
+        db.multi_void_sql([
             ("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s",
              (ctx.guild_id, role.id)),
             ("DELETE FROM ReactMessages WHERE GuildID=%s AND RoleID=%s",
@@ -317,7 +317,7 @@ class Admin(commands.Cog):
             logger.info("reaction event has no member (likely: user not in guild)")
             return
         logger.debug(f"Message ID on reaction: {event.message_id}")
-        vals = db.single_SQL(
+        vals = db.single_sql(
             "SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s", (event.message_id,))
         logger.debug(f"SQL values: {vals}")
         for (emoji, role_id) in vals:
@@ -339,7 +339,7 @@ class Admin(commands.Cog):
                 channel_id=event.channel_id
             )
             return
-        vals = db.single_SQL(
+        vals = db.single_sql(
             "SELECT Emoji, RoleID FROM ReactMessages WHERE MessageID=%s",
             (event.message_id,)
         )
@@ -356,7 +356,7 @@ class Admin(commands.Cog):
 
     @staticmethod
     async def send_chained_message(guild: discord.Guild, user: discord.User | discord.Member) -> None:
-        vals = db.single_SQL(
+        vals = db.single_sql(
             "SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s",
             (guild.id,)
         )
