@@ -30,12 +30,20 @@ class Misc(commands.Cog):
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
         desc = ("Note: depending on your server settings and role permissions," +
                 " some of these commands may be hidden or disabled\n\n" +
-                "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " +
-                                                                   command.description + "\n"
-                                                                   for command in self.bot.cogs[cog].walk_commands()
-                                                                   if isinstance(command, discord.SlashCommand)]))
-                        for cog in self.bot.cogs]))  # TODO combine command and groups from walk_commands
-        embed = discord.Embed(title="Help Page", description=desc, colour=Colours.PRIMARY)
+                "".join(
+                    ["\n***" + cog + "***\n" + "".join(
+                        sorted(
+                            [command.mention + " : " +
+                                command.description + "\n"
+                                for command in self.bot.cogs[cog].walk_commands()
+                                if isinstance(command, discord.SlashCommand)
+                             ]
+                        )
+                    )
+                        for cog in self.bot.cogs]
+                ))
+        embed = discord.Embed(title="Help Page", description=desc,
+                              colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
         logger.info("Displaying long help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
@@ -59,18 +67,27 @@ class Misc(commands.Cog):
             logger.error("bot.user is None (Bot is offline)")
             return
         if (self.bot.user.mentioned_in(msg) and msg.reference is None):
-            logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
+            logger.info("Generating AI response", member_id=msg.author.id,
+                        channel_id=msg.channel.id)
             async with msg.channel.typing():
-                clean_prompt = re.sub(" @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
+                clean_prompt = re.sub(
+                    " @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
                 client = PyCAI(CAI_TOKEN)
-                chat = await client.chat.new_chat(CAI_NIX_ID, token=CAI_TOKEN)
+                chat = await client.chat.new_chat(CAI_NIX_ID)
                 participants = chat['participants']
-                nix_username = participants[1 if participants[0]['is_human'] else 0]['user']['username']
+                nix_username = participants[1 if participants[0]
+                                            ['is_human'] else 0]['user']['username']
                 try:
-                    data = await client.chat.send_message(chat['external_id'], nix_username, clean_prompt, wait=True)
+                    data = await client.chat.send_message(
+                        tgt=nix_username,
+                        history_id=chat['external_id'],
+                        text=clean_prompt,
+                        wait=True
+                    )
                     text = data['replies'][0]['text']
                 except TLSClientException:
-                    text = f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
+                    text = (f"Uh-oh! I'm having trouble at the moment, " +
+                            "please try again later {Emotes.CLOWN}")
                 await msg.reply(text)
                 return
 

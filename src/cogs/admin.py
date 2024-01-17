@@ -19,7 +19,9 @@ class Admin(commands.Cog):
         "reacting with the given emoji will assign the given role"
     )
     @discord.commands.default_permissions(manage_guild=True)
-    @discord.commands.option('channel', type=discord.TextChannel, parameter_name="channel", required=False)
+    @discord.commands.option(
+        'channel', type=discord.TextChannel, parameter_name="channel", required=False
+    )
     @discord.commands.option("emoji", required=False)
     @discord.commands.option("role", type=discord.Role, required=False)
     async def greeting_role(
@@ -99,7 +101,9 @@ class Admin(commands.Cog):
 
     @discord.slash_command(name="send_message", description="Sends message to the channel")
     @discord.commands.default_permissions(manage_guild=True)
-    @discord.commands.option('channel', type=discord.TextChannel, parameter_name="channel", required=False)
+    @discord.commands.option(
+        'channel', type=discord.TextChannel, parameter_name="channel", required=False
+    )
     async def send_message(
         self,
         ctx: discord.ApplicationContext,
@@ -256,25 +260,23 @@ class Admin(commands.Cog):
         if self.bot.user is None:
             logger.error("Bot is offline", channel_id=msg.channel.id)
             return
-        values = db.single_sql(
-            "SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,)
-        )
-        if values is not None:
-            check_vals = [val[0] for val in values]
-            if msg.channel.id in check_vals or -1 in check_vals:
-                try:
-                    db.single_void_SQL(
-                        "INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
-                        (msg.guild.id, msg.author.id, msg.channel.id
-                         if msg.channel.id in check_vals else -1)
-                    )
-                    await self.send_chained_message(msg.guild, msg.author)
-                except db.KeyViolation:
-                    logger.info(
-                        "User that is already chained has written in the channel again",
-                        member_id=msg.author.id,
-                        guild_id=msg.guild.id
-                    )
+        if msg.author.id != self.bot.user.id:
+            values = db.single_sql(
+                "SELECT WatchedChannelID FROM MessageChain WHERE GuildID=%s", (msg.guild.id,))
+            if values is not None:
+                check_vals = [val[0] for val in values]
+                if msg.channel.id in check_vals or -1 in check_vals:
+                    try:
+                        db.single_void_SQL(
+                            "INSERT INTO ChainedUsers VALUES (%s, %s, %s)",
+                            (msg.guild.id, msg.author.id, msg.channel.id
+                             if msg.channel.id in check_vals else -1))
+                        await self.send_chained_message(msg.guild, msg.author)
+                    except db.KeyViolation:
+                        logger.info(
+                            "User that is already chained has written in the channel again",
+                            member_id=msg.author.id, guild_id=msg.guild.id
+                        )
 
     @commands.Cog.listener('on_message')
     async def assign_role(self, msg: discord.Message) -> None:
@@ -355,7 +357,10 @@ class Admin(commands.Cog):
                     logger.error("Couldnt get role for react role unassign")
 
     @staticmethod
-    async def send_chained_message(guild: discord.Guild, user: discord.User | discord.Member) -> None:
+    async def send_chained_message(
+        guild: discord.Guild,
+        user: discord.User | discord.Member
+    ) -> None:
         vals = db.single_sql(
             "SELECT ResponseChannelID, Message FROM MessageChain WHERE GuildID=%s",
             (guild.id,)
@@ -372,7 +377,6 @@ class Admin(commands.Cog):
             except discord.errors.Forbidden:
                 logger.info("Permission failure for chain_message",
                             guild_id=guild.id, channel_id=response_channel_id)
-                pass
 
 
 def setup(bot: discord.Bot) -> None:
