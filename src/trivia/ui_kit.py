@@ -13,7 +13,7 @@ class TriviaView(discord.ui.View):
     """View for the trivia game
             Args:
                 state (TriviaGame): the current TriviaGame state
-                difficulty (function): function called on view timeout
+                callback (function): function called on view timeout
                 channel_id (int): channel_id for the trivia game
     """
 
@@ -55,20 +55,25 @@ class TriviaView(discord.ui.View):
         If the guess is a number it has to be exact, otherwise any (spellingwise) close guesses will count too
         """
         async with self.lock:
-            if msg.channel.id == self.message.channel.id:
-                guess = self.state.check_guess(msg.content, str(msg.author.id))
-                if guess == GuessValue.INCORRECT:
-                    await msg.add_reaction(Emotes.BRUH)
-                else:
-                    await msg.add_reaction(Emotes.WHOA)
-                    await msg.reply(f"You got the answer! ({self.state.answer}) " +
-                                    f"You are now at {self.state.players[str(msg.author.id)]} points {Emotes.HAPPY}")
-                    if guess == GuessValue.CORRECT_AND_WON:
-                        await msg.reply(f"Congratulations! {msg.author.mention} has won with " +
-                                        f"{MAX_POINTS} points! {Emotes.TEEHEE}")
-                        await self.on_timeout()
-                    else:
-                        await msg.channel.send(await self.get_question(), view=self)
+            if msg.channel.id != self.message.channel.id:
+                return
+            if self.is_finished():
+                return
+            guess = self.state.check_guess(msg.content, str(msg.author.id))
+            if guess == GuessValue.INCORRECT:
+                await msg.add_reaction(Emotes.BRUH)
+                return
+            await msg.add_reaction(Emotes.WHOA)
+            await msg.reply(
+                f"You got the answer! ({self.state.answer}) " +
+                f"You are now at {self.state.players[str(msg.author.id)]} points {Emotes.HAPPY}"
+            )
+            if guess == GuessValue.CORRECT_AND_WON:
+                await msg.reply(f"Congratulations! {msg.author.mention} has won with " +
+                                f"{MAX_POINTS} points! {Emotes.TEEHEE}")
+                await self.on_timeout()
+            else:
+                await msg.channel.send(await self.get_question(), view=self)
 
     async def get_question(self) -> str | None:
         return await self.state.get_new_question()
