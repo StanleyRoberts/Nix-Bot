@@ -18,7 +18,7 @@ bot = commands.Bot(intents=intents, command_prefix='%s',
                    activity=discord.Game(name="/help"),
                    debug_guilds=debugs)
 
-NIX_ID = bot.user.id
+NIX_ID = 0  # Set on login
 
 logger = Logger()
 logger.set_bot(bot)
@@ -90,7 +90,11 @@ async def on_member_remove(member: discord.Member) -> None:
 @bot.event
 async def on_ready() -> None:
     if bot.user is not None:
+        NIX_ID = bot.user.id
         logger.info('Logged in', member_id=bot.user.id)
+    else:
+        logger.critical("Nix not logged in")
+        exit(1)
 
 
 def main() -> None:
