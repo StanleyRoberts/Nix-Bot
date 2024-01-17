@@ -53,7 +53,7 @@ class Misc(commands.Cog):
         Args:
             msg (discord.Message): Message that triggered event
         """
-        if event.user_id == NIX_ID:
+        if msg.author.id == NIX_ID:
             return
         if self.bot.user is None:
             logger.error("bot.user is None (Bot is offline)")
