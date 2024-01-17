@@ -49,8 +49,7 @@ class Misc(commands.Cog):
     @commands.slash_command(name='help', description="Display the help page for Nix")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
         view = Help_Nav(self.bot.cogs)
-        await ctx.interaction.response.send_message(embed=view.build_embed(),
-                                                    view=view)
+        await ctx.interaction.response.send_message(embed=view.build_embed(), view=view)
         logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.Cog.listener("on_message")
@@ -67,24 +66,26 @@ class Misc(commands.Cog):
         if (self.bot.user.mentioned_in(msg) and msg.reference is None):
             logger.info("Generating AI response", member_id=msg.author.id,
                         channel_id=msg.channel.id)
-            clean_prompt = re.sub(
-                " @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
-            client = PyCAI(CAI_TOKEN)
-            chat = await client.chat.new_chat(CAI_NIX_ID)
-            participants = chat['participants']
-            nix_username = participants[1 if participants[0]['is_human'] else 0]['user']['username']
-            try:
-                data = await client.chat.send_message(
-                    tgt=nix_username,
-                    history_id=chat['external_id'],
-                    text=clean_prompt,
-                    wait=True
-                )
-                text = data['replies'][0]['text']
-            except TLSClientException:
-                text = f"Uh-oh! I'm having trouble at the moment, " +\
-                    "please try again later {Emotes.CLOWN}"
-            await msg.reply(text)
+            async with msg.channel.typing():
+                clean_prompt = re.sub(
+                    " @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
+                client = PyCAI(CAI_TOKEN)
+                chat = await client.chat.new_chat(CAI_NIX_ID)
+                participants = chat['participants']
+                nix_username = participants[1 if participants[0]
+                                            ['is_human'] else 0]['user']['username']
+                try:
+                    data = await client.chat.send_message(
+                        tgt=nix_username,
+                        history_id=chat['external_id'],
+                        text=clean_prompt,
+                        wait=True
+                    )
+                    text = data['replies'][0]['text']
+                except TLSClientException:
+                    text = f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
+                await msg.reply(text)
+                return
 
 
 class Help_Nav(discord.ui.View):
@@ -111,8 +112,7 @@ class Help_Nav(discord.ui.View):
                                             for command in page.walk_commands()
                                             if isinstance(command, discord.SlashCommand)])))
 
-        return discord.Embed(title="Help Page", description=desc,
-                             colour=Colours.PRIMARY)
+        return discord.Embed(title="Help Page", description=desc, colour=Colours.PRIMARY)
 
     @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
     async def backward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
