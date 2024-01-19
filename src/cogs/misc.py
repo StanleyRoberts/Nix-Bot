@@ -83,7 +83,8 @@ class Misc(commands.Cog):
                     )
                     text = data['replies'][0]['text']
                 except TLSClientException:
-                    text = f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
+                    text = f"Uh-oh! I'm having trouble at the moment, " +\
+                        "please try again later {Emotes.CLOWN}"
                 await msg.reply(text)
                 return
 

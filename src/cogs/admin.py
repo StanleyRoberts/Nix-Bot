@@ -17,7 +17,8 @@ class Admin(commands.Cog):
         description="sends a message to the given channel. " +
         "reacting with the given emoji will assign the given role")
     @discord.commands.default_permissions(manage_guild=True)
-    @discord.commands.option('channel', type=discord.TextChannel, parameter_name="channel", required=False)
+    @discord.commands.option('channel', type=discord.TextChannel,
+                             parameter_name="channel", required=False)
     @discord.commands.option("emoji", required=False)
     @discord.commands.option("role", type=discord.Role, required=False)
     async def greeting_role(
