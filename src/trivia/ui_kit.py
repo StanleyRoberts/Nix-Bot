@@ -39,7 +39,9 @@ class TriviaView(discord.ui.View):
         channel_id = interaction.channel_id if interaction.channel_id else 0
         guild_id = interaction.guild_id if interaction.guild_id else 0
         if old_answer:
-            await interaction.response.send_message(f"The answer was: {old_answer} {Emotes.SUNGLASSES}")
+            await interaction.response.send_message(
+                f"The answer was: {old_answer} {Emotes.SUNGLASSES}"
+            )
             if not isinstance(interaction.channel, discord.abc.Messageable):
                 logger.error("Callback for trivia interaction is not in sendable channel",
                              channel_id=channel_id, guild_id=guild_id)
@@ -52,7 +54,7 @@ class TriviaView(discord.ui.View):
     async def handle_guess(self, msg: discord.Message) -> None:
         """Checks if a guess is correct
 
-        If the guess is a number it has to be exact, otherwise any (spellingwise) close guesses will count too
+        If the guess is a number it has to be exact, otherwise any close guesses will be correct
         """
         async with self.lock:
             if msg.channel.id != self.message.channel.id:
@@ -76,7 +78,17 @@ class TriviaView(discord.ui.View):
                 await msg.channel.send(await self.get_question(), view=self)
 
     async def get_question(self) -> str | None:
+        """Generate and return new question
+
+        Returns:
+            str | None: New question (None if failed to generate)
+        """
         return await self.state.get_new_question()
 
-    def get_current_question(self) -> str:  # TODO needs to be able to return None?
+    def get_current_question(self) -> str:
+        """Return current question
+
+        Returns:
+            str: current question
+        """
         return self.state.get_current_question()

@@ -17,21 +17,32 @@ class Misc(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
 
-    @commands.slash_command(name='quote', description="Displays an AI-generated quote over an inspirational image")
+    @commands.slash_command(
+        name='quote',
+        description="Displays an AI-generated quote over an inspirational image"
+    )
     async def send_quote(self, ctx: discord.ApplicationContext) -> None:
-        await ctx.respond(requests.get("https://inspirobot.me/api?generate=true").text)
+        await ctx.respond(requests.get("https://inspirobot.me/api?generate=true", timeout=10).text)
         logger.info("Generating quote", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.slash_command(name='all_commands', description="Displays all of Nix's commands")
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
         desc = ("Note: depending on your server settings and role permissions," +
                 " some of these commands may be hidden or disabled\n\n" +
-                "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " +
-                                                                   command.description + "\n"
-                                                                   for command in self.bot.cogs[cog].walk_commands()
-                                                                   if isinstance(command, discord.SlashCommand)]))
-                        for cog in self.bot.cogs]))  # TODO combine command and groups from walk_commands
-        embed = discord.Embed(title="Help Page", description=desc, colour=Colours.PRIMARY)
+                "".join(
+                    ["\n***" + cog + "***\n" + "".join(
+                        sorted(
+                            [command.mention + " : " +
+                                command.description + "\n"
+                                for command in self.bot.cogs[cog].walk_commands()
+                                if isinstance(command, discord.SlashCommand)
+                             ]
+                        )
+                    )
+                        for cog in self.bot.cogs]
+                ))
+        embed = discord.Embed(title="Help Page", description=desc,
+                              colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
         logger.info("Displaying long help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
@@ -42,7 +53,7 @@ class Misc(commands.Cog):
         logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.Cog.listener("on_message")
-    async def NLP(self, msg: discord.Message) -> None:
+    async def nlp(self, msg: discord.Message) -> None:
         """
         Prints out an AI generated response to the message if it mentions Nix
 
@@ -53,13 +64,16 @@ class Misc(commands.Cog):
             logger.error("bot.user is None (Bot is offline)")
             return
         if (self.bot.user.mentioned_in(msg) and msg.reference is None):
-            logger.info("Generating AI response", member_id=msg.author.id, channel_id=msg.channel.id)
+            logger.info("Generating AI response", member_id=msg.author.id,
+                        channel_id=msg.channel.id)
             async with msg.channel.typing():
-                clean_prompt = re.sub(" @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
+                clean_prompt = re.sub(
+                    " @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
                 client = PyCAI(CAI_TOKEN)
                 chat = await client.chat.new_chat(CAI_NIX_ID)
                 participants = chat['participants']
-                nix_username = participants[1 if participants[0]['is_human'] else 0]['user']['username']
+                nix_username = participants[1 if participants[0]
+                                            ['is_human'] else 0]['user']['username']
                 try:
                     data = await client.chat.send_message(
                         tgt=nix_username,
@@ -69,7 +83,8 @@ class Misc(commands.Cog):
                     )
                     text = data['replies'][0]['text']
                 except TLSClientException:
-                    text = f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
+                    text = f"Uh-oh! I'm having trouble at the moment, " +\
+                        "please try again later {Emotes.CLOWN}"
                 await msg.reply(text)
                 return
 
@@ -104,13 +119,15 @@ class Help_Nav(discord.ui.View):
     async def backward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
-        logger.debug("Back button pressed", member_id=interaction.user.id if interaction.user is not None else 0)
+        logger.debug("Back button pressed", member_id=interaction.user.id
+                     if interaction.user is not None else 0)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
     async def forward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
-        logger.debug("Next button pressed", member_id=interaction.user.id if interaction.user is not None else 0)
+        logger.debug("Next button pressed", member_id=interaction.user.id
+                     if interaction.user is not None else 0)
 
 
 def setup(bot: discord.Bot) -> None:

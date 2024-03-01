@@ -24,7 +24,7 @@ def select_from_unsafe(table_name: str) -> typing.List[typing.Tuple[typing.Any, 
     """
     con = psycopg2.connect(DATABASE_URL)
     cur = con.cursor()
-    cur.execute('SELECT * FROM public.{}'.format(table_name))
+    cur.execute(f'SELECT * FROM public.{table_name}')
     val = cur.fetchall()
     con.commit()
     cur.close()
@@ -32,13 +32,17 @@ def select_from_unsafe(table_name: str) -> typing.List[typing.Tuple[typing.Any, 
     return val
 
 
-def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> list[tuple[typing.Any, ...]]:
+def single_sql(
+    query: str,
+    values: tuple[typing.Any, ...] = (None,)
+) -> list[tuple[typing.Any, ...]]:
     """
     Opens a connection, submits a single SQL query to the database then cleans up
 
     Args:
         query (string): SQL query to execute.
-        values (tuple, optional): Values to provide to the SQL query (i.e. for %s). Defaults to None.
+        values (tuple, optional):
+            Values to provide to the SQL query (i.e. for %s). Defaults to None.
 
     Raises:
         KeyViolation: Raised when key constraint is violated
@@ -54,8 +58,8 @@ def single_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> list[tup
     err_mess = None
     try:
         cur.execute(query, values if values != (None,) else None)
-    except UniqueViolation:
-        raise KeyViolation("Key constraint violated")
+    except UniqueViolation as e:
+        raise KeyViolation("Key constraint violated") from e
     except psycopg2.Error as e:
         err_mess = f"SQL Error: {e.__class__.__name__}\n{traceback.format_exc()}"
         logger.error(err_mess)
@@ -82,7 +86,8 @@ def single_void_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> Non
 
     Args:
         query (string): SQL query to execute.
-        values (tuple, optional): Values to provide to the SQL query (i.e. for %s). Defaults to None.
+        values (tuple, optional):
+            Values to provide to the SQL query (i.e. for %s). Defaults to None.
 
     Raises:
         KeyViolation: Raised when key constraint is violated
@@ -95,8 +100,8 @@ def single_void_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> Non
     err_mess = None
     try:
         cur.execute(query, values if values != (None,) else None)
-    except UniqueViolation:
-        raise KeyViolation("Key constraint violated")
+    except UniqueViolation as e:
+        raise KeyViolation("Key constraint violated") from e
     except psycopg2.Error as e:
         err_mess = f"SQL Error: {e.__class__.__name__}\n{traceback.format_exc()}"
         logger.error(err_mess)
@@ -111,13 +116,14 @@ def single_void_SQL(query: str, values: tuple[typing.Any, ...] = (None,)) -> Non
         raise RuntimeError(err_mess)
 
 
-def multi_void_SQL(commands: list[tuple[str, tuple[typing.Any, ...]]]) -> None:
+def multi_void_sql(commands: list[tuple[str, tuple[typing.Any, ...]]]) -> None:
     """Executes multiple commands for the database that don't have a return
 
     Args:
-        commands (list[tuple[str, tuple[typing.Any, ...]]]): List of tuples where each tuple contains a string and a
-            tuple. The string of each tuple is the query and the inner tuple contains the substituted values for the
-            query.
+        commands (list[tuple[str, tuple[typing.Any, ...]]]):
+            List of tuples where each tuple contains a string and a tuple.
+            The string of each tuple is the query and the inner tuple contains
+            the substituted values for the query.
 
     Raises:
         KeyViolation: _description_
@@ -132,8 +138,8 @@ def multi_void_SQL(commands: list[tuple[str, tuple[typing.Any, ...]]]) -> None:
     for (query, values) in commands:
         try:
             cur.execute(query, values)
-        except UniqueViolation:
-            raise KeyViolation("Key constraint violated")
+        except UniqueViolation as e:
+            raise KeyViolation("Key constraint violated") from e
         except psycopg2.Error as e:
             err_mess = f"SQL Error: {e.__class__.__name__}\n{traceback.format_exc()}"
             logger.error(err_mess)
@@ -155,9 +161,11 @@ def populate() -> None:
     logger.info("Populating test database")
     con = psycopg2.connect(DATABASE_URL)
     cur = con.cursor()
-    cur.execute("CREATE TABLE Guilds(ID BIGINT, CountingChannelID BIGINT, BirthdayChannelID BIGINT, " +
-                "FactChannelID BIGINT, CurrentCount INTEGER, LastCounterID BIGINT, HighScoreCounting INTEGER, " +
-                "FailRoleID BIGINT, PRIMARY KEY(ID));")
+    cur.execute(
+        "CREATE TABLE Guilds(ID BIGINT, CountingChannelID BIGINT, BirthdayChannelID BIGINT, " +
+        "FactChannelID BIGINT, CurrentCount INTEGER, LastCounterID BIGINT, " +
+        "HighScoreCounting INTEGER, FailRoleID BIGINT, PRIMARY KEY(ID));"
+    )
 
     cur.execute("CREATE TABLE Birthdays(GuildID BIGINT, UserID BIGINT, Birthdate TEXT, " +
                 "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, UserID));")
@@ -165,27 +173,39 @@ def populate() -> None:
     cur.execute("CREATE TABLE Subreddits(GuildID BIGINT, subreddit TEXT, " +
                 "SubredditChannelID BIGINT, PRIMARY KEY(GuildID, subreddit));")
 
-    cur.execute("CREATE TABLE ReactMessages(GuildID BIGINT, MessageID BIGINT, RoleID BIGINT, Emoji TEXT, " +
-                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, MessageID, RoleID, Emoji));")
+    cur.execute(
+        "CREATE TABLE ReactMessages(GuildID BIGINT, MessageID BIGINT, RoleID BIGINT, Emoji TEXT, " +
+        "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), " +
+        "PRIMARY KEY(GuildID, MessageID, RoleID, Emoji));"
+    )
 
-    cur.execute("CREATE TABLE RoleChannel(GuildID BIGINT, RoleID BIGINT, ChannelID BIGINT, ToAdd BOOLEAN, " +
-                "FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, ChannelID, RoleID));")
+    cur.execute(
+        "CREATE TABLE RoleChannel(GuildID BIGINT, RoleID BIGINT, ChannelID BIGINT, " +
+        "ToAdd BOOLEAN, FOREIGN KEY(GuildID) REFERENCES Guilds(ID), " +
+        "PRIMARY KEY(GuildID, ChannelID, RoleID));"
+    )
 
-    cur.execute("CREATE TABLE MessageChain(GuildID BIGINT, WatchedChannelID BIGINT, ResponseChannelID BIGINT, " +
-                "Message VARCHAR(2000), FOREIGN KEY(GuildID) REFERENCES Guilds(ID), PRIMARY KEY(GuildID, " +
-                "WatchedChannelID));")
+    cur.execute(
+        "CREATE TABLE MessageChain(GuildID BIGINT, WatchedChannelID BIGINT, " +
+        "ResponseChannelID BIGINT, Message VARCHAR(2000), FOREIGN KEY(GuildID) " +
+        "REFERENCES Guilds(ID), PRIMARY KEY(GuildID, WatchedChannelID));"
+    )
 
-    cur.execute("CREATE TABLE ChainedUsers(GuildID BIGINT, UserID BIGINT, ChannelID BIGINT, " +
-                "FOREIGN KEY(GuildID, ChannelID) REFERENCES MessageChain(GuildID, WatchedChannelID), " +
-                "PRIMARY KEY(GuildID, UserID, ChannelID));")
+    cur.execute(
+        "CREATE TABLE ChainedUsers(GuildID BIGINT, UserID BIGINT, ChannelID BIGINT, " +
+        "FOREIGN KEY(GuildID, ChannelID) REFERENCES MessageChain(GuildID, WatchedChannelID), " +
+        "PRIMARY KEY(GuildID, UserID, ChannelID));")
 
-    cur.execute("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, " +
-                "CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (821016940462080000, " +
-                "NULL, NULL, NULL, 0, NULL, 0, NULL);")
+    cur.execute(
+        "INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, " +
+        "CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (821016940462080000, " +
+        "NULL, NULL, NULL, 0, NULL, 0, NULL);")
 
-    cur.execute("INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, " +
-                "CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES (1026169937422729226, " +
-                "NULL, NULL, NULL, 0, NULL, 0, NULL);")
+    cur.execute(
+        "INSERT INTO Guilds (ID, CountingChannelID, BirthdayChannelID, FactChannelID, " +
+        "CurrentCount, LastCounterID, HighScoreCounting, FailRoleID) VALUES " +
+        "(1026169937422729226, NULL, NULL, NULL, 0, NULL, 0, NULL);"
+    )
 
     con.commit()
     cur.close()
