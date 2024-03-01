@@ -19,4 +19,4 @@ jobs:
         run: mypy --strict --disable-error-code no-untyped-call --disable-error-code misc .
       - name: Run pycodestyle
         if: always()
-        run: pycodestyle src --max-line-length=119
+        run: pycodestyle src --max-line-length=100

@@ -5,7 +5,6 @@ import json
 
 from helpers.logger import Logger
 from helpers.style import Emotes
-from helpers.env import NINJA_API_KEY
 
 logger = Logger()
 
@@ -33,23 +32,26 @@ class TriviaInterface:
     async def _fill_cache(self) -> None:
         """Refill trivia cache
         """
+        api_url = 'https://the-trivia-api.com/v2/questions?difficulties=easy'
         if self.category:
-            api_url = 'https://the-trivia-api.com/v2/questions?difficulties=easy&categories={}'.format(self.category)
-        else:
-            api_url = 'https://the-trivia-api.com/v2/questions?difficulties=easy'
+            api_url += f'&categories={self.category}'
 
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=10)
         if response.status_code == requests.codes.ok:
-            self._cache = [((cjson['question']['text']), (cjson['correctAnswer']))
-                           for cjson in json.loads(response.text)
-                           if not any(map(cjson['question']['text'].__contains__, ["these", "following"]))]
+            self._cache = [
+                ((cjson['question']['text']), (cjson['correctAnswer']))
+                for cjson in json.loads(response.text)
+                if not any(
+                    map(cjson['question']['text'].__contains__, ["these", "following"])
+                )
+            ]
             if not self._cache:
                 logger.error(f"Response of Trivia API empty. url= {api_url}", )
                 self._cache = [None]
             else:
                 logger.debug("Successful cache refill")
         else:
-            logger.error("{0} Cache refill failed: {1}".format(response.status_code, response.text))
+            logger.error(f"{response.status_code} Cache refill failed: {response.text}")
             self._cache = [None]
 
     async def get_trivia(self) -> tuple[str, str] | None:
@@ -65,6 +67,14 @@ class TriviaInterface:
 
     @classmethod
     async def with_fill(cls, difficulty: str) -> 'TriviaInterface':
+        """Create and return a filled trivia interface
+
+        Args:
+            difficulty (str): Difficult question to fill cache with
+
+        Returns:
+            TriviaInterface: Created TriviaInterface
+        """
         self = cls(difficulty)
         await self._fill_cache()
         return self
@@ -100,36 +110,58 @@ class TriviaGame:
             return None
 
     def get_current_question(self) -> str:
+        """Get current question
+
+        Returns:
+            str: current question
+        """
         return f"**Current Question** {Emotes.SNEAKY}\nQuestion: {self.question}\n"
 
-    def check_guess(self, content: str, id: str) -> GuessValue:
+    def check_guess(self, content: str, user_id: str) -> GuessValue:
+        """Check if guess correct
+
+        Args:
+            content (str): User guess
+            user_id (str): User id
+
+        Returns:
+            GuessValue: Whether guess was correct or not
+        """
         if not self.answer:
             raise RuntimeError("Could not find answer")
         if content.isdigit() and content is self.answer or\
                 get_close_matches(self.answer.lower(), [content.lower()], cutoff=0.8) != []:
-            return self._handle_correct(id)
+            return self._handle_correct(user_id)
         else:
             return GuessValue.INCORRECT
 
-    async def skip(self, id: str) -> str:
+    async def skip(self, user_id: str) -> str:
+        """Skip question
+
+        Args:
+            user_id (str): User who initiated skip
+
+        Returns:
+            str: Answer for skipped question
+        """
         if not self.answer:
             raise RuntimeError("Could not find answer")
         value: str = ""
         if ((len(self.players) <= 1) or
-                (id in self.players.keys())):
+                (user_id in self.players)):
             old_answer = self.answer
             await self.get_new_question()
             value = old_answer
         return value
 
-    def _handle_correct(self, id: str) -> GuessValue:
-        if id in self.players.keys():
-            self.players[id] += 1
+    def _handle_correct(self, user_id: str) -> GuessValue:
+        if user_id in self.players:
+            self.players[user_id] += 1
         else:
-            self.players.update({id: 1})
+            self.players.update({user_id: 1})
 
-        if self.players[id] >= MAX_POINTS:
-            logger.debug("User has won", member_id=int(id))
+        if self.players[user_id] >= MAX_POINTS:
+            logger.debug("User has won", member_id=int(user_id))
             return GuessValue.CORRECT_AND_WON
         else:
             return GuessValue.CORRECT_NOT_WON

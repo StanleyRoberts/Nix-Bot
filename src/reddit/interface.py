@@ -27,13 +27,11 @@ class Post:
         self.img: list[discord.File] = []
 
     async def load_img(self) -> 'Post':
+        """Load image from reddit post"""
         if self._url and re.search(r"\.(png|jpg|gif|jpeg)$", self._url):
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(self._url) as resp:
-                        self.img = [discord.File(io.BytesIO(await resp.read()), self._url)]
-            except Exception as e:
-                logger.error(f"Failed to load image {e.__class__.__name__}")
+            async with aiohttp.ClientSession() as session:
+                async with session.get(self._url) as resp:
+                    self.img = [discord.File(io.BytesIO(await resp.read()), self._url)]
         elif self._url:
             self.text = self._url
         return self

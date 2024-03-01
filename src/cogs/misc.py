@@ -16,21 +16,32 @@ class Misc(commands.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
 
-    @commands.slash_command(name='quote', description="Displays an AI-generated quote over an inspirational image")
+    @commands.slash_command(
+        name='quote',
+        description="Displays an AI-generated quote over an inspirational image"
+    )
     async def send_quote(self, ctx: discord.ApplicationContext) -> None:
-        await ctx.respond(requests.get("https://inspirobot.me/api?generate=true").text)
+        await ctx.respond(requests.get("https://inspirobot.me/api?generate=true", timeout=10).text)
         logger.info("Generating quote", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
     @commands.slash_command(name='all_commands', description="Displays all of Nix's commands")
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
         desc = ("Note: depending on your server settings and role permissions," +
                 " some of these commands may be hidden or disabled\n\n" +
-                "".join(["\n***" + cog + "***\n" + "".join(sorted([command.mention + " : " +
-                                                                   command.description + "\n"
-                                                                   for command in self.bot.cogs[cog].walk_commands()
-                                                                   if isinstance(command, discord.SlashCommand)]))
-                        for cog in self.bot.cogs]))  # TODO combine command and groups from walk_commands
-        embed = discord.Embed(title="Help Page", description=desc, colour=Colours.PRIMARY)
+                "".join(
+                    ["\n***" + cog + "***\n" + "".join(
+                        sorted(
+                            [command.mention + " : " +
+                                command.description + "\n"
+                                for command in self.bot.cogs[cog].walk_commands()
+                                if isinstance(command, discord.SlashCommand)
+                             ]
+                        )
+                    )
+                        for cog in self.bot.cogs]
+                ))
+        embed = discord.Embed(title="Help Page", description=desc,
+                              colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
         logger.info("Displaying long help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
@@ -108,15 +119,15 @@ class Help_Nav(discord.ui.View):
     async def backward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
-        logger.debug("Back button pressed",
-                     member_id=interaction.user.id if interaction.user is not None else 0)
+        logger.debug("Back button pressed", member_id=interaction.user.id
+                     if interaction.user is not None else 0)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
     async def forward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
-        logger.debug("Next button pressed",
-                     member_id=interaction.user.id if interaction.user is not None else 0)
+        logger.debug("Next button pressed", member_id=interaction.user.id
+                     if interaction.user is not None else 0)
 
 
 def setup(bot: discord.Bot) -> None:
