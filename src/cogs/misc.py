@@ -57,16 +57,20 @@ class Misc(commands.Cog):
             logger.error("bot.user is None (Bot is offline)")
             return
 
-        if (self.bot.user.mentioned_in(msg) and msg.reference is None):
-            prompt = re.sub(
-                " @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
-            logger.info("Generating AI response",
-                        member_id=msg.author.id, channel_id=msg.channel.id)
-            try:
-                async with msg.channel.typing():
-                    await msg.reply(await Misc.nlp(prompt))
-            except:  # API for AI is unstable so we catch all here
-                await msg.reply(f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}")
+        if not (self.bot.user.mentioned_in(msg) and msg.reference is None):
+            return
+
+        prompt = re.sub(
+            " @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
+        logger.info("Generating AI response",
+                    member_id=msg.author.id, channel_id=msg.channel.id)
+        try:
+            async with msg.channel.typing():
+                await msg.reply(await Misc.nlp(prompt))
+        except Exception:  # API for AI is unstable so we catch all here
+            await msg.reply(
+                f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
+            )
 
     @staticmethod
     async def nlp(prompt: str) -> str:
@@ -86,7 +90,7 @@ class Misc(commands.Cog):
             text=prompt,
             wait=True
         )
-        return data['replies'][0]['text']
+        return typing.cast(str, data['replies'][0]['text'])
 
 
 class Help_Nav(discord.ui.View):
