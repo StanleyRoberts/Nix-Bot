@@ -54,7 +54,7 @@ class Misc(commands.Cog):
     @commands.Cog.listener("on_message")
     async def respond(self, msg: discord.Message) -> None:
         if self.bot.user is None:
-            logger.error("bot.user is None (Bot is offline)")
+            logger.error("Bot is offline")
             return
 
         if not (self.bot.user.mentioned_in(msg) and msg.reference is None):
