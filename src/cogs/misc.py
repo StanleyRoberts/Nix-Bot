@@ -67,7 +67,8 @@ class Misc(commands.Cog):
         try:
             async with msg.channel.typing():
                 await msg.reply(await Misc.nlp(prompt))
-        except Exception:  # API for AI is unstable so we catch all here
+        except Exception as err:  # API for AI is unstable so we catch all here
+            logger.error(f"AI error: {err}")
             await msg.reply(
                 f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
             )
