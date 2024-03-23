@@ -1,3 +1,5 @@
+import json
+import tls_client
 from discord.ext import commands
 import discord
 import requests
@@ -10,6 +12,64 @@ from helpers.env import CAI_TOKEN, CAI_NIX_ID
 from helpers.logger import Logger
 
 logger = Logger()
+
+# 'inplace' hotfix. remove when characterai API updated past 0.8 FIXME
+
+
+async def cai_req_fix(
+        url: str, session: tls_client.Session,
+        *, token: str = None, method: str = 'GET',
+        data: dict = None, split: bool = False,
+        neo: bool = False):
+    if neo:
+        link = f'https://neo.character.ai/{url}'
+    else:
+        link = f'{session.url}{url}'
+
+    if token == None:
+        key = session.token
+    else:
+        key = token
+
+    headers = {
+        'User-Agent': 'okhttp/5.0.0-SNAPSHOT',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': 'https://beta.character.ai/',
+        'Authorization': f'Token {key}',
+        'Origin': 'https://beta.character.ai',
+    }
+
+    if method == 'GET':
+        response = session.get(
+            link, headers=headers
+        )
+
+    elif method == 'POST':
+        response = session.post(
+            link, headers=headers, json=data
+        )
+
+    elif method == 'PUT':
+        response = session.put(
+            link, headers=headers, json=data
+        )
+
+    if split:
+        data = json.loads(response.text.split('\n')[-2])
+    else:
+        data = response.json()
+
+    if str(data).startswith("{'command': 'neo_error'"):
+        logger.error(data['comment'])
+    elif str(data).startswith("{'detail': 'Auth"):
+        logger.error('Invalid token')
+    elif str(data).startswith("{'status': 'Error"):
+        logger.error(data['status'])
+    elif str(data).startswith("{'error'"):
+        logger.error(data['error'])
+    else:
+        return data
 
 
 class Misc(commands.Cog):
@@ -85,11 +145,24 @@ class Misc(commands.Cog):
         chat = await client.chat.new_chat(CAI_NIX_ID)
         participants = chat['participants']
         nix_username = participants[1 if participants[0]['is_human'] else 0]['user']['username']
-        data = await client.chat.send_message(
-            tgt=nix_username,
-            history_id=chat['external_id'],
-            text=prompt,
-            wait=True
+        # FIXME use this code instead when cai_req_fix removed
+        #
+        # data = await client.chat.send_message(
+        #    tgt=nix_username,
+        #    history_id=chat['external_id'],
+        #    text=prompt,
+        #    wait=True
+        # )
+
+        data = await cai_req_fix(
+            'chat/streaming/', client.chat.session,
+            token=CAI_TOKEN, method='POST', split=True,
+            data={
+                'history_external_id': chat['external_id'],
+                'tgt': nix_username,
+                'text': prompt,
+                'wait': True
+            }
         )
         return typing.cast(str, data['replies'][0]['text'])
 
