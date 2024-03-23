@@ -33,7 +33,7 @@ The app requires [Python 3.10+](https://www.python.org/downloads/), and we also 
 Setup a virtual environment using: `python -m venv .venv`  
 And install the requirements (on your virtual env) with: `pip install -r requirements.txt`
 
-When running locally/testing Nix reads environment variables from a `.env` file which establishes private keys/tokens to be used within the app. If you are not one of the original authors for this project you will have to create this yourself with your own keys/tokens as required (please examine the `src/helpers/env.py` file to identify the variables that must be set). For live deployment the environment variables must be set on the hosting service/machine you use. The testing.postgres module needs to be installed using the following command: `pip install git+https://github.com/tk0miya/testing.postgresql.git`
+When running locally/testing Nix reads environment variables from a `.env` file which establishes private keys/tokens to be used within the app. If you are not one of the original authors for this project you will have to create this yourself with your own keys/tokens as required (please examine the `src/helpers/env.py` file to identify the variables that must be set). For live deployment the environment variables must be set on the hosting service/machine you use.
 
 Running the project locally (i.e. not on Fly.io) runs a testing build, with a fresh testing database however you will need [PostgreSQL](https://www.postgresql.org/download/) installed on your machine and on your `PATH`.
 
