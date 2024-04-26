@@ -94,7 +94,7 @@ class Facts(commands.Cog):
         Returns:
             string: Random fact or None if there was an error getting a fact
         """
-        api_url = 'https://api.api-ninjas.com/v1/facts?limit=1'
+        api_url = 'https://api.api-ninjas.com/v1/facts'
         if NINJA_API_KEY is None:
             logger.error("NINJA_API_KEY variable not available")
             return None
@@ -103,8 +103,7 @@ class Facts(commands.Cog):
         if response.status_code == requests.codes.ok:
             return str(cjson[0]["fact"])
         else:
-            err = f"Fact Error {response.status_code}: {cjson['message']}"
-            logger.error(err)
+            logger.error(f"Fact Error {response.status_code}: {cjson}")
             return None
 
 
