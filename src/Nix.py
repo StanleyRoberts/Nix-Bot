@@ -99,7 +99,7 @@ def main() -> None:
 
     opts, _ = getopt.getopt(sys.argv[1:], "iel:", ["logger-level=", "test-deps", "test_env"])
     for opt, arg in opts:
-        if opt in ["-l", "-logger-level"]:
+        if opt in ["-l", "--logger-level"]:
             priority = Priority[arg.upper()].name
         if opt in ["-i", "--test-deps"]:
             test_req = True
@@ -131,8 +131,9 @@ def main() -> None:
     for cog in cogs:
         bot.load_extension(f'cogs.{cog}')
 
-    if test_req:
-        exit(0)
+    if __debug__:
+        if test_req:
+            exit(0)
 
     try:
         bot.run(TOKEN)
