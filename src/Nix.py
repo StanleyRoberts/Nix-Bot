@@ -105,14 +105,16 @@ def main() -> None:
             test_req = True
         if opt in ["-e", "--test-env"]:
             test_env = True
+            
+    if priority:
+        logger.set_priority(priority)
+    else:
+        logger.info("No logging level set, defaulting to all")
 
     if __debug__:
         db.populate()
+        logger.debug_mode = True
         bot.load_extension("cogs.debug")
-        if priority:
-            logger.set_priority(priority)
-        else:
-            logger.info("No logging level set, defaulting to all")
 
         if test_env:
             import helpers.env as env
@@ -123,9 +125,6 @@ def main() -> None:
                     logger.error(f"Missing FLY.IO environment variable: {var}")
                     exit_code = 1
             exit(exit_code)
-    else:
-        logger.debug_mode = False
-        logger.set_priority("WARNING")
 
     cogs = [cog[: -3] for cog in listdir('./src/cogs')
             if cog[-3:] == ".py" and (cog not in ["__init__.py", "debug.py"])]

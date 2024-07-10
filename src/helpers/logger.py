@@ -24,7 +24,7 @@ class Logger(object):
         if cls._instance is None:
             cls._instance = super(Logger, cls).__new__(cls)
             cls.print_level = 0
-            cls.debug_mode = True
+            cls.debug_mode = False
             cls.command_bot: discord.Bot | None = None
         return cls._instance
 
