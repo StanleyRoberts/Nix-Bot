@@ -105,7 +105,7 @@ def main() -> None:
             test_req = True
         if opt in ["-e", "--test-env"]:
             test_env = True
-            
+
     if priority:
         logger.set_priority(priority)
     else:
