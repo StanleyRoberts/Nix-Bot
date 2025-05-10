@@ -33,9 +33,11 @@ class Reddit(commands.Cog):
         ctx: discord.ApplicationContext,
         subreddit: str,
         time: str
+        
     ) -> None:
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
-        reddit = RedditInterface(subreddit, time)
+        is_nsfw= ctx.channel.is_nsfw()
+        reddit = RedditInterface(subreddit, is_nsfw, time)
         post = await reddit.get_post()
         await ctx.interaction.response.send_message(
             content=post.text,

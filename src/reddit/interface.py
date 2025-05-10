@@ -22,6 +22,7 @@ class Post:
     """
 
     def __init__(self, text: str, url: str = "") -> None:
+        
         self.text = text
         self._url = url
         self.img: list[discord.File] = []
@@ -33,7 +34,7 @@ class Post:
                 async with session.get(self._url) as resp:
                     self.img = [discord.File(io.BytesIO(await resp.read()), self._url)]
         elif self._url:
-            self.text = self._url
+            self.text += self._url
         return self
 
 
@@ -46,10 +47,11 @@ class RedditInterface:
 
     """
 
-    def __init__(self, sub: str, time: str = "day") -> None:
+    def __init__(self, sub: str, is_nsfw: bool, time: str = "day") -> None:
         self.cache: list[praw.models.reddit.submission.Submission] = []
         self._nsub = sub
         self.time = time
+        self.is_nsfw = is_nsfw
         self.sub: str | None = None
         self.error_response: str | None = None
 
@@ -103,27 +105,37 @@ class RedditInterface:
         if not self.sub == subreddit:
             try:
                 async with praw.Reddit(client_id=CLIENT_ID,
-                                       client_secret=SECRET_KEY,
-                                       user_agent=USER_AGENT) as instance:
+                                    client_secret=SECRET_KEY,
+                                    user_agent=USER_AGENT) as instance:
+                    temp_sub = await instance.subreddit(subreddit)
+                    await temp_sub.load()
+
+                    
+                    if temp_sub.over18 and not self.is_nsfw:
+                        logger.warning(f"Subreddit {subreddit} is marked NSFW")
+                        self.error_response = f"{Emotes.GOON} Subreddit '{subreddit}' is marked NSFW, This server is not marked NSFW{Emotes.GOON}"
+                        return
+
                     self.sub = subreddit
-                    self.cache = [post async for post in (await instance.subreddit(self.sub)).top(
-                        time_filter=self.time, limit=num)]
+                    self.cache = [post async for post in (await instance.subreddit(subreddit)).top(
+                        time_filter=self.time, limit=num) if self.is_nsfw or not post.over_18]
                     logger.info(f"The subreddit {subreddit} was set for reddit.interface")
-                    self.error_response = None
+                self.error_response = None
+
             except prawcore.exceptions.Redirect:
                 logger.warning(f"Requested subreddit {subreddit} was not found")
-                self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' not found"
+                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit}' not found"
             except prawcore.exceptions.NotFound:
                 logger.warning(f"Requested subreddit {subreddit} is banned")
-                self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' banned"
+                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit}' banned"
             except prawcore.exceptions.Forbidden:
                 logger.warning(f"Requested subreddit {subreddit} is set to private")
-                self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' private"
+                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit}' private"
             except prawcore.AsyncPrawcoreException as e:
                 logger.error(f"Failure getting subreddit <{subreddit}>: {e.__class__.__name__}")
                 self.error_response = f"{Emotes.WTF} Unknown error, please try again later"
 
-            random.shuffle(self.cache)
+        random.shuffle(self.cache)
 
     async def get_post(self) -> Post:
         """Gets a random reddit post from the cache
