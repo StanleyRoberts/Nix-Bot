@@ -33,10 +33,10 @@ class Reddit(commands.Cog):
         ctx: discord.ApplicationContext,
         subreddit: str,
         time: str
-        
+
     ) -> None:
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
-        is_nsfw= ctx.channel.is_nsfw()
+        is_nsfw = ctx.channel.is_nsfw()  
         reddit = RedditInterface(subreddit, is_nsfw, time)
         post = await reddit.get_post()
         await ctx.interaction.response.send_message(
@@ -138,8 +138,8 @@ class Reddit(commands.Cog):
             logger.info(f"Attempting to send reddit daily post <subreddit: {entry[1]}>",
                         guild_id=entry[0], channel_id=entry[2])
             try:
-                post = await RedditInterface.single_post(entry[1], "day")
                 channel = await self.bot.fetch_channel(entry[2])
+                post = await RedditInterface.single_post(entry[1], channel.is_nsfw, "day")
                 if not isinstance(channel, discord.abc.Messageable):
                     logger.error("reddit daily post channel is not sendable")
                     continue

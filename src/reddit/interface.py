@@ -22,7 +22,7 @@ class Post:
     """
 
     def __init__(self, text: str, url: str = "") -> None:
-        
+
         self.text = text
         self._url = url
         self.img: list[discord.File] = []
@@ -76,7 +76,7 @@ class RedditInterface:
             return False
 
     @staticmethod
-    async def single_post(subreddit: str, time: str) -> Post:
+    async def single_post(subreddit: str, is_nsfw, time: str) -> Post:
         """Returns a single post from a subreddit
 
         Args:
@@ -86,7 +86,7 @@ class RedditInterface:
         Returns:
             Post: Top post found
         """
-        reddit = RedditInterface(subreddit, time)
+        reddit = RedditInterface(subreddit, is_nsfw, time)
         post = await reddit.get_post()
         return post
 
