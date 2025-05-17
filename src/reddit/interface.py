@@ -33,7 +33,7 @@ class Post:
                 async with session.get(self._url) as resp:
                     self.img = [discord.File(io.BytesIO(await resp.read()), self._url)]
         elif self._url:
-            self.text = self._url
+            self.text += self._url
         return self
 
 
@@ -46,10 +46,11 @@ class RedditInterface:
 
     """
 
-    def __init__(self, sub: str, time: str = "day") -> None:
+    def __init__(self, sub: str, is_nsfw: bool = False, time: str = "day") -> None:
         self.cache: list[praw.models.reddit.submission.Submission] = []
         self._nsub = sub
         self.time = time
+        self.is_nsfw = is_nsfw
         self.sub: str | None = None
         self.error_response: str | None = None
 
@@ -74,7 +75,7 @@ class RedditInterface:
             return False
 
     @staticmethod
-    async def single_post(subreddit: str, time: str) -> Post:
+    async def single_post(subreddit: str, is_nsfw: bool, time: str) -> Post:
         """Returns a single post from a subreddit
 
         Args:
@@ -84,11 +85,11 @@ class RedditInterface:
         Returns:
             Post: Top post found
         """
-        reddit = RedditInterface(subreddit, time)
+        reddit = RedditInterface(subreddit, is_nsfw, time)
         post = await reddit.get_post()
         return post
 
-    async def set_subreddit(self, subreddit: str, num: int = 15) -> None:
+    async def set_subreddit(self, subreddit_name: str, num: int = 15) -> None:
         """Sets interface to point to new subreddit
 
         Using this also resets the number of cached reddit posts.
@@ -100,27 +101,41 @@ class RedditInterface:
         Returns:
             Post: _description_
         """
-        if not self.sub == subreddit:
+        if not self.sub == subreddit_name:
             try:
                 async with praw.Reddit(client_id=CLIENT_ID,
                                        client_secret=SECRET_KEY,
                                        user_agent=USER_AGENT) as instance:
-                    self.sub = subreddit
-                    self.cache = [post async for post in (await instance.subreddit(self.sub)).top(
-                        time_filter=self.time, limit=num)]
-                    logger.info(f"The subreddit {subreddit} was set for reddit.interface")
+                    self.sub = subreddit_name
+                    subreddit = await instance.subreddit(self.sub)
+                    await subreddit.load()
+
+                    if subreddit.over18 and not self.is_nsfw:
+                        logger.warning(f"Subreddit {subreddit_name} is marked NSFW")
+                        self.error_response = (
+                            f"{Emotes.GOON} Subreddit '{subreddit_name}' is marked NSFW. "
+                            f"This channel is not marked NSFW {Emotes.GOON}"
+                        )
+                        return
+
+                    self.cache = [post async for post in subreddit.top(
+                        time_filter=self.time, limit=num) if self.is_nsfw or not post.over_18]
+                    logger.info(f"The subreddit {subreddit_name} was set for reddit.interface")
                     self.error_response = None
+
             except prawcore.exceptions.Redirect:
-                logger.warning(f"Requested subreddit {subreddit} was not found")
-                self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' not found"
+                logger.warning(f"Requested subreddit {subreddit_name} was not found")
+                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit_name}' not found"
             except prawcore.exceptions.NotFound:
-                logger.warning(f"Requested subreddit {subreddit} is banned")
-                self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' banned"
+                logger.warning(f"Requested subreddit {subreddit_name} is banned")
+                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit_name}' banned"
             except prawcore.exceptions.Forbidden:
-                logger.warning(f"Requested subreddit {subreddit} is set to private")
-                self.error_response = f"{Emotes.WTF} Subreddit \'{subreddit}\' private"
+                logger.warning(f"Requested subreddit {subreddit_name} is set to private")
+                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit_name}' private"
             except prawcore.AsyncPrawcoreException as e:
-                logger.error(f"Failure getting subreddit <{subreddit}>: {e.__class__.__name__}")
+                logger.error(
+                    f"Failure getting subreddit <{subreddit_name}>: {e.__class__.__name__}"
+                )
                 self.error_response = f"{Emotes.WTF} Unknown error, please try again later"
 
             random.shuffle(self.cache)
