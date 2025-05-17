@@ -22,7 +22,6 @@ class Post:
     """
 
     def __init__(self, text: str, url: str = "") -> None:
-
         self.text = text
         self._url = url
         self.img: list[discord.File] = []
@@ -90,7 +89,7 @@ class RedditInterface:
         post = await reddit.get_post()
         return post
 
-    async def set_subreddit(self, subreddit: str, num: int = 15) -> None:
+    async def set_subreddit(self, subreddit_name: str, num: int = 15) -> None:
         """Sets interface to point to new subreddit
 
         Using this also resets the number of cached reddit posts.
@@ -102,39 +101,41 @@ class RedditInterface:
         Returns:
             Post: _description_
         """
-        if not self.sub == subreddit:
+        if not self.sub == subreddit_name:
             try:
                 async with praw.Reddit(client_id=CLIENT_ID,
                                        client_secret=SECRET_KEY,
                                        user_agent=USER_AGENT) as instance:
-                    self.sub = subreddit
-                    temp_sub = await instance.subreddit(self.sub)
-                    await temp_sub.load()
+                    self.sub = subreddit_name
+                    subreddit = await instance.subreddit(self.sub)
+                    await subreddit.load()
 
-                    if temp_sub.over18 and not self.is_nsfw:
-                        logger.warning(f"Subreddit {subreddit} is marked NSFW")
+                    if subreddit.over18 and not self.is_nsfw:
+                        logger.warning(f"Subreddit {subreddit_name} is marked NSFW")
                         self.error_response = (
-                            f"{Emotes.GOON} Subreddit '{subreddit}' is marked NSFW,"
-                            f"This server is not marked NSFW{Emotes.GOON}"
+                            f"{Emotes.GOON} Subreddit '{subreddit_name}' is marked NSFW. "
+                            f"This channel is not marked NSFW {Emotes.GOON}"
                         )
                         return
 
-                    self.cache = [post async for post in temp_sub.top(
+                    self.cache = [post async for post in subreddit.top(
                         time_filter=self.time, limit=num) if self.is_nsfw or not post.over_18]
-                    logger.info(f"The subreddit {subreddit} was set for reddit.interface")
+                    logger.info(f"The subreddit {subreddit_name} was set for reddit.interface")
                     self.error_response = None
 
             except prawcore.exceptions.Redirect:
-                logger.warning(f"Requested subreddit {subreddit} was not found")
-                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit}' not found"
+                logger.warning(f"Requested subreddit {subreddit_name} was not found")
+                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit_name}' not found"
             except prawcore.exceptions.NotFound:
-                logger.warning(f"Requested subreddit {subreddit} is banned")
-                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit}' banned"
+                logger.warning(f"Requested subreddit {subreddit_name} is banned")
+                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit_name}' banned"
             except prawcore.exceptions.Forbidden:
-                logger.warning(f"Requested subreddit {subreddit} is set to private")
-                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit}' private"
+                logger.warning(f"Requested subreddit {subreddit_name} is set to private")
+                self.error_response = f"{Emotes.WTF} Subreddit '{subreddit_name}' private"
             except prawcore.AsyncPrawcoreException as e:
-                logger.error(f"Failure getting subreddit <{subreddit}>: {e.__class__.__name__}")
+                logger.error(
+                    f"Failure getting subreddit <{subreddit_name}>: {e.__class__.__name__}"
+                )
                 self.error_response = f"{Emotes.WTF} Unknown error, please try again later"
 
             random.shuffle(self.cache)

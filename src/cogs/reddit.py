@@ -33,7 +33,6 @@ class Reddit(commands.Cog):
         ctx: discord.ApplicationContext,
         subreddit: str,
         time: str
-
     ) -> None:
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
         is_nsfw = ctx.channel.is_nsfw()
