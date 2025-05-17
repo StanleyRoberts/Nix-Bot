@@ -47,7 +47,7 @@ class RedditInterface:
 
     """
 
-    def __init__(self, sub: str, is_nsfw: bool, time: str = "day") -> None:
+    def __init__(self, sub: str, is_nsfw: bool = False, time: str = "day") -> None:
         self.cache: list[praw.models.reddit.submission.Submission] = []
         self._nsub = sub
         self.time = time
@@ -76,7 +76,7 @@ class RedditInterface:
             return False
 
     @staticmethod
-    async def single_post(subreddit: str, is_nsfw, time: str) -> Post:
+    async def single_post(subreddit: str, is_nsfw: bool, time: str) -> Post:
         """Returns a single post from a subreddit
 
         Args:
@@ -107,7 +107,8 @@ class RedditInterface:
                 async with praw.Reddit(client_id=CLIENT_ID,
                                     client_secret=SECRET_KEY,
                                     user_agent=USER_AGENT) as instance:
-                    temp_sub = await instance.subreddit(subreddit)
+                    self.sub = subreddit
+                    temp_sub = await instance.subreddit(self.sub)
                     await temp_sub.load()
 
                     
@@ -116,11 +117,10 @@ class RedditInterface:
                         self.error_response = f"{Emotes.GOON} Subreddit '{subreddit}' is marked NSFW, This server is not marked NSFW{Emotes.GOON}"
                         return
 
-                    self.sub = subreddit
-                    self.cache = [post async for post in (await instance.subreddit(subreddit)).top(
+                    self.cache = [post async for post in temp_sub.top(
                         time_filter=self.time, limit=num) if self.is_nsfw or not post.over_18]
                     logger.info(f"The subreddit {subreddit} was set for reddit.interface")
-                self.error_response = None
+                    self.error_response = None
 
             except prawcore.exceptions.Redirect:
                 logger.warning(f"Requested subreddit {subreddit} was not found")
@@ -135,7 +135,7 @@ class RedditInterface:
                 logger.error(f"Failure getting subreddit <{subreddit}>: {e.__class__.__name__}")
                 self.error_response = f"{Emotes.WTF} Unknown error, please try again later"
 
-        random.shuffle(self.cache)
+            random.shuffle(self.cache)
 
     async def get_post(self) -> Post:
         """Gets a random reddit post from the cache

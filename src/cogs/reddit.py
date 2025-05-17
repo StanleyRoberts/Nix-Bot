@@ -139,7 +139,10 @@ class Reddit(commands.Cog):
                         guild_id=entry[0], channel_id=entry[2])
             try:
                 channel = await self.bot.fetch_channel(entry[2])
-                post = await RedditInterface.single_post(entry[1], channel.is_nsfw, "day")
+                is_nsfw = False
+                if isinstance(channel, discord.TextChannel): 
+                    is_nsfw = channel.is_nsfw()
+                post = await RedditInterface.single_post(entry[1], is_nsfw, "day")
                 if not isinstance(channel, discord.abc.Messageable):
                     logger.error("reddit daily post channel is not sendable")
                     continue
