@@ -36,7 +36,7 @@ class Reddit(commands.Cog):
 
     ) -> None:
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
-        is_nsfw = ctx.channel.is_nsfw()  
+        is_nsfw = ctx.channel.is_nsfw()
         reddit = RedditInterface(subreddit, is_nsfw, time)
         post = await reddit.get_post()
         await ctx.interaction.response.send_message(
@@ -140,7 +140,7 @@ class Reddit(commands.Cog):
             try:
                 channel = await self.bot.fetch_channel(entry[2])
                 is_nsfw = False
-                if isinstance(channel, discord.TextChannel): 
+                if isinstance(channel, discord.TextChannel):
                     is_nsfw = channel.is_nsfw()
                 post = await RedditInterface.single_post(entry[1], is_nsfw, "day")
                 if not isinstance(channel, discord.abc.Messageable):

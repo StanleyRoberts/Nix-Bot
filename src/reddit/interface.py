@@ -105,16 +105,18 @@ class RedditInterface:
         if not self.sub == subreddit:
             try:
                 async with praw.Reddit(client_id=CLIENT_ID,
-                                    client_secret=SECRET_KEY,
-                                    user_agent=USER_AGENT) as instance:
+                                       client_secret=SECRET_KEY,
+                                       user_agent=USER_AGENT) as instance:
                     self.sub = subreddit
                     temp_sub = await instance.subreddit(self.sub)
                     await temp_sub.load()
 
-                    
                     if temp_sub.over18 and not self.is_nsfw:
                         logger.warning(f"Subreddit {subreddit} is marked NSFW")
-                        self.error_response = f"{Emotes.GOON} Subreddit '{subreddit}' is marked NSFW, This server is not marked NSFW{Emotes.GOON}"
+                        self.error_response = (
+                            f"{Emotes.GOON} Subreddit '{subreddit}' is marked NSFW,"
+                            f"This server is not marked NSFW{Emotes.GOON}"
+                        )
                         return
 
                     self.cache = [post async for post in temp_sub.top(
