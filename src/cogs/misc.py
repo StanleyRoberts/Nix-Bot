@@ -47,7 +47,7 @@ class Misc(commands.Cog):
 
     @commands.slash_command(name='help', description="Display the help page for Nix")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
-        view = Help_Nav(self.bot.cogs)
+        view = Help_Nav(self.bot.cogs, self.bot)
         await ctx.interaction.response.send_message(embed=view.build_embed(), view=view)
         logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id)
 
@@ -154,10 +154,11 @@ Please continue this conversation. The users newest message is: {msg_arr[len(msg
 
 
 class Help_Nav(discord.ui.View):
-    def __init__(self, cogs: typing.Mapping[str, discord.Cog]) -> None:
+    def __init__(self, cogs: typing.Mapping[str, discord.Cog], bot: discord.Bot) -> None:
         super().__init__()
+        self.bot = bot
         self.index = 0
-        self.pages = ["Front"] + [cogs[cog] for cog in cogs]
+        self.pages = ["Front"] + [cogs[cog] for cog in cogs if cog != "Debug"]
 
     def build_embed(self) -> discord.Embed:
         self.index = self.index % len(self.pages)
@@ -176,6 +177,10 @@ class Help_Nav(discord.ui.View):
                               .join(sorted([command.mention + " : " + command.description + "\n"
                                             for command in page.walk_commands()
                                             if isinstance(command, discord.SlashCommand)])))
+            if page.qualified_name == "Misc" and self.bot.user is not None:
+                desc = desc + \
+                    f"{self.bot.user.mention} : Mentioning Nix in a message or replying" +\
+                    " to Nix will cause Nix to respond!"
 
         return discord.Embed(title="Help Page", description=desc, colour=Colours.PRIMARY)
 
