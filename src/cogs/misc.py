@@ -53,20 +53,28 @@ class Misc(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def respond(self, msg: discord.Message) -> None:
+        """
+        Prints out an AI generated response to the message if it mentions Nix
+
+        Args:
+            msg (discord.Message): Message that triggered event
+        """
         if self.bot.user is None:
             logger.error("Bot is offline")
             return
 
-        if not (self.bot.user.mentioned_in(msg) and msg.reference is None):
+        if not self.bot.user.mentioned_in(msg):
             return
 
-        prompt = re.sub(
-            " @", " ", re.sub("@" + self.bot.user.name, "", msg.clean_content))
         logger.info("Generating AI response",
                     member_id=msg.author.id, channel_id=msg.channel.id)
         try:
             async with msg.channel.typing():
-                await msg.reply(await Misc.nlp(prompt))
+                await msg.reply(await Misc.ai_resp(
+                    Misc.format_chain(
+                        list(reversed(await Misc.get_history(msg))), self.bot.user.name
+                    )
+                ))
         except Exception as err:  # API for AI is unstable so we catch all here
             logger.error(f"AI error: {err}")
             await msg.reply(
@@ -74,13 +82,64 @@ class Misc(commands.Cog):
             )
 
     @staticmethod
-    async def nlp(prompt: str) -> str:
+    async def get_history(
+            msg: discord.Message,
+            chain: list[str] = []) -> list[str]:
         """
-        Prints out an AI generated response to the message if it mentions Nix
+        Get a messages reply-chain history
 
         Args:
-            msg (discord.Message): Message that triggered event
+            msg (discord.Message): Message to get reply-chain of
+
+        Returns:
+            string: List of each messages content in the reply-chain,
+                chronologically with the first message being the newest
         """
+        chain.append(msg.clean_content)
+        if msg.reference is None or msg.reference.message_id is None:
+            return chain
+        else:
+            return await Misc.get_history(
+                await msg.channel.fetch_message(msg.reference.message_id), chain
+            )
+
+    @staticmethod
+    def format_chain(msg_arr: list[str], bot_name: str) -> str:
+        """
+        Format a message chain for input into AI
+
+        Args:
+            msg_arr (list[str]): List of each messages content in the chain,
+                in chronological order with the first item being the oldest message
+
+        Returns:
+            str: Formatted message for input into AI
+        """
+        logger.debug(f"chain: {msg_arr}")
+        msg_arr = list(map(lambda x: re.sub(" @", " ", re.sub("@" + bot_name, "", x)),
+                           msg_arr))
+        if len(msg_arr) > 1:
+            idents = ["[Nix]" if i % 2 else "[User]" for i in range(0, len(msg_arr))]
+            history = "\n".join([i + ": " + j for (i, j) in zip(idents, msg_arr)])
+            return f"""The following text is your message history with this user: `
+{history}`
+
+Please continue this conversation. The users newest message is: {msg_arr[len(msg_arr)-1]}"""
+        else:
+            return msg_arr[0]
+
+    @staticmethod
+    async def ai_resp(prompt: str) -> str:
+        """
+        Prints out an AI generated response to a message
+
+        Args:
+            prompt (str): Message text to reply to
+
+        Returns:
+            str: Response from the Nix AI
+        """
+        logger.debug(f"prompt: {prompt}")
         client = PyCAI(CAI_TOKEN)
         chat = await client.chat.new_chat(CAI_NIX_ID)
         participants = chat['participants']
