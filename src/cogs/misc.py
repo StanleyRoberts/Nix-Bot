@@ -68,13 +68,12 @@ class Misc(commands.Cog):
 
         logger.info("Generating AI response",
                     member_id=msg.author.id, channel_id=msg.channel.id)
+
         try:
             async with msg.channel.typing():
-                await msg.reply(await Misc.ai_resp(
-                    Misc.format_chain(
-                        list(reversed(await Misc.get_history(msg))), self.bot.user.name
-                    )
-                ))
+                await msg.reply(await Misc.ai_resp(Misc.format_chain(
+                    list(reversed(await Misc.get_history(msg))), self.bot.user.name
+                )))
         except Exception as err:  # API for AI is unstable so we catch all here
             logger.error(f"AI error: {err}")
             await msg.reply(
@@ -84,7 +83,7 @@ class Misc(commands.Cog):
     @staticmethod
     async def get_history(
             msg: discord.Message,
-            chain: list[str] = []) -> list[str]:
+            chain: list[tuple[str, str]] | None = None) -> list[tuple[str, str]]:
         """
         Get a messages reply-chain history
 
@@ -92,10 +91,13 @@ class Misc(commands.Cog):
             msg (discord.Message): Message to get reply-chain of
 
         Returns:
-            string: List of each messages content in the reply-chain,
-                chronologically with the first message being the newest
+            string:List corresponding to each element in the message chain
+                Tuple corresponds to (users_name, message content). Chronological order with
+                first item being the newest message.
         """
-        chain.append(msg.clean_content)
+        if chain is None:
+            chain = []
+        chain.append((msg.author.display_name, msg.clean_content))
         if msg.reference is None or msg.reference.message_id is None:
             return chain
         else:
@@ -104,29 +106,28 @@ class Misc(commands.Cog):
             )
 
     @staticmethod
-    def format_chain(msg_arr: list[str], bot_name: str) -> str:
+    def format_chain(msg_arr: list[tuple[str, str]], bot_name: str) -> str:
         """
         Format a message chain for input into AI
 
         Args:
-            msg_arr (list[str]): List of each messages content in the chain,
-                in chronological order with the first item being the oldest message
+            msg_arr (list[tuple[str, str]]): List corresponding to each element in the message chain
+                Tuple corresponds to (users_name, message content). Chronological order with
+                first item being the oldest message.
 
         Returns:
             str: Formatted message for input into AI
         """
-        logger.debug(f"chain: {msg_arr}")
-        msg_arr = list(map(lambda x: re.sub(" @", " ", re.sub("@" + bot_name, "", x)),
+        msg_arr = list(map(lambda x: (re.sub(" @", " ", re.sub("@" + bot_name, "", x[0])), x[1]),
                            msg_arr))
         if len(msg_arr) > 1:
-            idents = ["[Nix]" if i % 2 else "[User]" for i in range(0, len(msg_arr))]
-            history = "\n".join([i + ": " + j for (i, j) in zip(idents, msg_arr)])
+            history = "\n".join(["[" + user + "]: " + content for (user, content) in msg_arr])
             return f"""The following text is your message history with this user: `
 {history}`
 
-Please continue this conversation. The users newest message is: {msg_arr[len(msg_arr)-1]}"""
+Please continue this conversation."""
         else:
-            return msg_arr[0]
+            return re.sub(" @", " ", re.sub("@" + bot_name, "", msg_arr[0][1]))
 
     @staticmethod
     async def ai_resp(prompt: str) -> str:
@@ -178,8 +179,7 @@ class Help_Nav(discord.ui.View):
                                             for command in page.walk_commands()
                                             if isinstance(command, discord.SlashCommand)])))
             if page.qualified_name == "Misc" and self.bot.user is not None:
-                desc = desc + \
-                    f"{self.bot.user.mention} : Mentioning Nix in a message or replying" +\
+                desc += f"{self.bot.user.mention} : Mentioning Nix in a message or replying" +\
                     " to Nix will cause Nix to respond!"
 
         return discord.Embed(title="Help Page", description=desc, colour=Colours.PRIMARY)
