@@ -164,7 +164,7 @@ def populate() -> None:
     cur.execute(
         "CREATE TABLE Guilds(ID BIGINT, CountingChannelID BIGINT, BirthdayChannelID BIGINT, " +
         "FactChannelID BIGINT, CurrentCount INTEGER, LastCounterID BIGINT, " +
-        "HighScoreCounting INTEGER, FailRoleID BIGINT, PRIMARY KEY(ID));"
+        "HighScoreCounting INTEGER, FailRoleID BIGINT, NicknameChangeAllowed BOOLEAN DEFAULT False, PRIMARY KEY(ID));"
     )
 
     cur.execute("CREATE TABLE Birthdays(GuildID BIGINT, UserID BIGINT, Birthdate TEXT, " +
