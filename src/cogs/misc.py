@@ -73,11 +73,14 @@ class Misc(commands.Cog):
         logger.info("Generating AI response",
                     member_id=msg.author.id, channel_id=msg.channel.id)
 
-        nix_background = f"""You are Nix. Nix is a phoenix made of flames, he is friendly, helpful, and kind.
-            He has many mythological friends and lives inside a volcano.
-            Nix is androgynous and has no gender.
-            Nix is a member of a Discord server called {msg.guild.name} which contains other humans and Nix.
-            Nix is talking to a server member called {msg.author.name}"""
+        nix_background = (
+            f"You are Nix." +
+            "Nix is a phoenix made of flames, he is friendly, helpful, and kind." +
+            " He has many mythological friends and lives inside a volcano." +
+            " Nix is androgynous and has no gender." +
+            " Nix is a member of a Discord server called {msg.guild.name}" +
+            " which contains other humans and Nix." +
+            " Nix is talking to a server member called {msg.author.name}")
 
         async with msg.channel.typing():
             await msg.reply(await Misc.ai_resp(Misc.format_chain(
@@ -134,7 +137,8 @@ class Misc(commands.Cog):
         Args:
             messages (list[tuple(bool, str)]):
                 List of past messages with flag set if the message was from the user.
-                The first element in the list is the first message and the last message is the message to reply to.
+                The first element in the list is the first message and
+                the last message is the message to reply to.
             background (str): The background to use for Nix
 
         Returns:
@@ -157,7 +161,10 @@ class Misc(commands.Cog):
                 )).text
             except Exception as err:
                 logger.error(f"AI error: {err}")
-            return response or f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
+            return (
+                response or
+                f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
+            )
 
 
 class Help_Nav(discord.ui.View):
