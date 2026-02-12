@@ -75,12 +75,12 @@ class Misc(commands.Cog):
 
         nix_background = (
             f"You are Nix." +
-            "Nix is a phoenix made of flames, he is friendly, helpful, and kind." +
-            " He has many mythological friends and lives inside a volcano." +
-            " Nix is androgynous and has no gender." +
-            " Nix is a member of a Discord server called {msg.guild.name}" +
-            " which contains other humans and Nix." +
-            " Nix is talking to a server member called {msg.author.name}")
+            f"Nix is a phoenix made of flames, he is friendly, helpful, and kind." +
+            f" He has many mythological friends and lives inside a volcano." +
+            f" Nix is androgynous and has no gender." +
+            f" Nix is a member of a Discord server called {msg.guild.name}" +
+            f" which contains other humans and Nix." +
+            f" Nix is talking to a server member called {msg.author.name}")
 
         async with msg.channel.typing():
             await msg.reply(await Misc.ai_resp(Misc.format_chain(
@@ -145,6 +145,7 @@ class Misc(commands.Cog):
             str: Response from the Nix AI
         """
         logger.debug(messages)
+        response = None
         async with genai.Client().aio as client:
             try:
                 response = (await client.models.generate_content(
