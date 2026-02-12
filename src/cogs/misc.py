@@ -3,7 +3,7 @@ import discord
 import requests
 import typing
 import re
-from characterai import PyAsyncCAI as PyCAI  # type: ignore[import]
+from google import genai
 
 from helpers.style import Colours, Emotes
 from helpers.env import CAI_TOKEN, CAI_NIX_ID
@@ -63,22 +63,26 @@ class Misc(commands.Cog):
             logger.error("Bot is offline")
             return
 
+        if msg.guild is None:
+            logger.error("Message not sent in server")
+            return
+
         if not self.bot.user.mentioned_in(msg):
             return
 
         logger.info("Generating AI response",
                     member_id=msg.author.id, channel_id=msg.channel.id)
 
-        try:
-            async with msg.channel.typing():
-                await msg.reply(await Misc.ai_resp(Misc.format_chain(
-                    list(reversed(await Misc.get_history(msg))), self.bot.user.name
-                )))
-        except Exception as err:  # API for AI is unstable so we catch all here
-            logger.error(f"AI error: {err}")
-            await msg.reply(
-                f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
-            )
+        nix_background = f"""You are Nix. Nix is a phoenix made of flames, he is friendly, helpful, and kind.
+            He has many mythological friends and lives inside a volcano.
+            Nix is androgynous and has no gender.
+            Nix is a member of a Discord server called {msg.guild.name} which contains other humans and Nix.
+            Nix is talking to a server member called {msg.author.name}"""
+
+        async with msg.channel.typing():
+            await msg.reply(await Misc.ai_resp(Misc.format_chain(
+                list(reversed(await Misc.get_history(msg))), self.bot.user.name
+            ), nix_background))
 
     @staticmethod
     async def get_history(
@@ -106,7 +110,7 @@ class Misc(commands.Cog):
             )
 
     @staticmethod
-    def format_chain(msg_arr: list[tuple[str, str]], bot_name: str) -> str:
+    def format_chain(msg_arr: list[tuple[str, str]], bot_name: str) -> list[tuple[bool, str]]:
         """
         Format a message chain for input into AI
 
@@ -116,42 +120,44 @@ class Misc(commands.Cog):
                 first item being the oldest message.
 
         Returns:
-            str: Formatted message for input into AI
+            list[tuple[bool, str]]: Formatted message for input into AI
         """
-        msg_arr = list(map(lambda x: (re.sub(" @", " ", re.sub("@" + bot_name, "", x[0])), x[1]),
+        msg_arr = list(map(lambda x: (x[0], re.sub(" @", " ", re.sub("@" + bot_name, "", x[1]))),
                            msg_arr))
-        if len(msg_arr) > 1:
-            history = "\n".join(["[" + user + "]: " + content for (user, content) in msg_arr])
-            return f"""The following text is your message history with this user: `
-{history}`
-
-Please continue this conversation."""
-        else:
-            return re.sub(" @", " ", re.sub("@" + bot_name, "", msg_arr[0][1]))
+        return [(message[0] == bot_name, message[1]) for message in msg_arr]
 
     @staticmethod
-    async def ai_resp(prompt: str) -> str:
+    async def ai_resp(messages: list[tuple[bool, str]], background: str) -> str:
         """
         Prints out an AI generated response to a message
 
         Args:
-            prompt (str): Message text to reply to
+            messages (list[tuple(bool, str)]):
+                List of past messages with flag set if the message was from the user.
+                The first element in the list is the first message and the last message is the message to reply to.
+            background (str): The background to use for Nix
 
         Returns:
             str: Response from the Nix AI
         """
-        logger.debug(f"prompt: {prompt}")
-        client = PyCAI(CAI_TOKEN)
-        chat = await client.chat.new_chat(CAI_NIX_ID)
-        participants = chat['participants']
-        nix_username = participants[1 if participants[0]['is_human'] else 0]['user']['username']
-        data = await client.chat.send_message(
-            tgt=nix_username,
-            history_id=chat['external_id'],
-            text=prompt,
-            wait=True
-        )
-        return typing.cast(str, data['replies'][0]['text'])
+        logger.debug(messages)
+        async with genai.Client().aio as client:
+            try:
+                response = (await client.models.generate_content(
+                    model="gemini-3-flash-preview",
+                    contents=[
+                        genai.types.Content(
+                            role="model" if message[0] else "user",
+                            parts=[genai.types.Part(text=message[1])]
+                        )
+                        for message in messages],
+                    config=genai.types.GenerateContentConfig(
+                        system_instruction=background
+                    )
+                )).text
+            except Exception as err:
+                logger.error(f"AI error: {err}")
+            return response or f"Uh-oh! I'm having trouble at the moment, please try again later {Emotes.CLOWN}"
 
 
 class Help_Nav(discord.ui.View):
