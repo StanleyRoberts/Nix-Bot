@@ -290,9 +290,7 @@ class CharlatanChoice(discord.ui.View):
     """ A view that handles the Charlatan guessing the chosen word
 
     Args:
-        chosen_word (str): The secret chosen word
-        word_list (list[str]): The list of all words
-        origin ("CharlatanGame"): The Gameview which called this object
+        parent ("CharlatanGame"): The Gameview which called this object
     """
 
     def __init__(self, parent: CharlatanView):
@@ -336,7 +334,7 @@ class CharlatanChoice(discord.ui.View):
                 self.children = [button]
                 button.disabled = True
                 await self.message.edit(content=response, view=self)
-        button.callback = word_guess  # type: ignore[method-assign]
+        button.callback = word_guess
         self.add_item(button)
 
 
@@ -370,7 +368,7 @@ class WordSelection(discord.ui.View):
         options=random_selection()
     )
     async def callback(self,
-                       select: discord.ui.Select,  # type: ignore[type-arg]
+                       select: discord.ui.Select,
                        interaction: discord.Interaction) -> None:
         """ Changes interaction view to CharlatanLobby
 
@@ -381,10 +379,11 @@ class WordSelection(discord.ui.View):
                 Interaction containing the message to change the view of
         """
         logger.debug("WordSelection complete, returning to lobby")
-        selected_list = select.values[0]
-        if not isinstance(selected_list, str):
-            logger.warning("Received a non-str type for selected list")
+        if select.values is None or not isinstance(select.values[0], str):
+            logger.warning("Didn't receive proper value for selected list")
+            await self.message.edit(f"A problem occured changing the wordlist {Emotes.CONFUSED}", view=None)
             return
+        selected_list = select.values[0]
         self.game_state.wordlist = helper.WORDLISTS[selected_list]
         await self.message.edit(f"Wordlist changed to {selected_list} {Emotes.TEEHEE}", view=None)
         await interaction.response.defer()

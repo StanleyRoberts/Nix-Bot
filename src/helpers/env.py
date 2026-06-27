@@ -29,7 +29,7 @@ CAI_NIX_ID = load_env('CAI_NIX_ID')  # Character AI character ID of Nix bot
 DEBUG_GUILDS = os.getenv('DEBUG_GUILDS')  # Debug guilds (not required)
 
 if __debug__:
-    import testing.postgresql as tp  # type: ignore[import]
+    import testing.postgresql as tp
     postgres = tp.Postgresql()
     DATABASE_URL = postgres.url()
 

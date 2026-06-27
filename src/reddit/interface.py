@@ -1,5 +1,5 @@
-import asyncpraw as praw  # type: ignore[import]
-import asyncprawcore as prawcore  # type: ignore[import]
+import asyncpraw as praw
+import asyncprawcore as prawcore
 import random
 import aiohttp
 import io

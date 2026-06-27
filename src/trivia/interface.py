@@ -84,11 +84,12 @@ class TriviaGame:
     """Manages a trivia game internal state
 
     Args:
+        player_id (int): player who started the game
         category (str): Question category
 
     """
 
-    def __init__(self, player_id: str, category: str | None):
+    def __init__(self, player_id: int, category: str | None):
         self._interface = TriviaInterface(category)
         self.players = {player_id: 0}
         self.question: str | None = None
@@ -117,12 +118,12 @@ class TriviaGame:
         """
         return f"**Current Question** {Emotes.SNEAKY}\nQuestion: {self.question}\n"
 
-    def check_guess(self, content: str, user_id: str) -> GuessValue:
+    def check_guess(self, content: str, user_id: int) -> GuessValue:
         """Check if guess correct
 
         Args:
             content (str): User guess
-            user_id (str): User id
+            user_id (int): User id
 
         Returns:
             GuessValue: Whether guess was correct or not
@@ -135,11 +136,11 @@ class TriviaGame:
         else:
             return GuessValue.INCORRECT
 
-    async def skip(self, user_id: str) -> str:
+    async def skip(self, user_id: int) -> str:
         """Skip question
 
         Args:
-            user_id (str): User who initiated skip
+            user_id (int): User who initiated skip
 
         Returns:
             str: Answer for skipped question
@@ -154,14 +155,14 @@ class TriviaGame:
             value = old_answer
         return value
 
-    def _handle_correct(self, user_id: str) -> GuessValue:
+    def _handle_correct(self, user_id: int) -> GuessValue:
         if user_id in self.players:
             self.players[user_id] += 1
         else:
             self.players.update({user_id: 1})
 
         if self.players[user_id] >= MAX_POINTS:
-            logger.debug("User has won", member_id=int(user_id))
+            logger.debug("User has won", member_id=user_id)
             return GuessValue.CORRECT_AND_WON
         else:
             return GuessValue.CORRECT_NOT_WON

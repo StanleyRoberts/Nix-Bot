@@ -17,20 +17,27 @@ class Admin(commands.Cog):
         description="sends a message to the given channel. " +
         "reacting with the given emoji will assign the given role")
     @discord.commands.default_permissions(manage_guild=True)
-    @discord.commands.option('channel', type=discord.TextChannel,
-                             parameter_name="channel", required=False)
-    @discord.commands.option("emoji", required=False)
-    @discord.commands.option("role", type=discord.Role, required=False)
+    @discord.commands.option(name='channel', type=discord.TextChannel,
+                             parameter_name="set_channel", required=False)
+    @discord.commands.option(name="emoji", type=str, required=False)
+    @discord.commands.option(name="role", type=discord.Role, required=False)
     async def greeting_role(
         self,
         ctx: discord.ApplicationContext,
         text: str,
-        channel: discord.TextChannel | None,
+        set_channel: discord.TextChannel | None,
         emoji: str,
         role: discord.Role | None
     ) -> None:
+        channel = set_channel if set_channel else ctx.channel
         if channel is None:
-            channel = ctx.channel
+            logger.warning("Could not get channel from context.")
+            await ctx.respond(
+                f"Whoops! {Emotes.WTF} an error occured.",
+                ephemeral=True
+            )
+            return
+
         if emoji:
             try:
                 true_emoji = Emoji(emoji)
@@ -42,12 +49,19 @@ class Admin(commands.Cog):
 
         text = text.replace("<<nl>>", "\n")
         try:
+            if isinstance(channel, discord.ForumChannel) or isinstance(channel, discord.CategoryChannel):
+                logger.info("Channel is of type that doesn't support send method", channel_id=channel.id)
+                await ctx.respond(
+                    f"Whoops! {Emotes.WTF} I am unable to write in that channel",
+                    ephemeral=True
+                )
+                return
             message = await channel.send(text)
         except discord.errors.Forbidden:
             logger.info("Permission failure for chain_message",
-                        guild_id=ctx.guild_id, channel_id=channel.id)
+                        guild_id=ctx.guild_id if ctx.guild_id else -1, channel_id=channel.id)
             await ctx.respond(
-                f"Whoops! {Emotes.WTF} I don't have permissions to write in {channel.mention}",
+                f"Whoops! {Emotes.WTF} I don't have permissions to write in that channel",
                 ephemeral=True
             )
             return
@@ -58,6 +72,11 @@ class Admin(commands.Cog):
         await message.add_reaction(emoji=true_emoji.to_partial_emoji())
         logger.debug(f"role={role}")
         if role:
+            if ctx.guild_id is None:
+                logger.debug(f"Could not retrieve guild id from context.")
+                await ctx.respond(f"An error occured setting the role. {Emotes.WTF}")
+                return
+
             logger.debug(f"Message ID on insert: {message.id}")
             db.single_void_SQL(
                 "INSERT INTO ReactMessages VALUES (%s, %s, %s, %s)",
@@ -81,6 +100,11 @@ class Admin(commands.Cog):
                            "note this will not clear existing roles, or delete Nix messages")
     @discord.commands.default_permissions(manage_guild=True)
     async def delete_react_entry(self, ctx: discord.ApplicationContext) -> None:
+        if ctx.guild_id is None:
+            logger.warning("Could not retrieve guild id from context.")
+            await ctx.respond(f"An error has occured clearing role settings. {Emotes.WTF}")
+            return
+
         logger.info("Dropping react entries", guild_id=ctx.guild_id)
         db.multi_void_sql([
             ("DELETE FROM ReactMessages WHERE GuildID=%s", (ctx.guild_id,)),
