@@ -1,5 +1,5 @@
 import re
-import emoji as emoji_lib  # type: ignore[import]
+import emoji as emoji_lib
 
 from discord.partial_emoji import PartialEmoji
 
@@ -68,7 +68,7 @@ def string_to_partial_emoji(emoji: str) -> PartialEmoji:
     Returns:
         PartialEmoji: converted emoji
     """
-    if (emoji in emoji_lib.UNICODE_EMOJI['en'] or
+    if (emoji in [entry['en'] for entry in emoji_lib.EMOJI_DATA.values()] or
             re.compile(r"<?(?P<animated>a)?:?(?P<name>\w+):(?P<id>[0-9]{13,20})>?").match(emoji)):
         return PartialEmoji.from_str(emoji)
     else:

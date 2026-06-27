@@ -298,8 +298,8 @@ class CharlatanChoice(discord.ui.View):
     def __init__(self, parent: CharlatanView):
         logger.debug("Created new CharlatanChoice view")
         super().__init__(timeout=120)
-        self.parent = parent
-        self.guess_made = False
+        self.parent: CharlatanView = parent
+        self.guess_made: bool = False
         for i, button_word in enumerate(self.parent.game_state.wordlist):
             self.add_button(
                 i,
@@ -319,7 +319,7 @@ class CharlatanChoice(discord.ui.View):
         button = discord.ui.Button(label=str(self.parent.game_state.wordlist[i]),
                                    custom_id=str(i))  # type: ignore[var-annotated]
 
-        async def word_guess(interaction: discord.Interaction) -> None:
+        async def word_guess(_: discord.Interaction) -> None:
             """Callback for the added button"""
             if not self.guess_made:
                 self.guess_made = True
