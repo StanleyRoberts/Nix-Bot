@@ -1,11 +1,10 @@
-import random
 import discord
 from typing import TYPE_CHECKING, Callable
 
 from helpers.logger import Logger
 import helpers.citation as helper
 from helpers.style import Emotes, Colours
-from missingCitation.interface import THINKING_TIME
+from citations.interface import THINKING_TIME, Player
 if TYPE_CHECKING:
     from .interface import CitationGame
 
@@ -21,12 +20,12 @@ class PlayerVoting(discord.ui.View):
         after_vote (player) -> None: callback function used after vote is handed in
     """
 
-    def __init__(self, game_state: "CitationGame", after_vote: Callable[[discord.User | discord.Member], None]) -> None:
+    def __init__(self, game_state: "CitationGame", after_vote: Callable[[Player], None]) -> None:
         logger.debug("New PlayerVoting view created")
         super().__init__(timeout=None)
         self.game_state = game_state
         self.after_vote = after_vote
-        for i in range(0, len(self.game_state.players)):
+        for i in range(0, len(self.game_state.players)-1):
             self.add_button(i)
 
     def add_button(self, i: int) -> None:
@@ -35,6 +34,9 @@ class PlayerVoting(discord.ui.View):
         Args:
             i (int): Button label and unique ID
         """
+        if self.game_state.players[i].is_guesser:
+            return
+
         button = discord.ui.Button(
             label=str(i + 1),
             custom_id=str(i)
@@ -46,10 +48,9 @@ class PlayerVoting(discord.ui.View):
                 logger.warning("Invalid button press")
                 return
             content, is_valid, guessed = self.game_state.cast_vote(user, int(button.custom_id))
-            if is_valid:
+            if is_valid and guessed is not None:
                 await self.after_vote(guessed)
-                await self.leaderboard()
-
+            logger.debug("Non valid interaction in cast_vote")
             await interaction.response.send_message(ephemeral=True, content=content)
 
         button.callback = cast_vote  # type: ignore[method-assign]
@@ -76,7 +77,7 @@ class CitationLobby(discord.ui.View):
         if self.game_state.find_player(interaction.user) is None:
             logger.debug("New player joined game", member_id=interaction.user.id)
             self.game_state.add_player(interaction.user)
-            await interaction.response.edit_message(embed=self.game_state.make_embed(),
+            await interaction.response.edit_message(embed=self.game_state.make_embed(title=helper.CITATIONTITLE),
                                                     view=self)
         else:
             logger.info("User double login into " + helper.CITATIONTITLE + " lobby detected",
@@ -127,21 +128,27 @@ class CitationView(discord.ui.View):
         )
 
         self.game_state.reset_game()
+        self.game_state._choose_liars()
+        self.game_state._choose_guesser()
         await self.article_choice()
         await self.game_state.send_dms()
         await self.vote()
 
-    async def vote(self) -> discord.User | discord.Member:
+    async def vote(self) -> None:
         """Begins voting for the nonliar
 
         Args:
             channel (discord.TextChannel): Channel to vote using
 
         """
+        async def callback_voting(player: Player) -> None:
+            await self.score_player(player)
+            await self.leaderboard()
+
         logger.debug("Begin player voting timer")
         await helper.start_timer(THINKING_TIME)
         logger.debug("Begin player voting")
-        view = PlayerVoting(self.game_state, lambda player: (await CitationView.score_players(self, player)).__anext__())
+        view = PlayerVoting(self.game_state, callback_voting)
         await self.message.edit(
             view=view,
             embed=discord.Embed(
@@ -173,59 +180,14 @@ class CitationView(discord.ui.View):
         if not guess.choice_made:
             self.game_state.article = article_list[0] if len(article_list) > 0 else "Error"
 
-class CitationChoice(discord.ui.View):
-    """ A view that handles the Charlatan guessing the chosen word
-
-    Args:
-        article_list (list[str]): The list of all words
-        origin ("CitationGame"): The Gameview which called this object
-    """
-
-    def __init__(self, article_list: list[str], parent: CitationView):
-        logger.debug("Created new CitationChoice view")
-        super().__init__(timeout=120)
-        self.parent = parent
-        self.choice_made = False
-        for i, button_word in enumerate(article_list):
-            self.add_button(
-                i,
-                button_word
-            )
-
-    def add_button(self, i: int, article: str) -> None:
-        """Adds a button to the view
-
-        Adds a button to the view representing an article to choose from
-        Callback activates Charlatan_result with the correctness of the guess
-
-        Args:
-            i (int): The button ID, corresponding to its position in the wordlist
-            correct_button (bool): Whether the word at postion 'i' is the secret word
-        """
-        button = discord.ui.Button(label=article,
-                                   custom_id=str(i))  # type: ignore[var-annotated]
-
-        async def word_guess() -> None:
-            """Callback for the added button"""
-            if not self.choice_made:
-                self.choice_made = True
-                self.parent.game_state.article = article
-                logger.debug("CharlatanChoice, choice made.")
-                response = f"Article chosen. Read the article's summary and close it before the questions begin. {Emotes.HUG}"
-                self.children = [button]
-                button.disabled = True
-                await self.message.edit(content=response, view=self)
-        button.callback = word_guess  # type: ignore[method-assign]
-        self.add_item(button)
-
-    async def score_players(self, voted_player: discord.User | discord.Member) -> None:
+    async def score_player(self, voted_player: Player) -> None:
         """Update view based on voted player
 
         Args:
             voted_player (discord.User | discord.Member): Player that was voted as nonliar
         """
         nonliar_found = await self.game_state.score_players(voted_player)
-        nonliar = self.game_state.get_nonliar().user.mention
+        nonliar = self.game_state.get_non_liar().user.mention
         if nonliar_found:
             await self.message.edit(
                 embed=discord.Embed(
@@ -273,3 +235,48 @@ class CitationChoice(discord.ui.View):
         self.add_item(lobby_button)
 
         await self.message.edit(view=self, embed=self.game_state.make_embed("Leaderboard"))
+
+class CitationChoice(discord.ui.View):
+    """ A view for the guesser to guess who is not lying
+
+    Args:
+        article_list (list[str]): The list of all words
+        origin ("CitationGame"): The Gameview which called this object
+    """
+
+    def __init__(self, article_list: list[str], parent: CitationView):
+        logger.debug("Created new CitationChoice view")
+        super().__init__(timeout=120)
+        self.parent: CitationView = parent
+        self.choice_made = False
+        for i, button_word in enumerate(article_list):
+            self.add_button(
+                i,
+                button_word
+            )
+
+    def add_button(self, i: int, article: str) -> None:
+        """Adds a button to the view
+
+        Adds a button to the view representing an article to choose from
+        Callback activates Charlatan_result with the correctness of the guess
+
+        Args:
+            i (int): The button ID, corresponding to its position in the wordlist
+            correct_button (bool): Whether the word at postion 'i' is the secret word
+        """
+        button = discord.ui.Button(label=article,
+                                   custom_id=str(i))  # type: ignore[var-annotated]
+
+        async def word_guess(_ : discord.Interaction) -> None:
+            """Callback for the added button"""
+            if not self.choice_made:
+                self.choice_made = True
+                self.parent.game_state.article = article
+                logger.debug("CitationChoice, choice made.")
+                response = f"Article chosen. Read the article's summary and close it before the questions begin. {Emotes.HUG}"
+                self.children = [button]
+                button.disabled = True
+                await self.message.edit(content=response, view=self)
+        button.callback = word_guess # type: ignore[method-assign]
+        self.add_item(button)

@@ -39,7 +39,7 @@ class CitationGame:
         """ Chooses a guessing player for the game
         Needs to be done after choosing the impostor. 
         """
-        valid = [player for player in self.players if not player.is_liar]
+        valid = [player for player in self.players if player.is_liar]
         guesser = random.choice(valid)
         guesser.is_guesser = True
         logger.debug(f"Random Guesser was selected: {guesser.user.id}")
@@ -50,18 +50,24 @@ class CitationGame:
         logger.debug(f"Random not lying player was selected: {nonliar.user.id}")
 
     def get_word_choices(self) -> list[str]:
-        url = "https://en.wikipedia.org/w/api.php?action=query&list=random&format=json&rnnamespace=0&rnlimit=5"
-        response = requests.get(url)
-        json_resp = json.loads(response.text)
-        if response.status_code == requests.codes.ok:
-            return [art["title"] for art in json_resp["query"]["random"]]
-        else:
-            logger.error(f"Fact Error {response.status_code}: {json_resp}")
-            return []
+        choices = []
+        line_indeces = [random.randint(0, 999838) for _ in range(10)]
+        line_indeces.sort()
+        with open('titles.txt', 'r') as titles:
+            counter = 0
+            for title in titles:
+                if counter == line_indeces[0]:
+                    choices.append(title)
+                    line_indeces.pop(0)
+                    if len(line_indeces) == 0:
+                        return choices
+                counter += 1
+        logger.error(f"Didn't get 10 choices, missed : {line_indeces}")
+        return choices
 
-    def _get_link(self) -> None:
+    def _get_link(self) -> str:
         article_url = "https://en.wikipedia.org/wiki/"
-        return article_url + self.word.replace(' ', '_')
+        return article_url + self.article.replace(' ', '_')
 
     def reset_game(self) -> None:
         """ Reset charlatan game. (maintains scores)
@@ -70,7 +76,6 @@ class CitationGame:
         for p in self.players:
             p.is_guesser = False
             p.is_liar = True
-        self._choose_liars()
     
     def add_player(self, new_player: discord.User | discord.Member) -> None:
         """Add new player to game"""
@@ -84,14 +89,14 @@ class CitationGame:
         """Send dms to players and impostor displaying wordlist
         """
         for player in self.players:
-            desc = self.word if player.is_liar or player.is_guesser else self._get_link()
-            title = "Guess the liar:" if player.is_guesser else "You get to tell the truth:" if player.is_liar else "You have to make up a lie:"
+            desc = self.article if player.is_liar or player.is_guesser else self._get_link()
+            title = "Guess the liar:" if player.is_guesser else "You have to make up a lie:" if player.is_liar else "You get to tell the truth:"
             await player.user.send(
                 embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
             )
 
-    async def score_players(self, voted_player: discord.User | discord.Member) -> bool:
-        """Handles voting result for normal players
+    async def score_players(self, voted_player: Player) -> bool:
+        """Handles round result for normal players
 
         Args:
             voted_player (discord.User | discord.Member): Player voted for by the guesser
@@ -99,13 +104,12 @@ class CitationGame:
         Returns:
             bool: Whether the voted player was the charlatan
         """
-        player = self.find_player(voted_player)
-        if player is None:
+        if voted_player is None:
             logger.warning("Attempted to find player not in lobby")
             return False
-        if player.is_liar:
+        if voted_player.is_liar:
             logger.debug("Guesser didn't find nonliar")
-            player.score += 1
+            voted_player.score += 1
             return False
         else:
             logger.debug("Correctly guessed nonliar")
@@ -113,24 +117,7 @@ class CitationGame:
             self.get_guesser().score += 1
             return True
 
-    async def vote(self) -> list[discord.User | discord.Member]:
-        """Waits and then returns the most voted player
-        #TODO
-        Returns:
-            list[discord.User | discord.Member]:
-                List containing the player with most votes (multiple if tie)
-        """
-        await helper.start_timer(THINKING_TIME)
-        sort = sorted(self.players, key=lambda x: x.times_voted_for)[::-1]
-        return [x.user for x in sort if x.times_voted_for == sort[0].times_voted_for]
-
-    def reset_votes(self) -> None:
-        """Reset votes for each player
-        """
-        for p in self.players:
-            p.times_voted_for = 0
-
-    def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> Tuple[str, bool, discord.User | discord.Member]:
+    def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> Tuple[str, bool, Player | None]:
         """Handles player voting for nonliar
 
         Args:
@@ -144,11 +131,11 @@ class CitationGame:
         """
         player = self.find_player(user)
         if player is None:
-            return "You aren't in this game! Wait for the next round to join...", False
+            return "You aren't in this game! Wait for the next round to join...", False, None
         if not player.is_guesser:
-            return "You are not allowed to vote this round. As you are not guessing.", False
-            # Reset the previous vote
-        return f"You voted for {self.players[player.votee].user.display_name}", True
+            return "You are not allowed to vote this round. As you are not guessing.", False, None
+        voted_for = self.players[player_idx]
+        return f"You voted for {voted_for.user.display_name}", True, voted_for
 
     def find_player(self, user: discord.User | discord.Member) -> Player | None:
         """Return player if they are in the game
