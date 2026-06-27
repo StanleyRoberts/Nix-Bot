@@ -1,5 +1,5 @@
 import discord
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Coroutine, Any
 
 from helpers.logger import Logger
 import helpers.citation as helper
@@ -17,10 +17,10 @@ class PlayerVoting(discord.ui.View):
 
     Args:
         game_state (CitationGame): The current state of the game
-        after_vote (player) -> None: callback function used after vote is handed in
+        after_vote (Callable[[Player], Coroutine[Any, Any, None]]): callback function used after vote is handed in
     """
 
-    def __init__(self, game_state: "CitationGame", after_vote: Callable[[Player], None]) -> None:
+    def __init__(self, game_state: "CitationGame", after_vote: Callable[[Player], Coroutine[Any, Any, None]]) -> None:
         logger.debug("New PlayerVoting view created")
         super().__init__(timeout=None)
         self.game_state = game_state
@@ -278,5 +278,5 @@ class CitationChoice(discord.ui.View):
                 self.children = [button]
                 button.disabled = True
                 await self.message.edit(content=response, view=self)
-        button.callback = word_guess # type: ignore[method-assign]
+        button.callback = word_guess
         self.add_item(button)

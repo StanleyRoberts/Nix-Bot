@@ -22,7 +22,7 @@ class Misc(commands.Cog):
     )
     async def send_quote(self, ctx: discord.ApplicationContext) -> None:
         await ctx.respond(requests.get("https://inspirobot.me/api?generate=true", timeout=10).text)
-        logger.info("Generating quote", member_id=ctx.author.id, channel_id=ctx.channel_id)
+        logger.info("Generating quote", member_id=ctx.author.id, channel_id=ctx.channel_id if ctx.channel_id else -1)
 
     @commands.slash_command(name='all_commands', description="Displays all of Nix's commands")
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
@@ -43,13 +43,13 @@ class Misc(commands.Cog):
         embed = discord.Embed(title="Help Page", description=desc,
                               colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
-        logger.info("Displaying long help", member_id=ctx.author.id, channel_id=ctx.channel_id)
+        logger.info("Displaying long help", member_id=ctx.author.id, channel_id=ctx.channel_id if ctx.channel_id else -1)
 
     @commands.slash_command(name='help', description="Display the help page for Nix")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
         view = Help_Nav(self.bot.cogs, self.bot)
         await ctx.interaction.response.send_message(embed=view.build_embed(), view=view)
-        logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id)
+        logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id if ctx.channel_id else -1)
 
     @commands.Cog.listener("on_message")
     async def respond(self, msg: discord.Message) -> None:
