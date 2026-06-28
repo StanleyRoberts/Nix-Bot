@@ -257,7 +257,7 @@ class CitationChoice(discord.ui.View):
     def __init__(self, article_list: list[str], parent: CitationView):
         logger.debug("Created new CitationChoice view")
         super().__init__(timeout=120)
-        self.parent: CitationView = parent
+        self.parent_view: CitationView = parent
         self.choice_made = False
         for i, button_word in enumerate(article_list):
             self.add_button(
@@ -282,11 +282,11 @@ class CitationChoice(discord.ui.View):
             """Callback for the added button"""
             if not self.choice_made:
                 self.choice_made = True
-                self.parent.game_state.article = article
+                self.parent_view.game_state.article = article
                 logger.debug("CitationChoice, choice made.")
                 response = f"Article chosen. Read the article's summary and close it before the questions begin. {Emotes.HUG}"
                 self.children = [button]
                 button.disabled = True
                 await self.message.edit(content=response, view=self)
-        button.callback = word_guess
+        button.callback = word_guess # type: ignore[method-assign]
         self.add_item(button)

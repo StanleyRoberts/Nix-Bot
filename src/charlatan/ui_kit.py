@@ -1,6 +1,6 @@
 import random
 import discord
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from helpers.logger import Logger
 import helpers.charlatan as helper
@@ -296,12 +296,12 @@ class CharlatanChoice(discord.ui.View):
     def __init__(self, parent: CharlatanView):
         logger.debug("Created new CharlatanChoice view")
         super().__init__(timeout=120)
-        self.parent: CharlatanView = parent
+        self.parent_view: CharlatanView = parent
         self.guess_made: bool = False
-        for i, button_word in enumerate(self.parent.game_state.wordlist):
+        for i, button_word in enumerate(self.parent_view.game_state.wordlist):
             self.add_button(
                 i,
-                False if button_word is not self.parent.game_state.secret_word else True
+                False if button_word is not self.parent_view.game_state.secret_word else True
             )
 
     def add_button(self, i: int, correct_button: bool) -> None:
@@ -314,7 +314,7 @@ class CharlatanChoice(discord.ui.View):
             i (int): The button ID, corresponding to its position in the wordlist
             correct_button (bool): Whether the word at postion 'i' is the secret word
         """
-        button = discord.ui.Button(label=str(self.parent.game_state.wordlist[i]),
+        button = discord.ui.Button(label=str(self.parent_view.game_state.wordlist[i]),
                                    custom_id=str(i))  # type: ignore[var-annotated]
 
         async def word_guess(interaction: discord.Interaction) -> None:
@@ -324,17 +324,17 @@ class CharlatanChoice(discord.ui.View):
                 if correct_button:
                     logger.debug("CharlatanChoice, correct button callback triggered")
                     response = "You guessed the correct word good job. " + \
-                        f"It was \"{self.parent.game_state.secret_word}\" {Emotes.HUG}"
-                    await self.parent.charlatan_result(True)
+                        f"It was \"{self.parent_view.game_state.secret_word}\" {Emotes.HUG}"
+                    await self.parent_view.charlatan_result(True)
                 else:
                     logger.debug("CharlatanChoice, incorrect button callback triggered")
                     response = "You did not guess the correct word. " + \
-                        f"It was \"{self.parent.game_state.secret_word}\" {Emotes.CRYING}"
-                    await self.parent.charlatan_result(False)
+                        f"It was \"{self.parent_view.game_state.secret_word}\" {Emotes.CRYING}"
+                    await self.parent_view.charlatan_result(False)
                 self.children = [button]
                 button.disabled = True
                 await self.message.edit(content=response, view=self)
-        button.callback = word_guess
+        button.callback = word_guess # type: ignore[method-assign]
         self.add_item(button)
 
 
@@ -366,9 +366,9 @@ class WordSelection(discord.ui.View):
         min_values=0,
         max_values=1,
         options=random_selection()
-    )
+    ) 
     async def callback(self,
-                       select: discord.ui.Select,
+                       select: discord.ui.Select[Any, Any, Any], 
                        interaction: discord.Interaction) -> None:
         """ Changes interaction view to CharlatanLobby
 
