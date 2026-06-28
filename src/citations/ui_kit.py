@@ -126,11 +126,21 @@ class CitationView(discord.ui.View):
             ),
             view=self
         )
-
         self.game_state.reset_game()
         self.game_state._choose_liars()
         self.game_state._choose_guesser()
         await self.article_choice()
+        self.message = await (await interaction.original_response()).edit(
+            embed=discord.Embed(
+                description="Game is ongoing\n"\
+                    + "Guesser is: " + self.game_state.get_guesser().user.mention +"\n" \
+                    + "Article is: " + self.game_state.article,
+                title=helper.CITATIONTITLE,
+                colour=Colours.PRIMARY
+            ),
+            view=self
+        )
+        self.game_state
         await self.game_state.send_dms()
         await self.vote()
 

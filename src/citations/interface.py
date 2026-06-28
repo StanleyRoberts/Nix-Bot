@@ -88,12 +88,12 @@ class CitationGame:
     async def send_dms(self) -> None:
         """Send dms to players and impostor displaying wordlist
         """
-        for player in self.players:
-            desc = self.article if player.is_liar or player.is_guesser else self._get_link()
-            title = "Guess the liar:" if player.is_guesser else "You have to make up a lie:" if player.is_liar else "You get to tell the truth:"
-            await player.user.send(
-                embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
-            )
+        nonliar = self.get_non_liar()
+        desc = self._get_link()
+        title = "You get to tell the truth."
+        await nonliar.user.send(
+            embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
+        )
 
     async def score_players(self, voted_player: Player) -> bool:
         """Handles round result for normal players
