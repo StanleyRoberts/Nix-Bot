@@ -199,14 +199,14 @@ class Help_Nav(discord.ui.View):
         return discord.Embed(title="Help Page", description=desc, colour=Colours.PRIMARY)
 
     @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
-    async def backward_callback(self, _: discord.ui.Button[Help_Nav], interaction: discord.Interaction) -> None:
+    async def backward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
         logger.debug("Back button pressed", member_id=interaction.user.id
                      if interaction.user is not None else 0)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
-    async def forward_callback(self, _: discord.ui.Button[Help_Nav], interaction: discord.Interaction) -> None:
+    async def forward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
         logger.debug("Next button pressed", member_id=interaction.user.id
