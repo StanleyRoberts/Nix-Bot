@@ -23,7 +23,7 @@ class PostViewer(discord.ui.View):
 
     @discord.ui.button(label="New Post", style=discord.ButtonStyle.primary,
                        emoji=string_to_partial_emoji(Emotes.YUM))
-    async def refresh_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def refresh_callback(self, _: discord.ui.Button[PostViewer], interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         post = await self.reddit.get_post()
         if interaction.message is None:
@@ -37,7 +37,7 @@ class PostViewer(discord.ui.View):
                        emoji=PartialEmoji.from_str(Emotes.HUG))
     async def change_sub_callback(
         self,
-        _: discord.Button,
+        _: discord.ui.Button[PostViewer],
         interaction: discord.Interaction
     ) -> None:
         await interaction.response.send_modal(ChangeSubModal(title="Change Subreddit",

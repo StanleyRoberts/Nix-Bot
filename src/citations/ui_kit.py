@@ -70,7 +70,7 @@ class CitationLobby(discord.ui.View):
         self.game_state = game_state
 
     @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
-    async def join_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def join_callback(self, _: discord.ui.Button[CitationLobby], interaction: discord.Interaction) -> None:
         if interaction.user is None:
             logger.warning("Invalid Join interaction")
             return
@@ -89,18 +89,18 @@ class CitationLobby(discord.ui.View):
             )
 
     @discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
-    async def rules_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def rules_callback(self, _: discord.ui.Button[CitationLobby], interaction: discord.Interaction) -> None:
         await interaction.response.send_message(
             ephemeral=True,
             embed=discord.Embed(description=helper.CITATIONRULES)
         )
 
     @discord.ui.button(label="Confirm Lobby", row=2, style=discord.ButtonStyle.primary)
-    async def start_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def start_callback(self, _: discord.ui.Button[CitationLobby], interaction: discord.Interaction) -> None:
         await interaction.response.edit_message(view=CitationView(self.game_state))
 
     @discord.ui.button(label="Leave", row=0, style=discord.ButtonStyle.secondary)
-    async def leave_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def leave_callback(self, _: discord.ui.Button[CitationLobby], interaction: discord.Interaction) -> None:
         if interaction.user:
             self.game_state.remove_player(interaction.user)
         await interaction.response.edit_message(view=self)
@@ -115,7 +115,7 @@ class CitationView(discord.ui.View):
         self.game_state = game_state
 
     @discord.ui.button(label="Start Game", style=discord.ButtonStyle.primary)
-    async def start_game(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def start_game(self, _: discord.ui.Button[CitationView], interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         self.clear_items()
         self.message = await (await interaction.original_response()).edit(

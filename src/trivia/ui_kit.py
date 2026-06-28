@@ -31,7 +31,7 @@ class TriviaView(discord.ui.View):
 
     @discord.ui.button(label="Skip", style=discord.ButtonStyle.secondary,
                        emoji='⏩')
-    async def skip_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def skip_callback(self, _: discord.ui.Button[TriviaView], interaction: discord.Interaction) -> None:
         if interaction.user is None:
             logger.error("skip_callback interaction has no user")
             return
