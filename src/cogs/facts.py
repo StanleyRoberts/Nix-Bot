@@ -28,7 +28,7 @@ class Facts(commands.Cog):
         logger.debug("Getting fact", member_id=ctx.user.id, channel_id=ctx.channel_id if ctx.channel_id else -1)
 
     @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
-    @discord.commands.option(name='channel', type=discord.TextChannel, required=False) # type: ignore[untyped-decorator]
+    @discord.commands.option(name='channel', type=discord.TextChannel, required=False)
     @discord.commands.default_permissions(manage_guild=True)
     async def set_fact_channel(
         self,
