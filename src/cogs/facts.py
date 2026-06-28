@@ -33,7 +33,7 @@ class Facts(commands.Cog):
     async def set_fact_channel(
         self,
         ctx: discord.ApplicationContext,
-        channel: discord.TextChannel | None
+        channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel | discord.TextChannel | discord.ForumChannel | discord.CategoryChannel | discord.Thread | discord.DMChannel | discord.GroupChannel | discord.PartialMessageable | None
     ) -> None:
         if not channel:
             if ctx.channel is None:
@@ -51,7 +51,7 @@ class Facts(commands.Cog):
                            (channel.id, ctx.guild_id))
         
         await ctx.respond(
-            f"Facts channel set to {channel.mention if not isinstance(channel, discord.PartialMessageable) else channel.id} {Emotes.DRINKING}",
+            f"Facts channel set to {channel.mention if not isinstance(channel, discord.PartialMessageable | discord.DMChannel | discord.GroupChannel) else channel.id} {Emotes.DRINKING}",
             ephemeral=True
         )
         logger.debug("Fact channel set", member_id=ctx.user.id, channel_id=channel.id)

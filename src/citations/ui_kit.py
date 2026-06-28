@@ -278,7 +278,7 @@ class CitationChoice(discord.ui.View):
         button = discord.ui.Button(label=article,
                                    custom_id=str(i))  # type: ignore[var-annotated]
 
-        async def word_guess(_ : discord.Interaction) -> None:
+        async def word_guess(interaction : discord.Interaction) -> None:
             """Callback for the added button"""
             if not self.choice_made:
                 self.choice_made = True

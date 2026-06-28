@@ -317,7 +317,7 @@ class CharlatanChoice(discord.ui.View):
         button = discord.ui.Button(label=str(self.parent.game_state.wordlist[i]),
                                    custom_id=str(i))  # type: ignore[var-annotated]
 
-        async def word_guess(_: discord.Interaction) -> None:
+        async def word_guess(interaction: discord.Interaction) -> None:
             """Callback for the added button"""
             if not self.guess_made:
                 self.guess_made = True
