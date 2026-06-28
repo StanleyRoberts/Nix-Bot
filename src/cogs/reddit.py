@@ -39,7 +39,7 @@ class Reddit(commands.Cog):
             await ctx.respond(f"An error has occured {Emotes.CRYING}")
             return
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
-        if isinstance(ctx.channel, discord.DMChannel) or isinstance(ctx.channel, discord.GroupChannel) or isinstance(ctx.channel, discord.PartialMessageable):
+        if isinstance(ctx.channel, discord.DMChannel | discord.GroupChannel | discord.PartialMessageable):
             is_nsfw = False
         else:
             is_nsfw = ctx.channel.is_nsfw()
@@ -59,10 +59,13 @@ class Reddit(commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         sub: str,
-        channel: discord.TextChannel
+        channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel | discord.TextChannel | discord.ForumChannel | discord.CategoryChannel | discord.Thread | discord.DMChannel | discord.GroupChannel | discord.PartialMessageable | None
     ) -> None:
-        if not channel:
-            channel = ctx.channel
+        channel = channel if channel else ctx.channel
+        if channel is None:
+            logger.warning(f"Channel couldn't be extracted from context.")
+            await ctx.respond(f"An error has occured subscribing {Emotes.CRYING}")
+            return
         if ctx.guild_id is None:
             logger.warning(f"Guild id couldn't be extracted from context.")
             await ctx.respond(f"An error has occured subscribing {Emotes.CRYING}")

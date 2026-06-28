@@ -49,7 +49,7 @@ class Admin(commands.Cog):
 
         text = text.replace("<<nl>>", "\n")
         try:
-            if isinstance(channel, discord.ForumChannel) or isinstance(channel, discord.CategoryChannel):
+            if isinstance(channel, discord.ForumChannel | discord.CategoryChannel):
                 logger.info("Channel is of type that doesn't support send method", channel_id=channel.id)
                 await ctx.respond(
                     f"Whoops! {Emotes.WTF} I am unable to write in that channel",
