@@ -47,7 +47,7 @@ class RedditInterface:
     """
 
     def __init__(self, sub: str, is_nsfw: bool = False, time: str = "day") -> None:
-        self.cache: list[praw.models.reddit.submission.Submission] = []
+        self.cache: list[praw.models.reddit.submission.Submission] = [] #type: ignore[name-defined]
         self._nsub = sub
         self.time = time
         self.is_nsfw = is_nsfw
