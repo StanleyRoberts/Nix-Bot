@@ -27,7 +27,7 @@ class Reddit(commands.Cog):
         default="day",
         description="Time period to search for top posts",
         choices=["month", "hour", "week", "all", "day", "year"]
-    )
+    ) # type: ignore[untyped-decorator]
     async def send_reddit_post(
         self,
         ctx: discord.ApplicationContext,
@@ -53,7 +53,7 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='subscribe',
                             description="Subscribe to a subreddit to get daily posts from it")
-    @discord.commands.option(name="channel", type=discord.TextChannel, required=False)
+    @discord.commands.option(name="channel", type=discord.TextChannel, required=False) # type: ignore[untyped-decorator]
     @discord.commands.default_permissions(manage_guild=True)
     async def subscribe_to_sub(
         self,
@@ -90,7 +90,7 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='unsubscribe',
                             description="Unsubscribe to daily posts from the given subreddit")
-    @discord.commands.option("sub", type=str, required=False)
+    @discord.commands.option("sub", type=str, required=False) # type: ignore[untyped-decorator]
     @discord.commands.default_permissions(manage_guild=True)
     async def unsubscribe_from_sub(self, ctx: discord.ApplicationContext, sub: str) -> None:
         if not sub:
