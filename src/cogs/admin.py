@@ -18,9 +18,9 @@ class Admin(commands.Cog):
         "reacting with the given emoji will assign the given role")
     @discord.commands.default_permissions(manage_guild=True)
     @discord.commands.option(name='channel', type=discord.TextChannel,
-                             parameter_name="set_channel", required=False)
-    @discord.commands.option(name="emoji", type=str, required=False)
-    @discord.commands.option(name="role", type=discord.Role, required=False)
+                             parameter_name="set_channel", required=False) # type: ignore[untyped-decorator]
+    @discord.commands.option(name="emoji", type=str, required=False) # type: ignore[untyped-decorator]
+    @discord.commands.option(name="role", type=discord.Role, required=False) # type: ignore[untyped-decorator]
     async def greeting_role(
         self,
         ctx: discord.ApplicationContext,
@@ -88,7 +88,7 @@ class Admin(commands.Cog):
                            description="Takes out all of Nix's role " +
                            "assigning behaviour for this role")
     @discord.commands.option("role", type=discord.Role,
-                             description="The role to remove assignment for")
+                             description="The role to remove assignment for") # type: ignore[untyped-decorator]
     async def remove_single_role(self, ctx: discord.ApplicationContext, role: discord.Role) -> None:
         db.multi_void_sql([
             ("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id)),
@@ -147,12 +147,12 @@ class Admin(commands.Cog):
         description="allows Nix to follow up with custom messages whenever a user send a message")
     @discord.commands.option("message", type=str,
                              description="The message text that will be sent as a follow up. " +
-                             "Write <<user>> to ping the user")
+                             "Write <<user>> to ping the user") # type: ignore[untyped-decorator]
     @discord.commands.option("response_channel", type=discord.TextChannel,
-                             description="The channel where Nix sends its follow up")
+                             description="The channel where Nix sends its follow up") # type: ignore[untyped-decorator]
     @discord.commands.option("message_channel", type=discord.TextChannel,
                              description="The channel Nix watches for new messages " +
-                             "If not provided then Nix follows up all messages", required=False)
+                             "If not provided then Nix follows up all messages", required=False) # type: ignore[untyped-decorator]
     @discord.commands.default_permissions(manage_guild=True)
     async def set_chain_message(
         self,
