@@ -12,15 +12,21 @@ CHOICE_VOTE_TIME = 15
 
 logger = Logger()
 
+
 class PlayerVoting(discord.ui.View):
     """ View that manages the voting of who the nonliar is
 
     Args:
         game_state (CitationGame): The current state of the game
-        after_vote (Callable[[Player], Coroutine[Any, Any, None]]): callback function used after vote is handed in
+        after_vote (Callable[[Player], Coroutine[Any, Any, None]]):
+                                    callback function used after vote is handed in
     """
 
-    def __init__(self, game_state: "CitationGame", after_vote: Callable[[Player], Coroutine[Any, Any, None]]) -> None:
+    def __init__(
+        self,
+        game_state: "CitationGame",
+        after_vote: Callable[[Player], Coroutine[Any, Any, None]]
+    ) -> None:
         logger.debug("New PlayerVoting view created")
         super().__init__(timeout=None)
         self.game_state = game_state
@@ -70,15 +76,21 @@ class CitationLobby(discord.ui.View):
         self.game_state = game_state
 
     @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
-    async def join_callback(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def join_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         if interaction.user is None:
             logger.warning("Invalid Join interaction")
             return
         if self.game_state.find_player(interaction.user) is None:
             logger.debug("New player joined game", member_id=interaction.user.id)
             self.game_state.add_player(interaction.user)
-            await interaction.response.edit_message(embed=self.game_state.make_embed(title=helper.CITATIONTITLE),
-                                                    view=self)
+            await interaction.response.edit_message(
+                            embed=self.game_state.make_embed(title=helper.CITATIONTITLE),
+                            view=self
+            )
         else:
             logger.info("User double login into " + helper.CITATIONTITLE + " lobby detected",
                         member_id=interaction.user.id, channel_id=interaction.channel.id
@@ -89,18 +101,30 @@ class CitationLobby(discord.ui.View):
             )
 
     @discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
-    async def rules_callback(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def rules_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         await interaction.response.send_message(
             ephemeral=True,
             embed=discord.Embed(description=helper.CITATIONRULES)
         )
 
     @discord.ui.button(label="Confirm Lobby", row=2, style=discord.ButtonStyle.primary)
-    async def start_callback(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def start_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         await interaction.response.edit_message(view=CitationView(self.game_state))
 
     @discord.ui.button(label="Leave", row=0, style=discord.ButtonStyle.secondary)
-    async def leave_callback(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def leave_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         if interaction.user:
             self.game_state.remove_player(interaction.user)
         await interaction.response.edit_message(view=self)
@@ -115,7 +139,11 @@ class CitationView(discord.ui.View):
         self.game_state = game_state
 
     @discord.ui.button(label="Start Game", style=discord.ButtonStyle.primary)
-    async def start_game(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def start_game(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         await interaction.response.defer()
         self.clear_items()
         self.message = await (await interaction.original_response()).edit(
@@ -132,9 +160,9 @@ class CitationView(discord.ui.View):
         await self.article_choice()
         self.message = await (await interaction.original_response()).edit(
             embed=discord.Embed(
-                description="Game is ongoing\n"\
-                    + "Guesser is: " + self.game_state.get_guesser().user.mention +"\n" \
-                    + "Article is: " + self.game_state.article,
+                description="Game is ongoing\n"
+                + "Guesser is: " + self.game_state.get_guesser().user.mention + "\n"
+                + "Article is: " + self.game_state.article,
                 title=helper.CITATIONTITLE,
                 colour=Colours.PRIMARY
             ),
@@ -175,7 +203,7 @@ class CitationView(discord.ui.View):
         self.clear_items()
 
     async def article_choice(self) -> None:
-        """Handles nonliar choosing an article 
+        """Handles nonliar choosing an article
 
         Sends a voting dm to the nonliar.
         Called at start of game.
@@ -246,6 +274,7 @@ class CitationView(discord.ui.View):
 
         await self.message.edit(view=self, embed=self.game_state.make_embed("Leaderboard"))
 
+
 class CitationChoice(discord.ui.View):
     """ A view for the guesser to guess who is not lying
 
@@ -278,15 +307,16 @@ class CitationChoice(discord.ui.View):
         button = discord.ui.Button(label=article,
                                    custom_id=str(i))  # type: ignore[var-annotated]
 
-        async def word_guess(interaction : discord.Interaction) -> None:
+        async def word_guess(interaction: discord.Interaction) -> None:
             """Callback for the added button"""
             if not self.choice_made:
                 self.choice_made = True
                 self.parent_view.game_state.article = article
                 logger.debug("CitationChoice, choice made.")
-                response = f"Article chosen. Read the article's summary and close it before the questions begin. {Emotes.HUG}"
+                response = f"Article chosen. Read the article's summary" \
+                    + " and close it before the questions begin. {Emotes.HUG}"
                 self.children = [button]
                 button.disabled = True
                 await self.message.edit(content=response, view=self)
-        button.callback = word_guess # type: ignore[method-assign]
+        button.callback = word_guess  # type: ignore[method-assign]
         self.add_item(button)

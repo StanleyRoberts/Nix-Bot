@@ -12,15 +12,17 @@ logger = Logger()
 
 THINKING_TIME = 15
 
+
 class Player:
     """Represents a player in the game
     """
-    
+
     def __init__(self, user: discord.User | discord.Member, score: int) -> None:
         self.user = user
         self.score = score
         self.is_liar = True
         self.is_guesser = False
+
 
 class CitationGame:
     """ Manages the state of the Charlatan game
@@ -29,7 +31,7 @@ class CitationGame:
     """
     def __init__(
             self,
-            player: discord.User | discord.Member 
+            player: discord.User | discord.Member
     ) -> None:
         self.article = ""
         self.players = [Player(player, 0)]
@@ -37,7 +39,7 @@ class CitationGame:
 
     def _choose_guesser(self) -> None:
         """ Chooses a guessing player for the game
-        Needs to be done after choosing the impostor. 
+        Needs to be done after choosing the impostor.
         """
         valid = [player for player in self.players if player.is_liar]
         guesser = random.choice(valid)
@@ -76,7 +78,7 @@ class CitationGame:
         for p in self.players:
             p.is_guesser = False
             p.is_liar = True
-    
+
     def add_player(self, new_player: discord.User | discord.Member) -> None:
         """Add new player to game"""
         self.players.append(Player(new_player, 0))
@@ -117,7 +119,11 @@ class CitationGame:
             self.get_guesser().score += 1
             return True
 
-    def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> Tuple[str, bool, Player | None]:
+    def cast_vote(
+        self,
+        user: discord.User | discord.Member,
+        player_idx: int
+    ) -> Tuple[str, bool, Player | None]:
         """Handles player voting for nonliar
 
         Args:

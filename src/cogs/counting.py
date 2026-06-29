@@ -76,7 +76,8 @@ class Counting(commands.Cog):
     async def get_highscore(self, ctx: discord.ApplicationContext) -> None:
         if ctx.guild is None:
             logger.warning("Could not retrieve guild from context.")
-            await ctx.respond(f"An error occured trying to get the server's highscore! {Emotes.CRYING}")
+            await ctx.respond(
+                f"An error occured trying to get the server's highscore! {Emotes.CRYING}")
             return
         highscore = db.single_sql(
             "SELECT HighScoreCounting FROM Guilds WHERE ID = %s", (ctx.guild.id,))

@@ -23,7 +23,11 @@ class PostViewer(discord.ui.View):
 
     @discord.ui.button(label="New Post", style=discord.ButtonStyle.primary,
                        emoji=string_to_partial_emoji(Emotes.YUM))
-    async def refresh_callback(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def refresh_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         await interaction.response.defer()
         post = await self.reddit.get_post()
         if interaction.message is None:

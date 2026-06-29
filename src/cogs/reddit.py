@@ -27,7 +27,7 @@ class Reddit(commands.Cog):
         default="day",
         description="Time period to search for top posts",
         choices=["month", "hour", "week", "all", "day", "year"]
-    ) # type: ignore[untyped-decorator]
+    )  # type: ignore[untyped-decorator]
     async def send_reddit_post(
         self,
         ctx: discord.ApplicationContext,
@@ -39,7 +39,8 @@ class Reddit(commands.Cog):
             await ctx.respond(f"An error has occured {Emotes.CRYING}")
             return
         logger.debug("Getting reddit post", member_id=ctx.user.id, channel_id=ctx.channel_id)
-        if isinstance(ctx.channel, discord.DMChannel | discord.GroupChannel | discord.PartialMessageable):
+        if isinstance(ctx.channel,
+                      discord.DMChannel | discord.GroupChannel | discord.PartialMessageable):
             is_nsfw = False
         else:
             is_nsfw = ctx.channel.is_nsfw()
@@ -53,13 +54,19 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='subscribe',
                             description="Subscribe to a subreddit to get daily posts from it")
-    @discord.commands.option(name="channel", type=discord.TextChannel, required=False) # type: ignore[untyped-decorator]
+    @discord.commands.option(
+        name="channel",
+        type=discord.TextChannel,
+        required=False)  # type: ignore[untyped-decorator]
     @discord.commands.default_permissions(manage_guild=True)
     async def subscribe_to_sub(
         self,
         ctx: discord.ApplicationContext,
         sub: str,
-        channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel | discord.TextChannel | discord.ForumChannel | discord.CategoryChannel | discord.Thread | discord.DMChannel | discord.GroupChannel | discord.PartialMessageable | None
+        channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel
+            | discord.TextChannel | discord.ForumChannel | discord.CategoryChannel
+            | discord.Thread | discord.DMChannel | discord.GroupChannel
+            | discord.PartialMessageable | None
     ) -> None:
         channel = channel if channel else ctx.channel
         if channel is None:
@@ -93,7 +100,7 @@ class Reddit(commands.Cog):
 
     @commands.slash_command(name='unsubscribe',
                             description="Unsubscribe to daily posts from the given subreddit")
-    @discord.commands.option("sub", type=str, required=False) # type: ignore[untyped-decorator]
+    @discord.commands.option("sub", type=str, required=False)  # type: ignore[untyped-decorator]
     @discord.commands.default_permissions(manage_guild=True)
     async def unsubscribe_from_sub(self, ctx: discord.ApplicationContext, sub: str) -> None:
         if not sub:
@@ -103,7 +110,7 @@ class Reddit(commands.Cog):
             logger.warning(f"Guild id couldn't be extracted from context.")
             await ctx.respond(f"An error has occured unsubscribing {Emotes.CRYING}")
             return
-        
+
         if (sub.lower(),) not in db.single_sql(
             "SELECT Subreddit FROM Subreddits WHERE GuildID=%s",
             (ctx.guild_id,)
@@ -122,7 +129,8 @@ class Reddit(commands.Cog):
     async def get_subs(self, ctx: discord.ApplicationContext) -> None:
         if ctx.guild_id is None:
             logger.warning(f"Guild id couldn't be extracted from context.")
-            await ctx.respond(f"An error has occured getting this server's subscriptions {Emotes.CRYING}")
+            await ctx.respond(
+                f"An error has occured getting this server's subscriptions {Emotes.CRYING}")
             return
         subscriptions = db.single_sql(
             "SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))

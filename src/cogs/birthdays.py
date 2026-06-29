@@ -41,10 +41,12 @@ class Birthdays(commands.Cog):
         logger.info("Counting channel set", guild_id=ctx.guild_id, channel_id=channel.id)
 
     @commands.slash_command(name='birthday', description="Set your birthday")
-    @discord.commands.option(name="day", type=int, description="Enter day of the month (as integer)",
-                             min_value=1, max_value=31, required=True) # type: ignore[untyped-decorator]
+    @discord.commands.option(
+        name="day", type=int, description="Enter day of the month (as integer)",
+        min_value=1, max_value=31, required=True
+    )  # type: ignore[untyped-decorator]
     @discord.commands.option(name="month", type=str, description="Enter month of the year",
-                             choices=MONTHS, required=True) # type: ignore[untyped-decorator]
+                             choices=MONTHS, required=True)  # type: ignore[untyped-decorator]
     async def set_birthday(self, ctx: discord.ApplicationContext, day: int, month: str) -> None:
         if ctx.guild is None:
             logger.warning("Guild could not be retreived out of context.")
