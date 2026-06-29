@@ -93,7 +93,11 @@ class CharlatanLobby(discord.ui.View):
         self.game_state = game_state
 
     @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
-    async def join_callback(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def join_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         if interaction.user is None:
             logger.warning("Invalid Join interaction")
             return
@@ -112,24 +116,40 @@ class CharlatanLobby(discord.ui.View):
             )
 
     @discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
-    async def rules_callback(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def rules_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         await interaction.response.send_message(
             ephemeral=True,
             embed=discord.Embed(description=helper.RULES)
         )
 
     @discord.ui.button(label="Word List", row=1, style=discord.ButtonStyle.secondary)
-    async def wordlist_callback(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def wordlist_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         await interaction.response.send_message(view=WordSelection(game_state=self.game_state),
                                                 ephemeral=True)
 
     @discord.ui.button(label="Confirm Lobby", row=2, style=discord.ButtonStyle.primary)
-    async def start_callback(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def start_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         self.game_state.wordlist = self.game_state.wordlist[:16]
         await interaction.response.edit_message(view=CharlatanView(self.game_state))
 
     @discord.ui.button(label="Leave", row=0, style=discord.ButtonStyle.secondary)
-    async def leave_callback(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def leave_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         if interaction.user:
             self.game_state.remove_player(interaction.user)
         await interaction.response.edit_message(view=self)
@@ -144,7 +164,11 @@ class CharlatanView(discord.ui.View):
         self.game_state = game_state
 
     @discord.ui.button(label="Start Game", style=discord.ButtonStyle.primary)
-    async def start_game(self, _: discord.ui.Button[discord.ui.View], interaction: discord.Interaction) -> None:
+    async def start_game(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         await interaction.response.defer()
         self.clear_items()
         self.message = await (await interaction.original_response()).edit(
@@ -219,7 +243,7 @@ class CharlatanView(discord.ui.View):
     async def charlatan_guess(self) -> None:
         """Handles scoring for the charlatan voting for the secret word.
 
-        Sends a voting dm to the charlatan, and handles scoring and output messages for the result.
+        Sends a voting dm to the charlatan; handles scoring and output messages for the result.
         Called if the Charlatan was discovered.
         """
 
@@ -334,7 +358,7 @@ class CharlatanChoice(discord.ui.View):
                 self.children = [button]
                 button.disabled = True
                 await self.message.edit(content=response, view=self)
-        button.callback = word_guess # type: ignore[method-assign]
+        button.callback = word_guess  # type: ignore[method-assign]
         self.add_item(button)
 
 
@@ -366,9 +390,9 @@ class WordSelection(discord.ui.View):
         min_values=0,
         max_values=1,
         options=random_selection()
-    ) 
+    )
     async def callback(self,
-                       select: discord.ui.Select[Any, Any, Any], 
+                       select: discord.ui.Select[Any, Any, Any],
                        interaction: discord.Interaction) -> None:
         """ Changes interaction view to CharlatanLobby
 
@@ -381,7 +405,8 @@ class WordSelection(discord.ui.View):
         logger.debug("WordSelection complete, returning to lobby")
         if select.values is None or not isinstance(select.values[0], str):
             logger.warning("Didn't receive proper value for selected list")
-            await self.message.edit(f"A problem occured changing the wordlist {Emotes.CONFUSED}", view=None)
+            await self.message.edit(f"A problem occured changing the wordlist {Emotes.CONFUSED}",
+                                    view=None)
             return
         selected_list = select.values[0]
         self.game_state.wordlist = helper.WORDLISTS[selected_list]
