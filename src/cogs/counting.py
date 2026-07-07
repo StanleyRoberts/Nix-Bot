@@ -77,7 +77,8 @@ class Counting(commands.Cog):
         if ctx.guild is None:
             logger.warning("Could not retrieve guild from context.")
             await ctx.respond(
-                f"An error occured trying to get the server's highscore! {Emotes.CRYING}")
+                f"An error occured trying to get the server's highscore! {Emotes.CRYING}",
+                ephemeral=True)
             return
         highscore = db.single_sql(
             "SELECT HighScoreCounting FROM Guilds WHERE ID = %s", (ctx.guild.id,))

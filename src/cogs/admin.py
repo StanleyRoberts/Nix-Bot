@@ -84,7 +84,8 @@ class Admin(commands.Cog):
         if role:
             if ctx.guild_id is None:
                 logger.debug(f"Could not retrieve guild id from context.")
-                await ctx.respond(f"An error occured setting the role. {Emotes.WTF}")
+                await ctx.respond(f"An error occured setting the role. {Emotes.WTF}",
+                                  ephemeral=True)
                 return
 
             logger.debug(f"Message ID on insert: {message.id}")
@@ -119,7 +120,8 @@ class Admin(commands.Cog):
     async def delete_react_entry(self, ctx: discord.ApplicationContext) -> None:
         if ctx.guild_id is None:
             logger.warning("Could not retrieve guild id from context.")
-            await ctx.respond(f"An error has occured clearing role settings. {Emotes.WTF}")
+            await ctx.respond(f"An error has occured clearing role settings. {Emotes.WTF}",
+                              ephemeral=True)
             return
 
         logger.info("Dropping react entries", guild_id=ctx.guild_id)
