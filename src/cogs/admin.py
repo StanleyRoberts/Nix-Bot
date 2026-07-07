@@ -70,8 +70,14 @@ class Admin(commands.Cog):
         except discord.errors.Forbidden:
             logger.info("Permission failure for chain_message",
                         guild_id=ctx.guild_id if ctx.guild_id else -1, channel_id=channel.id)
+            channel_mention = channel.mention if not isinstance(
+                                                            channel,
+                                                            discord.DMChannel |
+                                                            discord.GroupChannel |
+                                                            discord.PartialMessageable
+                                                        ) else "that channel"
             await ctx.respond(
-                f"Whoops! {Emotes.WTF} I don't have permissions to write in that channel",
+                f"Whoops! {Emotes.WTF} I don't have permissions to write in {channel_mention}",
                 ephemeral=True
             )
             return
