@@ -124,9 +124,10 @@ class Misc(commands.Cog):
         Format a message chain for input into AI
 
         Args:
-            msg_arr (list[tuple[str, str]]): List corresponding to each element in message chain
-                Tuple corresponds to (users_name, message content). Chronological order with
-                first item being the oldest message.
+            msg_arr (list[tuple[str, str]]):
+                List corresponding to each element in the message chain
+                Tuple corresponds to (users_name, message content).
+                Chronological order with first item being the oldest message.
 
         Returns:
             list[tuple[bool, str]]: Formatted message for input into AI
