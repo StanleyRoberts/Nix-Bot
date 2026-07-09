@@ -40,10 +40,8 @@ class Facts(commands.Cog):
     async def set_fact_channel(
         self,
         ctx: discord.ApplicationContext,
-        channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel
-            | discord.TextChannel | discord.ForumChannel | discord.CategoryChannel
-            | discord.Thread | discord.DMChannel | discord.GroupChannel
-            | discord.PartialMessageable | None
+        channel: discord.abc.GuildChannel | discord.PartialMessageable
+            | discord.abc.PrivateChannel | discord.Thread | None
     ) -> None:
         if not channel:
             if ctx.channel is None:
@@ -54,8 +52,6 @@ class Facts(commands.Cog):
                 )
                 return
             channel = ctx.channel
-        if not channel:
-            return
 
         db.single_void_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s",
                            (channel.id, ctx.guild_id))
@@ -64,7 +60,7 @@ class Facts(commands.Cog):
             f"""Facts channel set to {
                 channel.mention if not isinstance(
                     channel,
-                    discord.PartialMessageable | discord.DMChannel | discord.GroupChannel
+                    discord.PartialMessageable | discord.abc.PrivateChannel
                 ) else channel.id} {Emotes.DRINKING}""",
             ephemeral=True
         )

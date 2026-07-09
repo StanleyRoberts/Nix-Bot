@@ -63,10 +63,8 @@ class Reddit(commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         sub: str,
-        channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel
-            | discord.TextChannel | discord.ForumChannel | discord.CategoryChannel
-            | discord.Thread | discord.DMChannel | discord.GroupChannel
-            | discord.PartialMessageable | None
+        channel: discord.abc.GuildChannel | discord.PartialMessageable
+            | discord.abc.PrivateChannel | discord.Thread | None
     ) -> None:
         channel = channel if channel else ctx.channel
         if channel is None:
