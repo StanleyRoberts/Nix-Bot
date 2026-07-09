@@ -120,7 +120,7 @@ class Reddit(commands.Cog):
             await ctx.respond(f"This server is not subscribed to r/{sub} {Emotes.SUPRISE}")
         else:
             logger.info(f"Subreddit {sub} was unsubscribed from",
-                        guild_id=ctx.guild_id, channel_id=ctx.channel_id if ctx.channel_id else -1)
+                        guild_id=ctx.guild_id, channel_id=ctx.channel_id)
             db.single_void_SQL(
                 "DELETE FROM Subreddits WHERE GuildID=%s AND Subreddit=%s ", (ctx.guild_id, sub))
             await ctx.respond(f"This server is now unsubscribed from r/{sub} {Emotes.SNEAKY}")
@@ -137,7 +137,7 @@ class Reddit(commands.Cog):
         subscriptions = db.single_sql(
             "SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))
         logger.info("The list of subscripted subreddits was requested",
-                    guild_id=ctx.guild_id, channel_id=ctx.channel_id if ctx.channel_id else -1)
+                    guild_id=ctx.guild_id, channel_id=ctx.channel_id)
         sub_command = self.bot.get_application_command("subscribe")
         if (sub_command is None) or (not isinstance(sub_command, discord.SlashCommand)):
             logger.error("Could not get subscribe command")

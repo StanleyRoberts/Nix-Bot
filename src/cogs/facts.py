@@ -27,7 +27,7 @@ class Facts(commands.Cog):
         await ctx.respond(msg)
         logger.debug("Getting fact",
                      member_id=ctx.user.id,
-                     channel_id=ctx.channel_id if ctx.channel_id else -1)
+                     channel_id=ctx.channel_id)
 
     @commands.slash_command(name='set_fact_channel',
                             description="Sets the channel for daily facts")

@@ -69,7 +69,7 @@ class Admin(commands.Cog):
             message = await channel.send(text)
         except discord.errors.Forbidden:
             logger.info("Permission failure for chain_message",
-                        guild_id=ctx.guild_id if ctx.guild_id else -1, channel_id=channel.id)
+                        guild_id=ctx.guild_id, channel_id=channel.id)
             channel_mention = channel.mention if not isinstance(
                                                             channel,
                                                             discord.DMChannel |
