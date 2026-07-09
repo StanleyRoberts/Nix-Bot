@@ -61,11 +61,11 @@ class Facts(commands.Cog):
                            (channel.id, ctx.guild_id))
 
         await ctx.respond(
-            f"Facts channel set to {
+            f"""Facts channel set to {
                 channel.mention if not isinstance(
                     channel,
                     discord.PartialMessageable | discord.DMChannel | discord.GroupChannel
-                ) else channel.id} {Emotes.DRINKING}",
+                ) else channel.id} {Emotes.DRINKING}""",
             ephemeral=True
         )
         logger.debug("Fact channel set", member_id=ctx.user.id, channel_id=channel.id)
