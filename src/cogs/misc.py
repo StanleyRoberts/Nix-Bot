@@ -22,7 +22,9 @@ class Misc(commands.Cog):
     )
     async def send_quote(self, ctx: discord.ApplicationContext) -> None:
         await ctx.respond(requests.get("https://inspirobot.me/api?generate=true", timeout=10).text)
-        logger.info("Generating quote", member_id=ctx.author.id, channel_id=ctx.channel_id)
+        logger.info("Generating quote",
+                    member_id=ctx.author.id,
+                    channel_id=ctx.channel_id)
 
     @commands.slash_command(name='all_commands', description="Displays all of Nix's commands")
     async def display_help(self, ctx: discord.ApplicationContext) -> None:
@@ -43,13 +45,17 @@ class Misc(commands.Cog):
         embed = discord.Embed(title="Help Page", description=desc,
                               colour=Colours.PRIMARY)
         await ctx.respond(embed=embed)
-        logger.info("Displaying long help", member_id=ctx.author.id, channel_id=ctx.channel_id)
+        logger.info("Displaying long help",
+                    member_id=ctx.author.id,
+                    channel_id=ctx.channel_id)
 
     @commands.slash_command(name='help', description="Display the help page for Nix")
     async def helper_embed(self, ctx: discord.ApplicationContext) -> None:
         view = Help_Nav(self.bot.cogs, self.bot)
         await ctx.interaction.response.send_message(embed=view.build_embed(), view=view)
-        logger.info("Displaying short help", member_id=ctx.author.id, channel_id=ctx.channel_id)
+        logger.info("Displaying short help",
+                    member_id=ctx.author.id,
+                    channel_id=ctx.channel_id)
 
     @commands.Cog.listener("on_message")
     async def respond(self, msg: discord.Message) -> None:
@@ -118,9 +124,10 @@ class Misc(commands.Cog):
         Format a message chain for input into AI
 
         Args:
-            msg_arr (list[tuple[str, str]]): List corresponding to each element in the message chain
-                Tuple corresponds to (users_name, message content). Chronological order with
-                first item being the oldest message.
+            msg_arr (list[tuple[str, str]]):
+                List corresponding to each element in the message chain
+                Tuple corresponds to (users_name, message content).
+                Chronological order with first item being the oldest message.
 
         Returns:
             list[tuple[bool, str]]: Formatted message for input into AI
@@ -199,14 +206,22 @@ class Help_Nav(discord.ui.View):
         return discord.Embed(title="Help Page", description=desc, colour=Colours.PRIMARY)
 
     @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, emoji='⬅️')
-    async def backward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def backward_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         self.index -= 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
         logger.debug("Back button pressed", member_id=interaction.user.id
                      if interaction.user is not None else 0)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary, emoji='➡️')
-    async def forward_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def forward_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         self.index += 1
         await interaction.response.edit_message(embed=self.build_embed(), view=self)
         logger.debug("Next button pressed", member_id=interaction.user.id

@@ -17,20 +17,36 @@ class Admin(commands.Cog):
         description="sends a message to the given channel. " +
         "reacting with the given emoji will assign the given role")
     @discord.commands.default_permissions(manage_guild=True)
-    @discord.commands.option('channel', type=discord.TextChannel,
-                             parameter_name="channel", required=False)
-    @discord.commands.option("emoji", required=False)
-    @discord.commands.option("role", type=discord.Role, required=False)
+    @discord.commands.option(
+        name='channel', type=discord.TextChannel,
+        parameter_name="set_channel", required=False
+    )  # type: ignore[untyped-decorator]
+    @discord.commands.option(
+        name="emoji",
+        type=str,
+        required=False)  # type: ignore[untyped-decorator]
+    @discord.commands.option(
+        name="role",
+        type=discord.Role,
+        required=False
+    )  # type: ignore[untyped-decorator]
     async def greeting_role(
         self,
         ctx: discord.ApplicationContext,
         text: str,
-        channel: discord.TextChannel | None,
+        set_channel: discord.TextChannel | None,
         emoji: str,
         role: discord.Role | None
     ) -> None:
+        channel = set_channel if set_channel else ctx.channel
         if channel is None:
-            channel = ctx.channel
+            logger.warning("Could not get channel from context.")
+            await ctx.respond(
+                f"Whoops! {Emotes.WTF} an error occured.",
+                ephemeral=True
+            )
+            return
+
         if emoji:
             try:
                 true_emoji = Emoji(emoji)
@@ -42,12 +58,26 @@ class Admin(commands.Cog):
 
         text = text.replace("<<nl>>", "\n")
         try:
+            if isinstance(channel, discord.ForumChannel | discord.CategoryChannel):
+                logger.info("Channel is of type that doesn't support send method",
+                            channel_id=channel.id)
+                await ctx.respond(
+                    f"Whoops! {Emotes.WTF} I am unable to write in that channel",
+                    ephemeral=True
+                )
+                return
             message = await channel.send(text)
         except discord.errors.Forbidden:
             logger.info("Permission failure for chain_message",
                         guild_id=ctx.guild_id, channel_id=channel.id)
+            channel_mention = channel.mention if not isinstance(
+                                                            channel,
+                                                            discord.DMChannel |
+                                                            discord.GroupChannel |
+                                                            discord.PartialMessageable
+                                                        ) else "that channel"
             await ctx.respond(
-                f"Whoops! {Emotes.WTF} I don't have permissions to write in {channel.mention}",
+                f"Whoops! {Emotes.WTF} I don't have permissions to write in {channel_mention}",
                 ephemeral=True
             )
             return
@@ -58,6 +88,12 @@ class Admin(commands.Cog):
         await message.add_reaction(emoji=true_emoji.to_partial_emoji())
         logger.debug(f"role={role}")
         if role:
+            if ctx.guild_id is None:
+                logger.debug(f"Could not retrieve guild id from context.")
+                await ctx.respond(f"An error occured setting the role. {Emotes.WTF}",
+                                  ephemeral=True)
+                return
+
             logger.debug(f"Message ID on insert: {message.id}")
             db.single_void_SQL(
                 "INSERT INTO ReactMessages VALUES (%s, %s, %s, %s)",
@@ -68,9 +104,16 @@ class Admin(commands.Cog):
     @discord.slash_command(name="remove_single_role_assignment",
                            description="Takes out all of Nix's role " +
                            "assigning behaviour for this role")
-    @discord.commands.option("role", type=discord.Role,
-                             description="The role to remove assignment for")
-    async def remove_single_role(self, ctx: discord.ApplicationContext, role: discord.Role) -> None:
+    @discord.commands.option(
+        name="role",
+        type=discord.Role,
+        description="The role to remove assignment for"
+    )  # type: ignore[untyped-decorator]
+    async def remove_single_role(
+        self,
+        ctx: discord.ApplicationContext,
+        role: discord.Role
+    ) -> None:
         db.multi_void_sql([
             ("DELETE FROM RoleChannel WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id)),
             ("DELETE FROM ReactMessages WHERE GuildID=%s AND RoleID=%s", (ctx.guild_id, role.id))])
@@ -81,6 +124,12 @@ class Admin(commands.Cog):
                            "note this will not clear existing roles, or delete Nix messages")
     @discord.commands.default_permissions(manage_guild=True)
     async def delete_react_entry(self, ctx: discord.ApplicationContext) -> None:
+        if ctx.guild_id is None:
+            logger.warning("Could not retrieve guild id from context.")
+            await ctx.respond(f"An error has occured clearing role settings. {Emotes.WTF}",
+                              ephemeral=True)
+            return
+
         logger.info("Dropping react entries", guild_id=ctx.guild_id)
         db.multi_void_sql([
             ("DELETE FROM ReactMessages WHERE GuildID=%s", (ctx.guild_id,)),
@@ -121,14 +170,21 @@ class Admin(commands.Cog):
     @discord.commands.slash_command(
         name="set_chain_message",
         description="allows Nix to follow up with custom messages whenever a user send a message")
-    @discord.commands.option("message", type=str,
+    @discord.commands.option(name="message", type=str,
                              description="The message text that will be sent as a follow up. " +
-                             "Write <<user>> to ping the user")
-    @discord.commands.option("response_channel", type=discord.TextChannel,
-                             description="The channel where Nix sends its follow up")
-    @discord.commands.option("message_channel", type=discord.TextChannel,
-                             description="The channel Nix watches for new messages " +
-                             "If not provided then Nix follows up all messages", required=False)
+                             "Write <<user>> to ping the user")  # type: ignore[untyped-decorator]
+    @discord.commands.option(
+        name="response_channel",
+        type=discord.TextChannel,
+        description="The channel where Nix sends its follow up"
+    )  # type: ignore[untyped-decorator]
+    @discord.commands.option(
+        name="message_channel",
+        type=discord.TextChannel,
+        description="The channel Nix watches for new messages. " +
+        "If not provided then Nix follows up all messages",
+        required=False
+    )  # type: ignore[untyped-decorator]
     @discord.commands.default_permissions(manage_guild=True)
     async def set_chain_message(
         self,

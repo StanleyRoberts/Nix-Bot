@@ -25,22 +25,43 @@ class Facts(commands.Cog):
                "Oh no, I can't think of any good facts right now." +
                f"Maybe I will think of one later{Emotes.CRYING}")
         await ctx.respond(msg)
-        logger.debug("Getting fact", member_id=ctx.user.id, channel_id=ctx.channel_id)
+        logger.debug("Getting fact",
+                     member_id=ctx.user.id,
+                     channel_id=ctx.channel_id)
 
-    @commands.slash_command(name='set_fact_channel', description="Sets the channel for daily facts")
-    @discord.commands.option("channel", type=discord.TextChannel, required=False)
+    @commands.slash_command(name='set_fact_channel',
+                            description="Sets the channel for daily facts")
+    @discord.commands.option(
+        name='channel',
+        type=discord.TextChannel,
+        required=False
+    )  # type: ignore[untyped-decorator]
     @discord.commands.default_permissions(manage_guild=True)
     async def set_fact_channel(
         self,
         ctx: discord.ApplicationContext,
-        channel: discord.TextChannel
+        channel: discord.abc.GuildChannel | discord.PartialMessageable
+            | discord.abc.PrivateChannel | discord.Thread | None
     ) -> None:
         if not channel:
+            if ctx.channel is None:
+                logger.warning("Could not get channel from context")
+                await ctx.respond(
+                    f"An error occured setting the channel {Emotes.WTF}",
+                    ephemeral=True
+                )
+                return
             channel = ctx.channel
+
         db.single_void_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s",
                            (channel.id, ctx.guild_id))
+
         await ctx.respond(
-            f"Facts channel set to {channel.mention} {Emotes.DRINKING}",
+            f"""Facts channel set to {
+                channel.mention if not isinstance(
+                    channel,
+                    discord.PartialMessageable | discord.abc.PrivateChannel
+                ) else channel.id} {Emotes.DRINKING}""",
             ephemeral=True
         )
         logger.debug("Fact channel set", member_id=ctx.user.id, channel_id=channel.id)
@@ -51,6 +72,11 @@ class Facts(commands.Cog):
     )
     @discord.commands.default_permissions(manage_guild=True)
     async def toggle_facts(self, ctx: discord.ApplicationContext) -> None:
+        if ctx.guild_id is None:
+            logger.warning("Could not retrieve guild id from context.")
+            await ctx.respond(f"An error occured trying to stop daily facts {Emotes.NOEMOTION}",
+                              ephemeral=True)
+            return
         db.single_void_SQL(
             "UPDATE Guilds SET FactChannelID=NULL WHERE ID=%s", (ctx.guild_id,))
         await ctx.respond(f"Stopping daily facts {Emotes.NOEMOTION}", ephemeral=True)
@@ -82,9 +108,11 @@ class Facts(commands.Cog):
                     if isinstance(channel, discord.abc.Messageable):
                         await channel.send(msg)
                     else:
-                        logger.info("Channel for daily fact not messageable", channel_id=factID[0])
+                        logger.info("Channel for daily fact not messageable",
+                                    channel_id=factID[0])
                 except discord.errors.Forbidden:
-                    logger.info("Permission failure for sending fact message", channel_id=factID[0])
+                    logger.info("Permission failure for sending fact message",
+                                channel_id=factID[0])
 
     @staticmethod
     def get_fact() -> str | None:

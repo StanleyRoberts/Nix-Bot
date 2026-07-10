@@ -49,9 +49,9 @@ class Logger(object):
     def debug(
         self,
         message: typing.Any,
-        guild_id: int = 0,
-        member_id: int = 0,
-        channel_id: int = 0
+        guild_id: int | None = 0,
+        member_id: int | None = 0,
+        channel_id: int | None = 0
     ) -> None:
         """Log a message at the DEBUG level
 
@@ -70,9 +70,9 @@ class Logger(object):
     def info(
         self,
         message: typing.Any,
-        guild_id: int = 0,
-        member_id: int = 0,
-        channel_id: int = 0
+        guild_id: int | None = 0,
+        member_id: int | None = 0,
+        channel_id: int | None = 0
     ) -> None:
         """Log a message at the INFO level
 
@@ -91,9 +91,9 @@ class Logger(object):
     def warning(
         self,
         message: typing.Any,
-        guild_id: int = 0,
-        member_id: int = 0,
-        channel_id: int = 0
+        guild_id: int | None = 0,
+        member_id: int | None = 0,
+        channel_id: int | None = 0
     ) -> None:
         """Log a message at the WARNING level
 
@@ -112,9 +112,9 @@ class Logger(object):
     def error(
         self,
         message: typing.Any,
-        guild_id: int = 0,
-        member_id: int = 0,
-        channel_id: int = 0
+        guild_id: int | None = 0,
+        member_id: int | None = 0,
+        channel_id: int | None = 0
     ) -> None:
         """Log a message at the ERROR level
 
@@ -133,9 +133,9 @@ class Logger(object):
     def critical(
         self,
         message: typing.Any,
-        guild_id: int = 0,
-        member_id: int = 0,
-        channel_id: int = 0
+        guild_id: int | None = 0,
+        member_id: int | None = 0,
+        channel_id: int | None = 0
     ) -> None:
         """Log a CRITICAL at the debug level
 
@@ -154,9 +154,9 @@ class Logger(object):
     def _print_log(self,
                    message: str,
                    priority: Priority,
-                   guild_id: int,
-                   member_id: int,
-                   channel_id: int,
+                   guild_id: int | None,
+                   member_id: int | None,
+                   channel_id: int | None,
                    call_class: str
                    ) -> None:
         if priority.value < self.print_level:

@@ -34,13 +34,24 @@ class Trivia(commands.Cog):
         name='trivia',
         description="Start a game of Trivia. The first person to get 5 points wins"
     )
-    @discord.commands.option("category", type=str, description="Category for questions",
-                             default="General", required=False, choices=CATEGORY_DICT.keys())
+    @discord.commands.option(
+        name="category", type=str, description="Category for questions",
+        default="General", required=False,
+        choices=CATEGORY_DICT.keys())  # type: ignore[untyped-decorator]
     async def game_start(self, ctx: discord.ApplicationContext, category: str) -> None:
         real_category = CATEGORY_DICT.get(category) or None
+        if ctx.channel_id is None:
+            logger.warning("Could not retrieve channel id from context.")
+            await ctx.respond(
+                f"{Emotes.WTF} Uh oh! An error has occured starting the game.",
+                ephemeral=True
+            )
+            return
+
         if ctx.channel_id in self.active_views:
             await ctx.respond(
-                f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel"
+                f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel",
+                ephemeral=True
             )
             await ctx.respond(self.active_views[ctx.channel_id].get_current_question(),
                               view=self.active_views[ctx.channel_id])
@@ -88,6 +99,13 @@ class Trivia(commands.Cog):
     @commands.slash_command(name='stop_trivia',
                             description='stops the in-progress trivia game in this channel')
     async def stop_trivia(self, ctx: discord.ApplicationContext) -> None:
+        if ctx.channel_id is None:
+            logger.warning("Could not retrieve channel id from context.")
+            await ctx.respond(
+                    f"An error occured trying to stop the Trivia {Emotes.WTF}",
+                    ephemeral=True)
+            return
+
         if not self.active_views[ctx.channel_id]:
             await ctx.respond(f"There is no Trivia active in this channel {Emotes.CONFUSED}")
         else:

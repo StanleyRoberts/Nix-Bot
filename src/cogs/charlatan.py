@@ -15,7 +15,9 @@ class Charlatan(commands.Cog):
 
     @commands.slash_command(name='charlatan', description="Play a game of Charlatan")
     async def start_game(self, ctx: discord.ApplicationContext) -> None:
-        logger.info("Starting Charlatan Game", guild_id=ctx.guild_id, channel_id=ctx.channel_id)
+        logger.info("Starting Charlatan Game",
+                    guild_id=ctx.guild_id,
+                    channel_id=ctx.channel_id)
         game_state = CharlatanGame(ctx.author)
         await ctx.respond(embed=game_state.make_embed("Charlatan"),
                           view=CharlatanLobby(game_state))

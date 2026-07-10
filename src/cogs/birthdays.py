@@ -25,6 +25,13 @@ class Birthdays(commands.Cog):
         ctx: discord.ApplicationContext,
         channel: discord.TextChannel
     ) -> None:
+        if ctx.guild_id is None:
+            logger.warning("Guild could not be retreived out of context.")
+            await ctx.respond(
+                f"An error occured setting the birthday channel {Emotes.CONFUSED}",
+                ephemeral=True
+            )
+            return
         db.single_void_SQL("UPDATE Guilds SET BirthdayChannelID=%s WHERE ID=%s",
                            (channel.id, ctx.guild_id))
         await ctx.respond(
@@ -34,11 +41,20 @@ class Birthdays(commands.Cog):
         logger.info("Counting channel set", guild_id=ctx.guild_id, channel_id=channel.id)
 
     @commands.slash_command(name='birthday', description="Set your birthday")
-    @discord.commands.option("day", type=int, description="Enter day of the month (as integer)",
-                             min_value=1, max_value=31, required=True)
-    @discord.commands.option("month", type=str, description="Enter month of the year",
-                             choices=MONTHS, required=True)
+    @discord.commands.option(
+        name="day", type=int, description="Enter day of the month (as integer)",
+        min_value=1, max_value=31, required=True
+    )  # type: ignore[untyped-decorator]
+    @discord.commands.option(name="month", type=str, description="Enter month of the year",
+                             choices=MONTHS, required=True)  # type: ignore[untyped-decorator]
     async def set_birthday(self, ctx: discord.ApplicationContext, day: int, month: str) -> None:
+        if ctx.guild is None:
+            logger.warning("Guild could not be retreived out of context.")
+            await ctx.respond(
+                f"An error occured setting the birthday {Emotes.CONFUSED}",
+                ephemeral=True
+            )
+            return
         if (month in ['Apr', 'Jun', 'Sep', 'Nov'] and day > 30) or (month == 'Feb' and day > 29):
             await ctx.respond(f"Sorry, I didn't understand the birthday '{day} {month}'" +
                               f" Are you sure it a valid day? {Emotes.CONFUSED}")

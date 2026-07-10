@@ -31,11 +31,15 @@ class TriviaView(discord.ui.View):
 
     @discord.ui.button(label="Skip", style=discord.ButtonStyle.secondary,
                        emoji='⏩')
-    async def skip_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
+    async def skip_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
         if interaction.user is None:
             logger.error("skip_callback interaction has no user")
             return
-        old_answer = await self.state.skip(str(interaction.user.id))
+        old_answer = await self.state.skip(interaction.user.id)
         channel_id = interaction.channel_id if interaction.channel_id else 0
         guild_id = interaction.guild_id if interaction.guild_id else 0
         if old_answer:
@@ -61,14 +65,14 @@ class TriviaView(discord.ui.View):
                 return
             if self.is_finished():
                 return
-            guess = self.state.check_guess(msg.content, str(msg.author.id))
+            guess = self.state.check_guess(msg.content, msg.author.id)
             if guess == GuessValue.INCORRECT:
                 await msg.add_reaction(Emotes.BRUH)
                 return
             await msg.add_reaction(Emotes.WHOA)
             await msg.reply(
                 f"You got the answer! ({self.state.answer}) " +
-                f"You are now at {self.state.players[str(msg.author.id)]} points {Emotes.HAPPY}"
+                f"You are now at {self.state.players[msg.author.id]} points {Emotes.HAPPY}"
             )
             if guess == GuessValue.CORRECT_AND_WON:
                 await msg.reply(f"Congratulations! {msg.author.mention} has won with " +

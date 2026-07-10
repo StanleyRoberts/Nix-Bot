@@ -1,5 +1,5 @@
-import asyncpraw as praw  # type: ignore[import]
-import asyncprawcore as prawcore  # type: ignore[import]
+import asyncpraw as praw
+import asyncprawcore as prawcore
 import random
 import aiohttp
 import io
@@ -45,9 +45,8 @@ class RedditInterface:
         time (str, optional): Time period to search in. Defaults to "day".
 
     """
-
     def __init__(self, sub: str, is_nsfw: bool = False, time: str = "day") -> None:
-        self.cache: list[praw.models.reddit.submission.Submission] = []
+        self.cache: list[praw.models.Submission] = []
         self._nsub = sub
         self.time = time
         self.is_nsfw = is_nsfw
