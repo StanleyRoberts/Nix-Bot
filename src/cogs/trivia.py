@@ -43,13 +43,15 @@ class Trivia(commands.Cog):
         if ctx.channel_id is None:
             logger.warning("Could not retrieve channel id from context.")
             await ctx.respond(
-                f"{Emotes.WTF} Uh oh! An error has occured starting the game."
+                f"{Emotes.WTF} Uh oh! An error has occured starting the game.",
+                ephemeral=True
             )
             return
 
         if ctx.channel_id in self.active_views:
             await ctx.respond(
-                f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel"
+                f"{Emotes.STARE} Uh oh! There is already an active trivia game in this channel",
+                ephemeral=True
             )
             await ctx.respond(self.active_views[ctx.channel_id].get_current_question(),
                               view=self.active_views[ctx.channel_id])
@@ -99,7 +101,9 @@ class Trivia(commands.Cog):
     async def stop_trivia(self, ctx: discord.ApplicationContext) -> None:
         if ctx.channel_id is None:
             logger.warning("Could not retrieve channel id from context.")
-            await ctx.respond(f"An error occured trying to stop the Trivia {Emotes.WTF}")
+            await ctx.respond(
+                    f"An error occured trying to stop the Trivia {Emotes.WTF}",
+                    ephemeral=True)
             return
 
         if not self.active_views[ctx.channel_id]:

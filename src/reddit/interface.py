@@ -45,10 +45,8 @@ class RedditInterface:
         time (str, optional): Time period to search in. Defaults to "day".
 
     """
-
     def __init__(self, sub: str, is_nsfw: bool = False, time: str = "day") -> None:
-        self.cache: list[  # type: ignore[name-defined]
-            praw.models.reddit.submission.Submission] = []
+        self.cache: list[praw.models.Submission] = []
         self._nsub = sub
         self.time = time
         self.is_nsfw = is_nsfw

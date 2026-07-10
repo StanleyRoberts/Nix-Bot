@@ -27,7 +27,7 @@ class Facts(commands.Cog):
         await ctx.respond(msg)
         logger.debug("Getting fact",
                      member_id=ctx.user.id,
-                     channel_id=ctx.channel_id if ctx.channel_id else -1)
+                     channel_id=ctx.channel_id)
 
     @commands.slash_command(name='set_fact_channel',
                             description="Sets the channel for daily facts")
@@ -40,10 +40,8 @@ class Facts(commands.Cog):
     async def set_fact_channel(
         self,
         ctx: discord.ApplicationContext,
-        channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel
-            | discord.TextChannel | discord.ForumChannel | discord.CategoryChannel
-            | discord.Thread | discord.DMChannel | discord.GroupChannel
-            | discord.PartialMessageable | None
+        channel: discord.abc.GuildChannel | discord.PartialMessageable
+            | discord.abc.PrivateChannel | discord.Thread | None
     ) -> None:
         if not channel:
             if ctx.channel is None:
@@ -54,18 +52,16 @@ class Facts(commands.Cog):
                 )
                 return
             channel = ctx.channel
-        if not channel:
-            return
 
         db.single_void_SQL("UPDATE Guilds SET FactChannelID=%s WHERE ID=%s",
                            (channel.id, ctx.guild_id))
 
         await ctx.respond(
-            f"Facts channel set to {
+            f"""Facts channel set to {
                 channel.mention if not isinstance(
                     channel,
-                    discord.PartialMessageable | discord.DMChannel | discord.GroupChannel
-                ) else channel.id} {Emotes.DRINKING}",
+                    discord.PartialMessageable | discord.abc.PrivateChannel
+                ) else channel.id} {Emotes.DRINKING}""",
             ephemeral=True
         )
         logger.debug("Fact channel set", member_id=ctx.user.id, channel_id=channel.id)

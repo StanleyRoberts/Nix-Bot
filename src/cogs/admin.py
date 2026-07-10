@@ -69,9 +69,15 @@ class Admin(commands.Cog):
             message = await channel.send(text)
         except discord.errors.Forbidden:
             logger.info("Permission failure for chain_message",
-                        guild_id=ctx.guild_id if ctx.guild_id else -1, channel_id=channel.id)
+                        guild_id=ctx.guild_id, channel_id=channel.id)
+            channel_mention = channel.mention if not isinstance(
+                                                            channel,
+                                                            discord.DMChannel |
+                                                            discord.GroupChannel |
+                                                            discord.PartialMessageable
+                                                        ) else "that channel"
             await ctx.respond(
-                f"Whoops! {Emotes.WTF} I don't have permissions to write in that channel",
+                f"Whoops! {Emotes.WTF} I don't have permissions to write in {channel_mention}",
                 ephemeral=True
             )
             return
@@ -84,7 +90,8 @@ class Admin(commands.Cog):
         if role:
             if ctx.guild_id is None:
                 logger.debug(f"Could not retrieve guild id from context.")
-                await ctx.respond(f"An error occured setting the role. {Emotes.WTF}")
+                await ctx.respond(f"An error occured setting the role. {Emotes.WTF}",
+                                  ephemeral=True)
                 return
 
             logger.debug(f"Message ID on insert: {message.id}")
@@ -119,7 +126,8 @@ class Admin(commands.Cog):
     async def delete_react_entry(self, ctx: discord.ApplicationContext) -> None:
         if ctx.guild_id is None:
             logger.warning("Could not retrieve guild id from context.")
-            await ctx.respond(f"An error has occured clearing role settings. {Emotes.WTF}")
+            await ctx.respond(f"An error has occured clearing role settings. {Emotes.WTF}",
+                              ephemeral=True)
             return
 
         logger.info("Dropping react entries", guild_id=ctx.guild_id)

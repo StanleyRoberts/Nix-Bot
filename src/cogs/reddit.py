@@ -63,10 +63,8 @@ class Reddit(commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         sub: str,
-        channel: discord.TextChannel | discord.VoiceChannel | discord.StageChannel
-            | discord.TextChannel | discord.ForumChannel | discord.CategoryChannel
-            | discord.Thread | discord.DMChannel | discord.GroupChannel
-            | discord.PartialMessageable | None
+        channel: discord.abc.GuildChannel | discord.PartialMessageable
+            | discord.abc.PrivateChannel | discord.Thread | None
     ) -> None:
         channel = channel if channel else ctx.channel
         if channel is None:
@@ -75,7 +73,7 @@ class Reddit(commands.Cog):
             return
         if ctx.guild_id is None:
             logger.warning(f"Guild id couldn't be extracted from context.")
-            await ctx.respond(f"An error has occured subscribing {Emotes.CRYING}")
+            await ctx.respond(f"An error has occured subscribing {Emotes.CRYING}", ephemeral=True)
             return
 
         if not await RedditInterface.valid_sub(sub):
@@ -108,7 +106,8 @@ class Reddit(commands.Cog):
             return
         if ctx.guild_id is None:
             logger.warning(f"Guild id couldn't be extracted from context.")
-            await ctx.respond(f"An error has occured unsubscribing {Emotes.CRYING}")
+            await ctx.respond(f"An error has occured unsubscribing {Emotes.CRYING}",
+                              ephemeral=True)
             return
 
         if (sub.lower(),) not in db.single_sql(
@@ -130,7 +129,8 @@ class Reddit(commands.Cog):
         if ctx.guild_id is None:
             logger.warning(f"Guild id couldn't be extracted from context.")
             await ctx.respond(
-                f"An error has occured getting this server's subscriptions {Emotes.CRYING}")
+                f"An error has occured getting this server's subscriptions {Emotes.CRYING}",
+                ephemeral=True)
             return
         subscriptions = db.single_sql(
             "SELECT Subreddit FROM Subreddits WHERE GuildID=%s", (ctx.guild_id,))

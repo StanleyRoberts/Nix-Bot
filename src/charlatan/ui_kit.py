@@ -392,7 +392,7 @@ class WordSelection(discord.ui.View):
         options=random_selection()
     )
     async def callback(self,
-                       select: discord.ui.Select[Any, Any, Any],
+                       select: discord.ui.Select[discord.ui.View, Any],
                        interaction: discord.Interaction) -> None:
         """ Changes interaction view to CharlatanLobby
 
