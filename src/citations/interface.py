@@ -1,7 +1,7 @@
 import random
 import discord
 
-from helpers.style import Colours
+from helpers.style import Emotes, Colours
 from helpers.logger import Logger
 
 logger = Logger()
@@ -84,11 +84,11 @@ class CitationGame:
             embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
         )
 
-    def score_players(self) -> bool:
+    def score_players(self) -> str:
         """Handles round result and scoring
 
         Returns:
-            bool: Whether voted_player was the nonliar
+            bool: Description of embed after scoring
         """
         for player in self.players:
             if player.voted_for is None:
@@ -105,19 +105,22 @@ class CitationGame:
         else:
             voted_player = player_copy[0]
 
-        if voted_player is None:
-            logger.warning("No singular most voted player found")
-            return False
-        elif voted_player.is_liar:
-            logger.debug("Players didn't find nonliar")
-            voted_player.score += 1
-            return False
-        else:
-            logger.debug("Correctly guessed nonliar")
-            voted_player.score += 2
-            return True
+        nonliar = self.get_non_liar()
 
-    def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> str:
+        if voted_player is None:
+            reply = "No singular most voted player found " + f"{Emotes.CRYING}\n"
+        elif voted_player.is_liar:
+            reply = "Players didn't find trush speaker " + f"{Emotes.CRYING}\n"
+            voted_player.score += 1
+        else:
+            reply = "The truth speaker was found " + f"{Emotes.HAPPY}\n"
+            voted_player.score += 2
+        reply += f"it was {nonliar.user.mention}\n"
+        return reply + "\nVote amount of players:\n " + "\n".join(
+            player.user.display_name + " : " + 
+            str(player.votes) for player in self.players)
+
+    def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> tuple[str, bool]:
         """Handles player voting for nonliar
 
         Args:
@@ -126,16 +129,17 @@ class CitationGame:
 
         Returns:
             str: Message to respond with
+            bool: Whether vote was valid
         """
         player = self.find_player(user)
         if player is None:
-            return "You aren't in this game! Wait for the next round to join..."
+            return "You aren't in this game! Wait for the next round to join...", False
         if player_idx < 0 or player_idx >= len(self.players):
-            return "Something went wrong during vote"
+            return "Something went wrong during vote", False
         if self.players[player_idx] is player:
-            return "You are not allowed to vote for yourself"
+            return "You are not allowed to vote for yourself", False
         player.voted_for = self.players[player_idx]
-        return f"You voted for {self.players[player_idx].user.display_name}"
+        return f"You voted for {self.players[player_idx].user.display_name}", True
 
     def find_player(self, user: discord.User | discord.Member) -> Player | None:
         """Return player if they are in the game

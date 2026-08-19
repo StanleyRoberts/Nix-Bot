@@ -24,13 +24,13 @@ class PlayerVoting(discord.ui.View):
     def __init__(
         self,
         game_state: "CitationGame",
-        after_vote: Callable[[Player], Coroutine[Any, Any, None]]
+        after_vote: Callable[[], Coroutine[Any, Any, None]]
     ) -> None:
         logger.debug("New PlayerVoting view created")
         super().__init__(timeout=None)
         self.game_state = game_state
         self.after_vote = after_vote
-        for i in range(0, len(self.game_state.players)-1):
+        for i in range(0, len(self.game_state.players)):
             self.add_button(i)
 
     def add_button(self, i: int) -> None:
@@ -49,9 +49,12 @@ class PlayerVoting(discord.ui.View):
             if user is None or button.custom_id is None:
                 logger.warning("Invalid button press")
                 return
-            content = self.game_state.cast_vote(user, int(button.custom_id))
-            logger.debug("Non valid interaction in cast_vote")
+            content, valid = self.game_state.cast_vote(user, int(button.custom_id))
             await interaction.response.send_message(ephemeral=True, content=content)
+            if not valid:
+                logger.debug("Non valid interaction in cast_vote")
+            else:
+                await self.after_vote()
 
         button.callback = cast_vote  # type: ignore[method-assign]
         self.add_item(button)
@@ -171,15 +174,17 @@ class CitationView(discord.ui.View):
             channel (discord.TextChannel): Channel to vote using
 
         """
-        async def callback_voting(player: Player) -> None:
+        async def callback_voting() -> None:
             if not self.in_voting_phase:
                 self.in_voting_phase = True
+                logger.debug("voting phase started")
                 time = discord.utils.format_dt(
                     dt.datetime.now() + dt.timedelta(minutes=1), style="T")
                 await self.message.edit(
                     view=view,
                     embed=discord.Embed(
-                        description="Voting phase until: " + time + "\n"
+                        description="Article is: " + self.game_state.article + "\n"
+                                    + "Voting phase until: " + time + "\n"
                                     + "Vote for person telling the truth:\n" + "\n".join(
                                         [self.game_state.players[button_id].user.mention + ": " +
                                             str(button_id + 1) for button_id in
@@ -191,6 +196,7 @@ class CitationView(discord.ui.View):
                 )
                 await helper.start_timer(helper.VOTE_TIME)
                 await self.score_player()
+                await helper.start_timer(helper.VOTE_RESULT_TIME)
                 await self.leaderboard()
 
         logger.debug("Begin player thinking timer")
@@ -200,7 +206,8 @@ class CitationView(discord.ui.View):
         await self.message.edit(
             view=view,
             embed=discord.Embed(
-                description="To begin vote phase " + "\n"
+                description="Article is: " + self.game_state.article + "\n"
+                            + "To begin vote phase " + "\n"
                             + "vote for person telling the truth:\n" + "\n".join(
                                 [self.game_state.players[button_id].user.mention + ": " +
                                     str(button_id + 1) for button_id in
@@ -230,16 +237,9 @@ class CitationView(discord.ui.View):
             self.game_state.article = article_list[0] if len(article_list) > 0 else "Error"
 
     async def score_player(self) -> None:
-        """Update view based on voted player
+        """Score results and updated view based on votes
         """
-        nonliar_found = self.game_state.score_players()
-        nonliar = self.game_state.get_non_liar().user.mention
-        if nonliar_found:
-            description = ("The truth speaker was found, " +
-                           f"it was {nonliar} {Emotes.HUG}")
-        else:
-            description = ("The players did not find the truth speaker, " +
-                           f"it was {nonliar} {Emotes.CRYING}")
+        description = self.game_state.score_players()
         await self.message.edit(
             embed=discord.Embed(
                 description=description,
@@ -306,7 +306,7 @@ class CitationChoice(discord.ui.View):
             i (int): The button ID, corresponding to its position in the wordlist
             article (str): Title of the article being represented
         """
-        button = discord.ui.Button(label=article,
+        button = discord.ui.Button(label=article.replace('_', ' '),
                                    custom_id=str(i))  # type: ignore[var-annotated]
 
         async def word_guess(interaction: discord.Interaction) -> None:
@@ -316,7 +316,7 @@ class CitationChoice(discord.ui.View):
                 self.parent_view.game_state.article = article
                 logger.debug("CitationChoice, choice made.")
                 response = f"Article chosen. Read the article's summary" \
-                    + " and close it before the questions begin. {Emotes.HUG}"
+                    + f" and close it before the questions begin. {Emotes.HUG}"
                 self.children = [button]
                 button.disabled = True
                 await self.message.edit(content=response, view=self)
