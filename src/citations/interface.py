@@ -1,12 +1,8 @@
 import random
-import requests
 import discord
-import json
 
-from typing import Tuple
 from helpers.style import Colours
 from helpers.logger import Logger
-import helpers.charlatan as helper
 
 logger = Logger()
 
@@ -20,14 +16,15 @@ class Player:
     def __init__(self, user: discord.User | discord.Member, score: int) -> None:
         self.user = user
         self.score = score
-        self.is_liar = True
-        self.is_guesser = False
+        self.is_liar: bool = True
+        self.voted_for: Player | None = None
+        self.votes: int = 0
 
 
 class CitationGame:
-    """ Manages the state of the Charlatan game
+    """ Manages the state of the Citations game
 
-    This includes the players, score, selected charlatan and selected word
+    This includes the players, score, selected nonliar and selected word
     """
     def __init__(
             self,
@@ -36,15 +33,6 @@ class CitationGame:
         self.article = ""
         self.players = [Player(player, 0)]
         self.reset_game()
-
-    def _choose_guesser(self) -> None:
-        """ Chooses a guessing player for the game
-        Needs to be done after choosing the impostor.
-        """
-        valid = [player for player in self.players if player.is_liar]
-        guesser = random.choice(valid)
-        guesser.is_guesser = True
-        logger.debug(f"Random Guesser was selected: {guesser.user.id}")
 
     def _choose_liars(self) -> None:
         nonliar = random.choice(self.players)
@@ -72,12 +60,13 @@ class CitationGame:
         return article_url + self.article.replace(' ', '_')
 
     def reset_game(self) -> None:
-        """ Reset charlatan game. (maintains scores)
-        Chooses new guesser, impostor and secret wor
+        """ Reset Citations game. (maintains scores)
+        Chooses new guesser, nonliar and secret word
         """
         for p in self.players:
-            p.is_guesser = False
             p.is_liar = True
+            p.voted_for = None
+            p.votes = 0
 
     def add_player(self, new_player: discord.User | discord.Member) -> None:
         """Add new player to game"""
@@ -88,7 +77,7 @@ class CitationGame:
         self.players = [p for p in self.players if p.user.id != player.id]
 
     async def send_dms(self) -> None:
-        """Send dms to players and impostor displaying wordlist
+        """Send dm to nonliar with wikipedia link
         """
         nonliar = self.get_non_liar()
         desc = self._get_link()
@@ -97,51 +86,58 @@ class CitationGame:
             embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
         )
 
-    async def score_players(self, voted_player: Player) -> bool:
-        """Handles round result for normal players
-
-        Args:
-            voted_player (discord.User | discord.Member): Player voted for by the guesser
+    def score_players(self) -> bool:
+        """Handles round result and scoring
 
         Returns:
-            bool: Whether the voted player was the charlatan
+            bool: Whether voted_player was the nonliar
         """
+        for player in self.players:
+            if player.voted_for is None:
+                continue
+            if player is not player.voted_for:
+                player.voted_for.votes += 1
+                if player.is_liar and not player.voted_for.is_liar:
+                    player.score += 1
+
+        player_copy = self.players.copy()
+        player_copy.sort(reverse=True, key=lambda p: p.votes)
+        if player_copy[0] == player_copy[1]:
+            voted_player = None
+        else:
+            voted_player = player_copy[0]
+
         if voted_player is None:
-            logger.warning("Attempted to find player not in lobby")
+            logger.warning("No singular most voted player found")
             return False
-        if voted_player.is_liar:
-            logger.debug("Guesser didn't find nonliar")
+        elif voted_player.is_liar:
+            logger.debug("Players didn't find nonliar")
             voted_player.score += 1
             return False
         else:
             logger.debug("Correctly guessed nonliar")
-            self.get_non_liar().score += 1
-            self.get_guesser().score += 1
+            voted_player.score += 2 
             return True
 
-    def cast_vote(
-        self,
-        user: discord.User | discord.Member,
-        player_idx: int
-    ) -> Tuple[str, bool, Player | None]:
+    def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> str:
         """Handles player voting for nonliar
 
         Args:
-            user (discord.User | discord.Member): Player that cast vote
+            user (discord.User | discord.Member): Player that casts vote
             player_idx (int): Index of player they voted for
 
         Returns:
             str: Message to respond with
-            bool: whether the vote was valid
-            discord.User | discord.Member: player they voted for
         """
         player = self.find_player(user)
         if player is None:
-            return "You aren't in this game! Wait for the next round to join...", False, None
-        if not player.is_guesser:
-            return "You are not allowed to vote this round. As you are not guessing.", False, None
-        voted_for = self.players[player_idx]
-        return f"You voted for {voted_for.user.display_name}", True, voted_for
+            return "You aren't in this game! Wait for the next round to join..."
+        if player_idx < 0 or player_idx >= len(self.players):
+            return "Something went wrong during vote"
+        if self.players[player_idx] is player:
+            return "You are not allowed to vote for yourself"
+        player.voted_for = self.players[player_idx]
+        return f"You voted for {self.players[player_idx].user.display_name}"
 
     def find_player(self, user: discord.User | discord.Member) -> Player | None:
         """Return player if they are in the game
@@ -153,7 +149,7 @@ class CitationGame:
             Player | None: Found player or None if player not in game
         """
         for player in self.players:
-            if player.user == user:
+            if player.user is user:
                 return player
         return None
 
@@ -177,17 +173,6 @@ class CitationGame:
             if not player.is_liar:
                 return player
         logger.error("Attempted to get nonliar but no non liar set")
-        return self.players[0]
-
-    def get_guesser(self) -> Player:
-        """Get guesser of this round
-        Returns:
-            Player: Guesser
-        """
-        for player in self.players:
-            if player.is_guesser:
-                return player
-        logger.error("Attempted to get guesser but no guesser set")
         return self.players[0]
 
     def reset_scores(self) -> None:

@@ -9,6 +9,12 @@ async def start_timer(time: int) -> None:
     """
     await asyncio.sleep(time)
 
+THINK_TIME = 15
+
+VOTE_TIME = 60
+
+CHOICE_VOTE_TIME = 15
+
 CITATIONTITLE = "Missing Citation"
 
 CITATIONRULES = """__Missing Citation Rules__
