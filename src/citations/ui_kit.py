@@ -5,7 +5,7 @@ import datetime as dt
 from helpers.logger import Logger
 import helpers.citation as helper
 from helpers.style import Emotes, Colours
-from citations.interface import THINKING_TIME, Player
+from citations.interface import Player
 if TYPE_CHECKING:
     from .interface import CitationGame
 
@@ -174,24 +174,24 @@ class CitationView(discord.ui.View):
         async def callback_voting(player: Player) -> None:
             if not self.in_voting_phase:
                 self.in_voting_phase = True
-                time = discord.utils.format_dt(dt.now() + dt.timedelta(minutes=1), style="T")
+                time = discord.utils.format_dt(
+                    dt.datetime.now() + dt.timedelta(minutes=1), style="T")
                 await self.message.edit(
                     view=view,
                     embed=discord.Embed(
-                        description="Voting phase until: "+ time + "\n"
-                            +"Vote for person telling the truth:\n" + "\n".join(
-                            [self.game_state.players[button_id].user.mention + ": " +
-                                str(button_id + 1) for button_id in
-                                range(0, len(self.game_state.players))]
-                        ),
+                        description="Voting phase until: " + time + "\n"
+                                    + "Vote for person telling the truth:\n" + "\n".join(
+                                        [self.game_state.players[button_id].user.mention + ": " +
+                                            str(button_id + 1) for button_id in
+                                            range(0, len(self.game_state.players))]
+                                    ),
                         title=helper.CITATIONTITLE,
                         colour=Colours.PRIMARY
                     )
                 )
                 await helper.start_timer(helper.VOTE_TIME)
-                await self.score_player(player)
+                await self.score_player()
                 await self.leaderboard()
-
 
         logger.debug("Begin player thinking timer")
         await helper.start_timer(helper.THINK_TIME)
@@ -200,12 +200,12 @@ class CitationView(discord.ui.View):
         await self.message.edit(
             view=view,
             embed=discord.Embed(
-                description="To begin vote phase " + "\n" 
-                    + "vote for person telling the truth:\n" + "\n".join(
-                    [self.game_state.players[button_id].user.mention + ": " +
-                        str(button_id + 1) for button_id in
-                        range(0, len(self.game_state.players))]
-                ),
+                description="To begin vote phase " + "\n"
+                            + "vote for person telling the truth:\n" + "\n".join(
+                                [self.game_state.players[button_id].user.mention + ": " +
+                                    str(button_id + 1) for button_id in
+                                    range(0, len(self.game_state.players))]
+                            ),
                 title=helper.CITATIONTITLE,
                 colour=Colours.PRIMARY
             )
@@ -229,32 +229,24 @@ class CitationView(discord.ui.View):
         if not guess.choice_made:
             self.game_state.article = article_list[0] if len(article_list) > 0 else "Error"
 
-    async def score_player(self, voted_player: Player) -> None:
+    async def score_player(self) -> None:
         """Update view based on voted player
-
-        Args:
-            voted_player (discord.User | discord.Member): Player that was voted as nonliar
         """
-        nonliar_found = await self.game_state.score_players(voted_player)
+        nonliar_found = self.game_state.score_players()
         nonliar = self.game_state.get_non_liar().user.mention
         if nonliar_found:
-            await self.message.edit(
-                embed=discord.Embed(
-                    description="The guesser has found the truth speaker, " +
-                    f"it was {nonliar} {Emotes.HUG}",
-                    title=helper.CITATIONTITLE,
-                    colour=Colours.PRIMARY),
-                view=self
-            )
+            description = ("The truth speaker was found, " +
+                           f"it was {nonliar} {Emotes.HUG}")
         else:
-            await self.message.edit(
-                embed=discord.Embed(
-                    description="The players did not find the truth speaker, " +
-                    f"it was {nonliar} {Emotes.CRYING}",
-                    title=helper.CITATIONTITLE,
-                    colour=Colours.PRIMARY),
-                view=self
-            )
+            description = ("The players did not find the truth speaker, " +
+                           f"it was {nonliar} {Emotes.CRYING}")
+        await self.message.edit(
+            embed=discord.Embed(
+                description=description,
+                title=helper.CITATIONTITLE,
+                colour=Colours.PRIMARY),
+            view=self
+        )
 
     async def leaderboard(self) -> None:
         """Adds Play Again and Back to Lobby buttons to the interaction message

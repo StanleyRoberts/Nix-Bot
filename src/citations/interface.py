@@ -6,8 +6,6 @@ from helpers.logger import Logger
 
 logger = Logger()
 
-THINKING_TIME = 15
-
 
 class Player:
     """Represents a player in the game
@@ -116,7 +114,7 @@ class CitationGame:
             return False
         else:
             logger.debug("Correctly guessed nonliar")
-            voted_player.score += 2 
+            voted_player.score += 2
             return True
 
     def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> str:
