@@ -3,6 +3,8 @@ import discord
 
 from helpers.style import Emotes, Colours
 from helpers.logger import Logger
+from helpers.titles import Titles
+from helpers.citation import CHOICE_AMOUNT
 
 logger = Logger()
 
@@ -35,20 +37,10 @@ class CitationGame:
         nonliar.is_liar = False
         logger.debug(f"Random not lying player was selected: {nonliar.user.id}")
 
-    def get_word_choices(self) -> list[str]:
-        choices = []
-        line_indeces = [random.randint(0, 999838) for _ in range(10)]
-        line_indeces.sort()
-        with open('titles.txt', 'r') as titles:
-            counter = 0
-            for title in titles:
-                if counter == line_indeces[0]:
-                    choices.append(title)
-                    line_indeces.pop(0)
-                    if len(line_indeces) == 0:
-                        return choices
-                counter += 1
-        logger.error(f"Logic Error: Didn't get 10 choices, missed : {line_indeces}")
+    def get_article_choices(self) -> list[str]:
+        choices = [Titles[str(random.randint(0,999838))].value for _ in range(CHOICE_AMOUNT)]
+        if len(choices) != CHOICE_AMOUNT:
+            logger.error(f"Logic Error: Didn't get {CHOICE_AMOUNT} choices, missed : {CHOICE_AMOUNT - len(choices)}")
         return choices
 
     def _get_link(self) -> str:

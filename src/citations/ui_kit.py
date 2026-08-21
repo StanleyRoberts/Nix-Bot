@@ -214,7 +214,7 @@ class CitationView(discord.ui.View):
         """
 
         logger.debug("Beginning article voting")
-        article_list = self.game_state.get_word_choices()
+        article_list = self.game_state.get_article_choices()
         guess = CitationChoice(article_list, self)
         await self.game_state.get_non_liar().user.send(view=guess)
         await helper.start_timer(helper.CHOICE_VOTE_TIME)

@@ -33,6 +33,8 @@ class Phases(Enum):
     ENDING = 3
 
 
+CHOICE_AMOUNT = 10
+
 THINK_TIME = 20
 
 VOTE_TIME = 60
