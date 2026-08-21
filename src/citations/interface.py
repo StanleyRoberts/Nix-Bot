@@ -11,9 +11,8 @@ class Player:
     """Represents a player in the game
     """
 
-    def __init__(self, user: discord.User | discord.Member, score: int) -> None:
+    def __init__(self, user: discord.User | discord.Member) -> None:
         self.user = user
-        self.score = score
         self.is_liar: bool = True
         self.voted_for: Player | None = None
         self.votes: int = 0
@@ -22,15 +21,14 @@ class Player:
 class CitationGame:
     """ Manages the state of the Citations game
 
-    This includes the players, score, selected nonliar and selected word
+    This includes the players, selected nonliar and selected word
     """
     def __init__(
             self,
             player: discord.User | discord.Member
     ) -> None:
         self.article = ""
-        self.players = [Player(player, 0)]
-        self.reset_game()
+        self.players = [Player(player)]
 
     def _choose_liars(self) -> None:
         nonliar = random.choice(self.players)
@@ -57,18 +55,9 @@ class CitationGame:
         article_url = "https://en.wikipedia.org/wiki/"
         return article_url + self.article.replace(' ', '_')
 
-    def reset_game(self) -> None:
-        """ Reset Citations game. (maintains scores)
-        Chooses new guesser, nonliar and secret word
-        """
-        for p in self.players:
-            p.is_liar = True
-            p.voted_for = None
-            p.votes = 0
-
     def add_player(self, new_player: discord.User | discord.Member) -> None:
         """Add new player to game"""
-        self.players.append(Player(new_player, 0))
+        self.players.append(Player(new_player))
 
     def remove_player(self, player: discord.User | discord.Member) -> None:
         """Remove player from game if they exist"""
@@ -78,46 +67,44 @@ class CitationGame:
         """Send dm to nonliar with wikipedia link
         """
         nonliar = self.get_non_liar()
-        desc = self._get_link()
+        desc = f"Read the summary and close the article before the questions begin {Emotes.HUG}" \
+               + "\n" + self._get_link()
         title = "You get to tell the truth."
         await nonliar.user.send(
             embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
         )
 
     def score_players(self) -> str:
-        """Handles round result and scoring
+        """Calculates most voted player(s) and list of players who guessed correctly
 
         Returns:
-            bool: Description of embed after scoring
+            str: Description of embed after scoring
         """
+
+        correct = []
+
         for player in self.players:
             if player.voted_for is None:
                 continue
-            if player is not player.voted_for:
+            if player is not player.voted_for and player.is_liar:
                 player.voted_for.votes += 1
-                if player.is_liar and not player.voted_for.is_liar:
-                    player.score += 1
+                if not player.voted_for.is_liar:
+                    correct.append(player)
 
-        player_copy = self.players.copy()
-        player_copy.sort(reverse=True, key=lambda p: p.votes)
-        if player_copy[0] == player_copy[1]:
-            voted_player = None
-        else:
-            voted_player = player_copy[0]
+        self.players.sort(reverse=True, key=lambda p: p.votes)
+        most_voted = [p for p in self.players if p.votes == self.players[0].votes]
 
         nonliar = self.get_non_liar()
 
-        if voted_player is None:
-            reply = "No singular most voted player found " + f"{Emotes.CRYING}\n"
-        elif voted_player.is_liar:
-            reply = "Players didn't find trush speaker " + f"{Emotes.CRYING}\n"
-            voted_player.score += 1
+        if nonliar in most_voted:
+            reply = "Players didn't find truth speaker " + f"{Emotes.CRYING}\n"
         else:
             reply = "The truth speaker was found " + f"{Emotes.HAPPY}\n"
-            voted_player.score += 2
-        reply += f"it was {nonliar.user.mention}\n"
-        return reply + "\nVote amount of players:\n " + "\n".join(
-            player.user.display_name + " : " + 
+        reply += f"it was {nonliar.user.mention}\n" \
+                 + "\n" + "Most voted: " + ", ".join([p.user.display_name for p in most_voted]) \
+                 + "\n" + "Correct guessers: " + ", ".join([p.user.display_name for p in correct])
+        return reply + "\n\nVote amount of players:\n " + "\n".join(
+            player.user.display_name + " : " +
             str(player.votes) for player in self.players)
 
     def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> tuple[str, bool]:
@@ -134,9 +121,9 @@ class CitationGame:
         player = self.find_player(user)
         if player is None:
             return "You aren't in this game! Wait for the next round to join...", False
-        if player_idx < 0 or player_idx >= len(self.players):
+        elif player_idx < 0 or player_idx >= len(self.players):
             return "Something went wrong during vote", False
-        if self.players[player_idx] is player:
+        elif self.players[player_idx] is player:
             return "You are not allowed to vote for yourself", False
         player.voted_for = self.players[player_idx]
         return f"You voted for {self.players[player_idx].user.display_name}", True
@@ -161,8 +148,7 @@ class CitationGame:
             Returns:
                 discord.Embed: The constructed embed
             """
-        desc = "Playing now:\n " + "\n".join(player.user.display_name + " : " + str(
-            player.score) for player in self.players)
+        desc = "Playing now:\n " + "\n".join(p.user.display_name for p in self.players)
         return discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
 
     def get_non_liar(self) -> Player:
@@ -176,8 +162,3 @@ class CitationGame:
                 return player
         logger.error("Attempted to get nonliar but no non liar set")
         return self.players[0]
-
-    def reset_scores(self) -> None:
-        """Reset the scores for all players in the game
-        """
-        self.players = [Player(player.user, 0) for player in self.players]

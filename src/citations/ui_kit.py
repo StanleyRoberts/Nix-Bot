@@ -124,7 +124,10 @@ class CitationLobby(discord.ui.View):
     ) -> None:
         if interaction.user:
             self.game_state.remove_player(interaction.user)
-        await interaction.response.edit_message(view=self)
+        if len(self.game_state.players) == 0:
+            await self.on_timeout()
+        else:
+            await interaction.response.edit_message(view=self)
 
 
 class CitationView(discord.ui.View):
@@ -152,7 +155,6 @@ class CitationView(discord.ui.View):
             ),
             view=self
         )
-        self.game_state.reset_game()
         self.game_state._choose_liars()
         await self.article_choice()
         self.message = await (await interaction.original_response()).edit(
@@ -180,43 +182,34 @@ class CitationView(discord.ui.View):
                 logger.debug("voting phase started")
                 time = discord.utils.format_dt(
                     dt.datetime.now() + dt.timedelta(minutes=1), style="T")
-                await self.message.edit(
+                await helper.edit_embed(
+                    message=self.message,
                     view=view,
-                    embed=discord.Embed(
-                        description="Article is: " + self.game_state.article + "\n"
-                                    + "Voting phase until: " + time + "\n"
-                                    + "Vote for person telling the truth:\n" + "\n".join(
-                                        [self.game_state.players[button_id].user.mention + ": " +
-                                            str(button_id + 1) for button_id in
-                                            range(0, len(self.game_state.players))]
-                                    ),
-                        title=helper.CITATIONTITLE,
-                        colour=Colours.PRIMARY
-                    )
-                )
+                    description="Article is: " + self.game_state.article + "\n"
+                                + "Voting phase until: " + time + "\n"
+                                + "Vote for person telling the truth:\n" + "\n".join(
+                                    [self.game_state.players[button_id].user.mention + ": " +
+                                        str(button_id + 1) for button_id in
+                                        range(0, len(self.game_state.players))])
+                                + "Player not lying can vote but it will not be counted.")
                 await helper.start_timer(helper.VOTE_TIME)
                 await self.score_player()
-                await helper.start_timer(helper.VOTE_RESULT_TIME)
-                await self.leaderboard()
 
         logger.debug("Begin player thinking timer")
         await helper.start_timer(helper.THINK_TIME)
         logger.debug("Begin talking stage")
         view = PlayerVoting(self.game_state, callback_voting)
-        await self.message.edit(
+        await helper.edit_embed(
+            message=self.message,
             view=view,
-            embed=discord.Embed(
-                description="Article is: " + self.game_state.article + "\n"
-                            + "To begin vote phase " + "\n"
-                            + "vote for person telling the truth:\n" + "\n".join(
-                                [self.game_state.players[button_id].user.mention + ": " +
-                                    str(button_id + 1) for button_id in
-                                    range(0, len(self.game_state.players))]
-                            ),
-                title=helper.CITATIONTITLE,
-                colour=Colours.PRIMARY
-            )
-        )
+            description="Article is: " + self.game_state.article + "\n"
+                        + "To begin vote phase " + "\n"
+                        + "vote for person telling the truth:\n" + "\n".join(
+                            [self.game_state.players[button_id].user.mention + ": " +
+                                str(button_id + 1) for button_id in
+                                range(0, len(self.game_state.players))])
+                        + "Player not lying can vote but it will not be counted."
+                        )
         view.message = self.message
         self.clear_items()
 
@@ -240,42 +233,7 @@ class CitationView(discord.ui.View):
         """Score results and updated view based on votes
         """
         description = self.game_state.score_players()
-        await self.message.edit(
-            embed=discord.Embed(
-                description=description,
-                title=helper.CITATIONTITLE,
-                colour=Colours.PRIMARY),
-            view=self
-        )
-
-    async def leaderboard(self) -> None:
-        """Adds Play Again and Back to Lobby buttons to the interaction message
-        """
-        self.clear_items()
-
-        play_again_button = discord.ui.Button(
-            label="Play Again",
-            style=discord.ButtonStyle.primary
-        )  # type: ignore[var-annotated]
-
-        async def play_again(interaction: discord.Interaction) -> None:
-            await interaction.response.edit_message(view=self)
-        play_again_button.callback = play_again  # type: ignore[method-assign]
-        self.add_item(play_again_button)
-
-        lobby_button = discord.ui.Button(
-            label="Back to Lobby",
-            style=discord.ButtonStyle.secondary
-        )  # type: ignore[var-annotated]
-
-        async def back_to_lobby(interaction: discord.Interaction) -> None:
-            play_again_button.disabled = True
-            self.game_state.reset_scores()
-            await interaction.response.edit_message(view=CitationLobby(self.game_state))
-        lobby_button.callback = back_to_lobby  # type: ignore[method-assign]
-        self.add_item(lobby_button)
-
-        await self.message.edit(view=self, embed=self.game_state.make_embed("Leaderboard"))
+        await helper.edit_embed(self.message, self, description)
 
 
 class CitationChoice(discord.ui.View):
@@ -315,8 +273,7 @@ class CitationChoice(discord.ui.View):
                 self.choice_made = True
                 self.parent_view.game_state.article = article
                 logger.debug("CitationChoice, choice made.")
-                response = f"Article chosen. Read the article's summary" \
-                    + f" and close it before the questions begin. {Emotes.HUG}"
+                response = f"Article chosen {Emotes.HAPPY}"
                 self.children = [button]
                 button.disabled = True
                 await self.message.edit(content=response, view=self)

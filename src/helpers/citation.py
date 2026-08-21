@@ -1,4 +1,6 @@
 import asyncio
+from helpers.style import Colours
+import discord
 
 
 async def start_timer(time: int) -> None:
@@ -8,6 +10,20 @@ async def start_timer(time: int) -> None:
         time (int): amount of time to wait in seconds
     """
     await asyncio.sleep(time)
+
+
+async def edit_embed(
+        message: discord.Message | discord.InteractionMessage,
+        view: discord.ui.View,
+        description: str) -> None:
+    await message.edit(
+        view=view,
+        embed=discord.Embed(
+            description=description,
+            title=CITATIONTITLE,
+            colour=Colours.PRIMARY
+        )
+    )
 
 THINK_TIME = 20
 
@@ -28,8 +44,9 @@ After that time the person with the link closes the article and the next phase b
 Every player has to give their version of what the content of the article is trying to convince the others.
 
 After this phase players start voting on who they think told the truth.
+The person telling the truth can vote but their vote will not be counted.
 From the first vote the voting phase lasts one minute, after which the scoring begins.
-The scoring is based on the player with the most vote (of which there can only be one):
+The scoring is based on the player(s) with the most votes:
 > - if the player told a lie, they get one point, otherwise they get two.
 > - every player who guessed correctly (except the player who knew the truth) also gets one point.
 """
