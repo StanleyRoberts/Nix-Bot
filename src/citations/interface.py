@@ -48,7 +48,7 @@ class CitationGame:
                     if len(line_indeces) == 0:
                         return choices
                 counter += 1
-        logger.error(f"Didn't get 10 choices, missed : {line_indeces}")
+        logger.error(f"Logic Error: Didn't get 10 choices, missed : {line_indeces}")
         return choices
 
     def _get_link(self) -> str:
