@@ -94,15 +94,15 @@ class CitationGame:
 
         nonliar = self.get_non_liar()
 
-        if nonliar in most_voted:
-            reply = "Players didn't find truth speaker " + f"{Emotes.CRYING}\n"
+        if nonliar not in most_voted:
+            reply = "Players didn't find non-liar " + f"{Emotes.CRYING}\n"
         else:
-            reply = "The truth speaker was found " + f"{Emotes.HAPPY}\n"
+            reply = "The non-liar was found " + f"{Emotes.HAPPY}\n"
         reply += f"it was {nonliar.user.mention}\n" \
-                 + "\n" + "Most voted: " + ", ".join([p.user.display_name for p in most_voted]) \
-                 + "\n" + "Correct guessers: " + ", ".join([p.user.display_name for p in correct])
+                 + "\n" + "Most voted: " + ", ".join([p.user.mention for p in most_voted]) \
+                 + "\n" + "Correct guessers: " + ", ".join([p.user.mention for p in correct])
         return reply + "\n\nVote amount of players:\n " + "\n".join(
-            player.user.display_name + " : " +
+            player.user.mention + " : " +
             str(player.votes) for player in self.players)
 
     def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> tuple[str, bool]:

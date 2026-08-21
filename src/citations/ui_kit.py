@@ -4,8 +4,7 @@ import datetime as dt
 
 from helpers.logger import Logger
 import helpers.citation as helper
-from helpers.style import Emotes, Colours
-from citations.interface import Player
+from helpers.style import Emotes
 if TYPE_CHECKING:
     from .interface import CitationGame
 
@@ -178,8 +177,8 @@ class CitationView(discord.ui.View):
                                 + "Vote for person telling the truth:\n" + "\n".join(
                                     [self.game_state.players[button_id].user.mention + ": "
                                         + str(button_id + 1) for button_id in
-                                        range(0, len(self.game_state.players))])
-                                + "Player not lying can vote but it will not be counted.")
+                                        range(0, len(self.game_state.players))]) + "\n\n"
+                                + "Non-liar can vote but it will not be counted.")
                 await helper.start_timer(helper.VOTE_TIME)
                 if self.phase == helper.Phases.VOTING:
                     self.phase = helper.Phases.ENDING
@@ -201,7 +200,7 @@ class CitationView(discord.ui.View):
                         + "vote for person telling the truth:\n" + "\n".join(
                             [self.game_state.players[button_id].user.mention + ": " +
                                 str(button_id + 1) for button_id in
-                                range(0, len(self.game_state.players))])
+                                range(0, len(self.game_state.players))]) + "\n\n"
                         + "Player not lying can vote but it will not be counted."
                         )
         view.message = self.message
