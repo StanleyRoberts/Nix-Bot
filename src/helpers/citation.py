@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 from helpers.style import Colours
 import discord
 
@@ -25,6 +26,13 @@ async def edit_embed(
         )
     )
 
+
+class Phases(Enum):
+    TALKING = 1
+    VOTING = 2
+    ENDING = 3
+
+
 THINK_TIME = 20
 
 VOTE_TIME = 60
@@ -41,7 +49,7 @@ except one player who gets the link to it.
 
 You then have 20 seconds to make up what the article could be about or read the content of it.
 After that time the person with the link closes the article and the next phase begins.
-Every player has to give their version of what the content of the article is trying to convince the others.
+Every player attempts to convince the others of their version of the article's content.
 
 After this phase players start voting on who they think told the truth.
 The person telling the truth can vote but their vote will not be counted.

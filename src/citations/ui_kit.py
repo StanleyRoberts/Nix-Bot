@@ -137,7 +137,7 @@ class CitationView(discord.ui.View):
         logger.debug("Created new " + helper.CITATIONTITLE + " view")
         super().__init__(timeout=300)
         self.game_state = game_state
-        self.in_voting_phase = False
+        self.phase: helper.Phases = helper.Phases.TALKING
 
     @discord.ui.button(label="Start Game", style=discord.ButtonStyle.primary)
     async def start_game(
@@ -147,26 +147,16 @@ class CitationView(discord.ui.View):
     ) -> None:
         await interaction.response.defer()
         self.clear_items()
-        self.message = await (await interaction.original_response()).edit(
-            embed=discord.Embed(
-                description="Game is ongoing",
-                title=helper.CITATIONTITLE,
-                colour=Colours.PRIMARY
-            ),
-            view=self
-        )
+        self.message = await interaction.original_response()
+        await helper.edit_embed(self.message, self, description="Game is ongoing")
         self.game_state._choose_liars()
         await self.article_choice()
-        self.message = await (await interaction.original_response()).edit(
-            embed=discord.Embed(
-                description="First stage: Think of an article that could have that title.\n"
-                + "Article is: " + self.game_state.article,
-                title=helper.CITATIONTITLE,
-                colour=Colours.PRIMARY
-            ),
-            view=self
-        )
-        await self.game_state.send_dms()
+        await helper.edit_embed(
+            message=self.message,
+            view=self,
+            description="Unless you got a DM, make up an article about:\n"
+                        + self.game_state.article,)
+        await self.game_state.send_link()
         await self.vote()
 
     async def vote(self) -> None:
@@ -174,25 +164,29 @@ class CitationView(discord.ui.View):
 
         Args:
             channel (discord.TextChannel): Channel to vote using
-
         """
         async def callback_voting() -> None:
-            if not self.in_voting_phase:
-                self.in_voting_phase = True
+            if self.phase == helper.Phases.TALKING:
+                self.phase = helper.Phases.VOTING
                 logger.debug("voting phase started")
-                time = discord.utils.format_dt(
-                    dt.datetime.now() + dt.timedelta(minutes=1), style="T")
+                time = f"<t:{dt.datetime.now().timestamp().__ceil__() + helper.VOTE_TIME}:R>"
                 await helper.edit_embed(
                     message=self.message,
                     view=view,
                     description="Article is: " + self.game_state.article + "\n"
                                 + "Voting phase until: " + time + "\n"
                                 + "Vote for person telling the truth:\n" + "\n".join(
-                                    [self.game_state.players[button_id].user.mention + ": " +
-                                        str(button_id + 1) for button_id in
+                                    [self.game_state.players[button_id].user.mention + ": "
+                                        + str(button_id + 1) for button_id in
                                         range(0, len(self.game_state.players))])
                                 + "Player not lying can vote but it will not be counted.")
                 await helper.start_timer(helper.VOTE_TIME)
+                if self.phase == helper.Phases.VOTING:
+                    self.phase = helper.Phases.ENDING
+                    await self.score_player()
+            if (all(p.voted_for is not None for p in self.game_state.players)
+                    and self.phase == helper.Phases.VOTING):
+                self.phase = helper.Phases.ENDING
                 await self.score_player()
 
         logger.debug("Begin player thinking timer")
@@ -228,6 +222,7 @@ class CitationView(discord.ui.View):
 
         if not guess.choice_made:
             self.game_state.article = article_list[0] if len(article_list) > 0 else "Error"
+        self.game_state.article = self.game_state.article.replace('_', ' ')
 
     async def score_player(self) -> None:
         """Score results and updated view based on votes

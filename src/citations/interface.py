@@ -63,7 +63,7 @@ class CitationGame:
         """Remove player from game if they exist"""
         self.players = [p for p in self.players if p.user.id != player.id]
 
-    async def send_dms(self) -> None:
+    async def send_link(self) -> None:
         """Send dm to nonliar with wikipedia link
         """
         nonliar = self.get_non_liar()
@@ -71,8 +71,7 @@ class CitationGame:
                + "\n" + self._get_link()
         title = "You get to tell the truth."
         await nonliar.user.send(
-            embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
-        )
+            embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY))
 
     def score_players(self) -> str:
         """Calculates most voted player(s) and list of players who guessed correctly
@@ -80,7 +79,6 @@ class CitationGame:
         Returns:
             str: Description of embed after scoring
         """
-
         correct = []
 
         for player in self.players:
