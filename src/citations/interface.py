@@ -27,10 +27,10 @@ class CitationGame:
     """
     def __init__(
             self,
-            player: discord.User | discord.Member
+            initiator: discord.User | discord.Member
     ) -> None:
         self.article = ""
-        self.players = [Player(player)]
+        self.players = [Player(initiator)]
 
     def _choose_liars(self) -> None:
         nonliar = random.choice(self.players)
@@ -38,10 +38,14 @@ class CitationGame:
         logger.debug(f"Random not lying player was selected: {nonliar.user.id}")
 
     def get_article_choices(self) -> list[str]:
-        choices = [Titles[str(random.randint(0,999838))].value for _ in range(CHOICE_AMOUNT)]
-        if len(choices) != CHOICE_AMOUNT:
-            logger.error(f"Logic Error: Didn't get {CHOICE_AMOUNT} choices, missed : {CHOICE_AMOUNT - len(choices)}")
-        return choices
+        """Returns a list of CHOICE_AMOUNT random article titles"""
+        articles = [Titles["a_" + str(i)].value
+                    for i in random.sample(range(0, 999838 + 1), CHOICE_AMOUNT)]
+        if len(articles) != CHOICE_AMOUNT:
+            logger.error(
+                f"Logic Error: Didn't get {CHOICE_AMOUNT} choices, missed : "
+                + f"{CHOICE_AMOUNT - len(articles)}")
+        return articles
 
     def _get_link(self) -> str:
         article_url = "https://en.wikipedia.org/wiki/"
@@ -59,7 +63,7 @@ class CitationGame:
         """Send dm to nonliar with wikipedia link
         """
         nonliar = self.get_non_liar()
-        desc = f"Read the summary and close the article before the questions begin {Emotes.HUG}" \
+        desc = f"Skim the article and close it before the questions begin {Emotes.HUG}" \
                + "\n" + self._get_link()
         title = "You get to tell the truth."
         await nonliar.user.send(
@@ -81,17 +85,19 @@ class CitationGame:
                 if not player.voted_for.is_liar:
                     correct.append(player)
 
-        self.players.sort(reverse=True, key=lambda p: p.votes)
-        most_voted = [p for p in self.players if p.votes == self.players[0].votes]
+        most_voted = [p for p in self.players
+                      if p.votes == max(self.players, key=lambda p: p.votes).votes]
 
         nonliar = self.get_non_liar()
 
         if nonliar not in most_voted:
-            reply = "Players didn't find non-liar " + f"{Emotes.CRYING}\n"
+            reply = "Players didn't find non-liar " + f"{Emotes.CRYING}\n" \
+                    + f"it was {nonliar.user.mention}\n"
         else:
             reply = "The non-liar was found " + f"{Emotes.HAPPY}\n"
-        reply += f"it was {nonliar.user.mention}\n" \
-                 + "\n" + "Most voted: " + ", ".join([p.user.mention for p in most_voted]) \
+            if len(most_voted) > 1:
+                reply += f"it was {nonliar.user.mention}\n"
+        reply += "\n" + "Most voted: " + ", ".join([p.user.mention for p in most_voted]) \
                  + "\n" + "Correct guessers: " + ", ".join([p.user.mention for p in correct])
         return reply + "\n\nVote amount of players:\n " + "\n".join(
             player.user.mention + " : " +
@@ -108,7 +114,7 @@ class CitationGame:
             str: Message to respond with
             bool: Whether vote was valid
         """
-        player = self.find_player(user)
+        player = self.find_player(user.id)
         if player is None:
             return "You aren't in this game! Wait for the next round to join...", False
         elif player_idx < 0 or player_idx >= len(self.players):
@@ -118,21 +124,21 @@ class CitationGame:
         player.voted_for = self.players[player_idx]
         return f"You voted for {self.players[player_idx].user.display_name}", True
 
-    def find_player(self, user: discord.User | discord.Member) -> Player | None:
-        """Return player if they are in the game
+    def find_player(self, id: int) -> Player | None:
+        """Return player, if they are in the game
 
         Args:
-            user (discord.User | discord.Member): Player to find
+            id (int): Discord id of player to find
 
         Returns:
             Player | None: Found player or None if player not in game
         """
         for player in self.players:
-            if player.user is user:
+            if player.user.id == id:
                 return player
         return None
 
-    def make_embed(self, title: str) -> discord.Embed:
+    def make_lobby_embed(self, title: str) -> discord.Embed:
         """Constructs an embed showing the current players in the lobby
 
             Returns:

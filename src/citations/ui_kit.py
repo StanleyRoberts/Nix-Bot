@@ -23,7 +23,7 @@ class PlayerVoting(discord.ui.View):
     def __init__(
         self,
         game_state: "CitationGame",
-        after_vote: Callable[[], Coroutine[Any, Any, None]]
+        after_vote: Callable[[], Coroutine[None, None, None]]
     ) -> None:
         logger.debug("New PlayerVoting view created")
         super().__init__(timeout=None)
@@ -80,11 +80,11 @@ class CitationLobby(discord.ui.View):
         if interaction.user is None:
             logger.warning("Invalid Join interaction")
             return
-        if self.game_state.find_player(interaction.user) is None:
+        if self.game_state.find_player(interaction.user.id) is None:
             logger.debug("New player joined game", member_id=interaction.user.id)
             self.game_state.add_player(interaction.user)
             await interaction.response.edit_message(
-                            embed=self.game_state.make_embed(title=helper.CITATIONTITLE),
+                            embed=self.game_state.make_lobby_embed(title=helper.CITATIONTITLE),
                             view=self
             )
         else:
