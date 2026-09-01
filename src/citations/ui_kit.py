@@ -12,7 +12,7 @@ logger = Logger()
 
 
 class PlayerVoting(discord.ui.View):
-    """ View that manages the voting of who the nonliar is
+    """ View for players to vote who nonliar is
 
     Args:
         game_state (CitationGame): The current state of the game
@@ -71,7 +71,18 @@ class CitationLobby(discord.ui.View):
         super().__init__(timeout=300)
         self.game_state = game_state
 
-    @discord.ui.button(label="Join", row=0, style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Rules", row=0, style=discord.ButtonStyle.secondary)
+    async def rules_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
+        await interaction.response.send_message(
+            ephemeral=True,
+            embed=discord.Embed(description=helper.CITATIONRULES)
+        )
+
+    @discord.ui.button(label="Join", row=1, style=discord.ButtonStyle.primary)
     async def join_callback(
         self,
         _: discord.ui.Button[discord.ui.View],
@@ -90,32 +101,13 @@ class CitationLobby(discord.ui.View):
         else:
             logger.info("User double login into " + helper.CITATIONTITLE + " lobby detected",
                         member_id=interaction.user.id, channel_id=interaction.channel.id
-                        if interaction.channel else 0)
+                        if interaction.channel else None)
             await interaction.response.send_message(
                 content=f"You have already joined the game {Emotes.NOEMOTION}",
                 ephemeral=True
             )
 
-    @discord.ui.button(label="Rules", row=1, style=discord.ButtonStyle.secondary)
-    async def rules_callback(
-        self,
-        _: discord.ui.Button[discord.ui.View],
-        interaction: discord.Interaction
-    ) -> None:
-        await interaction.response.send_message(
-            ephemeral=True,
-            embed=discord.Embed(description=helper.CITATIONRULES)
-        )
-
-    @discord.ui.button(label="Confirm Lobby", row=2, style=discord.ButtonStyle.primary)
-    async def start_callback(
-        self,
-        _: discord.ui.Button[discord.ui.View],
-        interaction: discord.Interaction
-    ) -> None:
-        await interaction.response.edit_message(view=CitationView(self.game_state))
-
-    @discord.ui.button(label="Leave", row=0, style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Leave", row=1, style=discord.ButtonStyle.secondary)
     async def leave_callback(
         self,
         _: discord.ui.Button[discord.ui.View],
@@ -128,9 +120,17 @@ class CitationLobby(discord.ui.View):
         else:
             await interaction.response.edit_message(view=self)
 
+    @discord.ui.button(label="Confirm Lobby", row=2, style=discord.ButtonStyle.primary)
+    async def start_callback(
+        self,
+        _: discord.ui.Button[discord.ui.View],
+        interaction: discord.Interaction
+    ) -> None:
+        await interaction.response.edit_message(view=CitationView(self.game_state))
+
 
 class CitationView(discord.ui.View):
-    """View that represent the main flow of the Missing Citation game"""
+    """View that represents an in-progress Missing Citation game"""
 
     def __init__(self, game_state: "CitationGame"):
         logger.debug("Created new " + helper.CITATIONTITLE + " view")
@@ -153,7 +153,7 @@ class CitationView(discord.ui.View):
         await helper.edit_embed(
             message=self.message,
             view=self,
-            description="Unless you got a DM, make up an article about:\n"
+            description="Unless you received a DM, make up an article about:\n"
                         + self.game_state.article,)
         await self.game_state.send_link()
         await self.vote()
@@ -234,7 +234,7 @@ class CitationChoice(discord.ui.View):
     """ View for nonliar to select an article
 
     Args:
-        article_list (list[str]): List of all articles/titles
+        article_list (list[str]): Subset of articles/titles to choose from
         origin ("CitationGame"): Gameview which called this object
     """
 
