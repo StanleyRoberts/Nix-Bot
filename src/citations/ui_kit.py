@@ -156,6 +156,9 @@ class CitationView(discord.ui.View):
             description="Unless you received a DM, make up an article about:\n"
                         + self.game_state.article,)
         await self.game_state.send_link()
+        logger.debug("Begin player thinking timer")
+        await helper.start_timer(helper.THINK_TIME)
+        logger.debug("Begin talking stage until first vote gets casted")
         await self.vote()
 
     async def vote(self) -> None:
@@ -187,14 +190,12 @@ class CitationView(discord.ui.View):
                         if all(p.voted_for is not None for p in self.game_state.players):
                             self.phase = helper.Phases.ENDING
                     case helper.Phases.ENDING:
+                        logger.debug("voting phase ended")
                         self.phase = helper.Phases.FINISHED
                         await self.finish_up_round()
                     case helper.Phases.FINISHED:
                         return
 
-        logger.debug("Begin player thinking timer")
-        await helper.start_timer(helper.THINK_TIME)
-        logger.debug("Begin talking stage")
         view = PlayerVoting(self.game_state, callback_voting)
         await helper.edit_embed(
             message=self.message,
