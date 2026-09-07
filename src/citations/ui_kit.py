@@ -267,13 +267,15 @@ class CitationChoice(discord.ui.View):
 
         async def word_guess(interaction: discord.Interaction) -> None:
             """Callback for the added button"""
-            if not self.choice_made:
-                self.choice_made = True
-                self.parent_view.game_state.article = article
-                logger.debug("CitationChoice, choice made.")
-                response = f"Article chosen {Emotes.HAPPY}"
-                self.children = [button]
-                button.disabled = True
-                await self.message.edit(content=response, view=self)
+            if self.choice_made:
+                return
+
+            self.choice_made = True
+            self.parent_view.game_state.article = article
+            logger.debug("CitationChoice, choice made.")
+            response = f"Article chosen {Emotes.HAPPY}"
+            self.children = [button]
+            button.disabled = True
+            await self.message.edit(content=response, view=self)
         button.callback = word_guess  # type: ignore[method-assign]
         self.add_item(button)
