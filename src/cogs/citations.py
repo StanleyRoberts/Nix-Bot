@@ -16,8 +16,8 @@ class MissingCitation(commands.Cog):
     @commands.slash_command(name='citations', description="Play a game of Citations")
     async def start_game(self, ctx: discord.ApplicationContext) -> None:
         logger.info("Starting Citations game",
-                    guild_id=ctx.guild_id if ctx.guild_id else -1,
-                    channel_id=ctx.channel_id if ctx.channel_id else -1)
+                    guild_id=ctx.guild_id,
+                    channel_id=ctx.channel_id)
         game_state = CitationGame(ctx.author)
         await ctx.respond(embed=game_state.make_lobby_embed("Citations"),
                           view=CitationLobby(game_state))
