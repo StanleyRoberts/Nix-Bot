@@ -40,7 +40,7 @@ class CitationGame:
     def get_article_choices(self) -> list[str]:
         """Returns a list of CHOICE_AMOUNT random article titles"""
         articles = [Titles["a_" + str(i)].value
-                    for i in random.sample(range(0, 999838 + 1), CHOICE_AMOUNT)]
+                    for i in random.sample(range(0, 999580 + 1), CHOICE_AMOUNT)]
         if len(articles) != CHOICE_AMOUNT:
             logger.error(
                 f"Logic Error: Didn't get {CHOICE_AMOUNT} choices, missed : "
