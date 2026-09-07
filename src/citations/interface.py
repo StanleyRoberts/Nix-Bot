@@ -69,11 +69,15 @@ class CitationGame:
         await nonliar.user.send(
             embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY))
 
-    def score_players(self) -> str:
-        """Calculates most voted player(s) and list of players who guessed correctly
+    def round_result(self) -> str:
+        """ Tallies up vote result and returns description of it.
+        Final description shows (in order):
+        - Whether non-liar was found and who they were
+        - List of players who voted for the correct player
+        - How many people voted each player to be the non-liar in descending order
 
         Returns:
-            str: Description of embed after scoring
+            str: Description of embed showing the round's result
         """
         correct = []
 

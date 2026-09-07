@@ -182,11 +182,11 @@ class CitationView(discord.ui.View):
                 await helper.start_timer(helper.VOTE_TIME)
                 if self.phase == helper.Phases.VOTING:
                     self.phase = helper.Phases.ENDING
-                    await self.score_player()
+                    await self.finish_up_round()
             if (all(p.voted_for is not None for p in self.game_state.players)
                     and self.phase == helper.Phases.VOTING):
                 self.phase = helper.Phases.ENDING
-                await self.score_player()
+                await self.finish_up_round()
 
         logger.debug("Begin player thinking timer")
         await helper.start_timer(helper.THINK_TIME)
@@ -223,10 +223,10 @@ class CitationView(discord.ui.View):
             self.game_state.article = article_list[0] if len(article_list) > 0 else "Error"
         self.game_state.article = self.game_state.article.replace('_', ' ')
 
-    async def score_player(self) -> None:
-        """Score results and updated view based on votes
+    async def finish_up_round(self) -> None:
+        """Calculate round result and updated view based on it
         """
-        description = self.game_state.score_players()
+        description = self.game_state.round_result()
         await helper.edit_embed(self.message, self, description)
 
 
