@@ -31,6 +31,7 @@ class Phases(Enum):
     TALKING = 1
     VOTING = 2
     ENDING = 3
+    FINISHED = 4
 
 
 CHOICE_AMOUNT = 10

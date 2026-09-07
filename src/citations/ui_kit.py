@@ -165,28 +165,32 @@ class CitationView(discord.ui.View):
             channel (discord.TextChannel): Channel to vote using
         """
         async def callback_voting() -> None:
-            if self.phase == helper.Phases.TALKING:
-                self.phase = helper.Phases.VOTING
-                logger.debug("voting phase started")
-                time = f"<t:{dt.datetime.now().timestamp().__ceil__() + helper.VOTE_TIME}:R>"
-                await helper.edit_embed(
-                    message=self.message,
-                    view=view,
-                    description="Article is: " + self.game_state.article + "\n"
-                                + "Voting phase until: " + time + "\n"
-                                + "Vote for person telling the truth:\n" + "\n".join(
-                                    [self.game_state.players[button_id].user.mention + ": "
-                                        + str(button_id + 1) for button_id in
-                                        range(0, len(self.game_state.players))]) + "\n\n"
-                                + "Non-liar can vote but it will not be counted.")
-                await helper.start_timer(helper.VOTE_TIME)
-                if self.phase == helper.Phases.VOTING:
-                    self.phase = helper.Phases.ENDING
-                    await self.finish_up_round()
-            if (all(p.voted_for is not None for p in self.game_state.players)
-                    and self.phase == helper.Phases.VOTING):
-                self.phase = helper.Phases.ENDING
-                await self.finish_up_round()
+            while self.phase is not helper.Phases.FINISHED:
+                match self.phase:
+                    case helper.Phases.TALKING:
+                        self.phase = helper.Phases.VOTING
+                        logger.debug("voting phase started")
+                        time = dt.datetime.now().timestamp().__ceil__() + helper.VOTE_TIME
+                        await helper.edit_embed(
+                            message=self.message,
+                            view=view,
+                            description="Article is: " + self.game_state.article + "\n"
+                                        + "Voting phase until: " + f"<t:{time}:R>" + "\n"
+                                        + "Vote for person telling the truth:\n" + "\n".join(
+                                            [self.game_state.players[button_id].user.mention + ": "
+                                                + str(button_id + 1) for button_id in
+                                                range(0, len(self.game_state.players))]) + "\n\n"
+                                        + "Non-liar can vote but it will not be counted.")
+                        await helper.start_timer(helper.VOTE_TIME)
+                        self.phase = helper.Phases.ENDING
+                    case helper.Phases.VOTING:
+                        if all(p.voted_for is not None for p in self.game_state.players):
+                            self.phase = helper.Phases.ENDING
+                    case helper.Phases.ENDING:
+                        self.phase = helper.Phases.FINISHED
+                        await self.finish_up_round()
+                    case helper.Phases.FINISHED:
+                        return
 
         logger.debug("Begin player thinking timer")
         await helper.start_timer(helper.THINK_TIME)
