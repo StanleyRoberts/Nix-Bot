@@ -4,7 +4,7 @@ import discord
 from helpers.style import Emotes, Colours
 from helpers.logger import Logger
 from citations.titles import Titles
-from citation import CHOICE_AMOUNT
+from citations.citation import CHOICE_AMOUNT
 
 logger = Logger()
 

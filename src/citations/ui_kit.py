@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Callable, Coroutine, Any
 import datetime as dt
 
 from helpers.logger import Logger
-import citation as helper
+import citations.citation as helper
 from helpers.style import Emotes
 if TYPE_CHECKING:
     from .interface import CitationGame
