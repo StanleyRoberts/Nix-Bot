@@ -15,7 +15,7 @@ class Player:
 
     def __init__(self, user: discord.User | discord.Member) -> None:
         self.user = user
-        self.is_liar: bool = True
+        self.is_misinformant: bool = True
         self.voted_for: Player | None = None
         self.votes: int = 0
 
@@ -23,7 +23,7 @@ class Player:
 class CitationGame:
     """ Manages the state of the Citations game
 
-    This includes the players, selected nonliar and selected word
+    This includes the players, selected editor and selected word
     """
     def __init__(
             self,
@@ -32,10 +32,10 @@ class CitationGame:
         self.article = ""
         self.players = [Player(initiator)]
 
-    def _choose_liars(self) -> None:
-        nonliar = random.choice(self.players)
-        nonliar.is_liar = False
-        logger.debug(f"Random not lying player was selected: {nonliar.user.id}")
+    def _choose_misinformant(self) -> None:
+        editor = random.choice(self.players)
+        editor.is_misinformant = False
+        logger.debug(f"Random not lying player was selected: {editor.user.id}")
 
     def get_article_choices(self) -> list[str]:
         """Returns a list of CHOICE_AMOUNT random article titles"""
@@ -60,21 +60,21 @@ class CitationGame:
         self.players = [p for p in self.players if p.user.id != player.id]
 
     async def send_link(self) -> None:
-        """Send dm to nonliar with wikipedia link
+        """Send dm to editor with wikipedia link
         """
-        nonliar = self.get_non_liar()
+        editor = self.get_editor()
         desc = f"Skim the article and close it before the questions begin {Emotes.HUG}" \
                + "\n" + self._get_link()
         title = "You get to tell the truth."
-        await nonliar.user.send(
+        await editor.user.send(
             embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY))
 
     def round_result(self) -> str:
         """ Tallies up vote result and returns description of it.
         Final description shows (in order):
-        - Whether non-liar was found and who they were
+        - Whether editor was found and who they were
         - List of players who voted for the correct player
-        - How many people voted each player to be the non-liar in descending order
+        - How many people voted each player to be the editor in descending order
 
         Returns:
             str: Description of embed showing the round's result
@@ -84,23 +84,23 @@ class CitationGame:
         for player in self.players:
             if player.voted_for is None:
                 continue
-            if player is not player.voted_for and player.is_liar:
+            if player is not player.voted_for and player.is_misinformant:
                 player.voted_for.votes += 1
-                if not player.voted_for.is_liar:
+                if not player.voted_for.is_misinformant:
                     correct.append(player)
 
         most_voted = [p for p in self.players
                       if p.votes == max(self.players, key=lambda p: p.votes).votes]
 
-        nonliar = self.get_non_liar()
+        editor = self.get_editor()
 
-        if nonliar not in most_voted:
-            reply = "Players didn't find non-liar " + f"{Emotes.CRYING}\n" \
-                    + f"it was {nonliar.user.mention}\n"
+        if editor not in most_voted:
+            reply = "Players didn't find editor " + f"{Emotes.CRYING}\n" \
+                    + f"it was {editor.user.mention}\n"
         else:
-            reply = "The non-liar was found " + f"{Emotes.HAPPY}\n"
+            reply = "The editor was found " + f"{Emotes.HAPPY}\n"
             if len(most_voted) > 1:
-                reply += f"it was {nonliar.user.mention}\n"
+                reply += f"it was {editor.user.mention}\n"
         reply += "\n" + "Most voted: " + ", ".join([p.user.mention for p in most_voted]) \
                  + "\n" + "Correct guessers: " + ", ".join([p.user.mention for p in correct])
         return reply + "\n\nVote amount of players:\n " + "\n".join(
@@ -108,7 +108,7 @@ class CitationGame:
             str(player.votes) for player in self.players)
 
     def cast_vote(self, user: discord.User | discord.Member, player_idx: int) -> tuple[str, bool]:
-        """Handles player voting for nonliar
+        """Handles player voting for editor
 
         Args:
             user (discord.User | discord.Member): Player that casts vote
@@ -151,14 +151,14 @@ class CitationGame:
         desc = "Playing now:\n " + "\n".join(p.user.display_name for p in self.players)
         return discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
 
-    def get_non_liar(self) -> Player:
+    def get_editor(self) -> Player:
         """Get not lying player of this round
 
         Returns:
-            Player: nonliar
+            Player: editor
         """
         for player in self.players:
-            if not player.is_liar:
+            if not player.is_misinformant:
                 return player
-        logger.error("Attempted to get nonliar but no non liar set")
+        logger.error("Attempted to get editor, but none set")
         return self.players[0]

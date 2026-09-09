@@ -48,16 +48,13 @@ CITATIONTITLE = "Missing Citation"
 
 CITATIONRULES = """__Missing Citation Rules__
 Every player is given the title of a wikipedia article, \
-except one player who gets the link to it.
+except one player, the "editor" who gets the link to it.
 
 You then have 20 seconds to make up what the article could be about or read the content of it.
-After that time the person with the link closes the article and the next phase begins.
+After that time the editor closes the article and the next phase begins.
 Every player attempts to convince the others of their version of the article's content.
 
 After this phase players start voting on who they think told the truth.
 The person telling the truth can vote but their vote will not be counted.
-From the first vote the voting phase lasts one minute, after which the scoring begins.
-The scoring is based on the player(s) with the most votes:
-> - if the player told a lie, they get one point, otherwise they get two.
-> - every player who guessed correctly (except the player who knew the truth) also gets one point.
+Every player wants to receive as many votes for them as they can while also voting for the editor.
 """

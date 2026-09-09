@@ -12,7 +12,7 @@ logger = Logger()
 
 
 class PlayerVoting(discord.ui.View):
-    """ View for players to vote who nonliar is
+    """ View for players to vote who editor is
 
     Args:
         game_state (CitationGame): The current state of the game
@@ -148,7 +148,7 @@ class CitationView(discord.ui.View):
         self.clear_items()
         self.message = await interaction.original_response()
         await helper.edit_embed(self.message, self, description="Game is ongoing")
-        self.game_state._choose_liars()
+        self.game_state._choose_misinformant()
         await self.article_choice()
         await helper.edit_embed(
             message=self.message,
@@ -162,7 +162,7 @@ class CitationView(discord.ui.View):
         await self.vote()
 
     async def vote(self) -> None:
-        """Begins voting for the nonliar
+        """Begins voting for the editor
 
         Args:
             channel (discord.TextChannel): Channel to vote using
@@ -183,7 +183,7 @@ class CitationView(discord.ui.View):
                                             [self.game_state.players[button_id].user.mention + ": "
                                                 + str(button_id + 1) for button_id in
                                                 range(0, len(self.game_state.players))]) + "\n\n"
-                                        + "Non-liar can vote but it will not be counted.")
+                                        + "editor can vote but it will not be counted.")
                         await helper.start_timer(helper.VOTE_TIME)
                         self.phase = helper.Phases.ENDING
                     case helper.Phases.VOTING:
@@ -212,16 +212,16 @@ class CitationView(discord.ui.View):
         self.clear_items()
 
     async def article_choice(self) -> None:
-        """Handles nonliar choosing an article
+        """Handles editor choosing an article
 
-        Sends a voting dm to the nonliar.
+        Sends a voting dm to the editor.
         Called at start of game.
         """
 
         logger.debug("Beginning article voting")
         article_list = self.game_state.get_article_choices()
         guess = CitationChoice(article_list, self)
-        await self.game_state.get_non_liar().user.send(view=guess)
+        await self.game_state.get_editor().user.send(view=guess)
         await helper.start_timer(helper.CHOICE_VOTE_TIME)
 
         if not guess.choice_made:
@@ -236,7 +236,7 @@ class CitationView(discord.ui.View):
 
 
 class CitationChoice(discord.ui.View):
-    """ View for nonliar to select an article
+    """ View for editor to select an article
 
     Args:
         article_list (list[str]): Subset of articles/titles to choose from
