@@ -1,16 +1,6 @@
-import asyncio
 from enum import Enum
 from helpers.style import Colours
 import discord
-
-
-async def start_timer(time: int) -> None:
-    """ Waits until time is up
-
-    Args:
-        time (int): amount of time to wait in seconds
-    """
-    await asyncio.sleep(time)
 
 
 async def edit_embed(

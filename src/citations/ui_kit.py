@@ -1,6 +1,7 @@
 import discord
 from typing import TYPE_CHECKING, Callable, Coroutine, Any
 import datetime as dt
+from asyncio import sleep
 
 from helpers.logger import Logger
 import citations.citation as helper
@@ -157,7 +158,7 @@ class CitationView(discord.ui.View):
                         + self.game_state.article,)
         await self.game_state.send_link()
         logger.debug("Begin player thinking timer")
-        await helper.start_timer(helper.THINK_TIME)
+        await sleep(helper.THINK_TIME)
         logger.debug("Begin talking stage until first vote gets casted")
         await self.vote()
 
@@ -184,7 +185,7 @@ class CitationView(discord.ui.View):
                                                 + str(button_id + 1) for button_id in
                                                 range(0, len(self.game_state.players))]) + "\n\n"
                                         + "editor can vote but it will not be counted.")
-                        await helper.start_timer(helper.VOTE_TIME)
+                        await sleep(helper.VOTE_TIME)
                         self.phase = helper.Phases.ENDING
                     case helper.Phases.VOTING:
                         if all(p.voted_for is not None for p in self.game_state.players):
@@ -222,11 +223,11 @@ class CitationView(discord.ui.View):
         article_list = self.game_state.get_article_choices()
         guess = CitationChoice(article_list, self)
         await self.game_state.get_editor().user.send(view=guess)
-        await helper.start_timer(helper.CHOICE_VOTE_TIME)
+        await sleep(helper.CHOICE_VOTE_TIME)
 
         if not guess.choice_made:
             self.game_state.article = article_list[0] if len(article_list) > 0 else "Error"
-        self.game_state.article = self.game_state.article.replace('_', ' ')
+            self.game_state.article = self.game_state.article.replace('_', ' ')
 
     async def finish_up_round(self) -> None:
         """Calculate round result and updated view based on it
