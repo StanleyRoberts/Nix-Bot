@@ -7,6 +7,9 @@ async def edit_embed(
         message: discord.Message | discord.InteractionMessage,
         view: discord.ui.View,
         description: str) -> None:
+    """ Edit given message using citation template, given view and description
+    Citation template describes title and colour of the discord embed.
+    """
     await message.edit(
         view=view,
         embed=discord.Embed(
