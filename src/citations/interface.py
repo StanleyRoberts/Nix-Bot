@@ -34,7 +34,7 @@ class CitationGame:
     def _choose_misinformant(self) -> None:
         editor = random.choice(self.players)
         editor.is_misinformant = False
-        logger.debug(f"Random not lying player was selected: {editor.user.id}")
+        logger.debug(f"Random misinformant was selected: {editor.user.id}")
 
     def get_article_choices(self) -> list[str]:
         """Returns a list of CHOICE_AMOUNT random article titles"""
