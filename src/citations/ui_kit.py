@@ -51,10 +51,10 @@ class PlayerVoting(discord.ui.View):
                 return
             content, valid = self.game_state.cast_vote(user, int(button.custom_id))
             await interaction.response.send_message(ephemeral=True, content=content)
-            if not valid:
-                logger.debug("Non valid interaction in cast_vote")
-            else:
+            if valid:
                 await self.after_vote()
+            else:
+                logger.debug("Non valid interaction in cast_vote")
 
         button.callback = cast_vote  # type: ignore[method-assign]
         self.add_item(button)
