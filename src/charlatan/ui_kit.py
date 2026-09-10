@@ -64,7 +64,7 @@ class PlayerVoting(discord.ui.View):
             i (int): Button label and unique ID
         """
         button = discord.ui.Button(
-            label=str(i + 1),
+            label=str(i),
             custom_id=str(i)
         )  # type: ignore[var-annotated]
 
@@ -73,7 +73,8 @@ class PlayerVoting(discord.ui.View):
             if user is None or button.custom_id is None:
                 logger.warning("Invalid button press")
                 return
-            content = self.game_state.cast_vote(user, int(button.custom_id))
+            # adjust id to use 0-index in backend but 1-index on button label
+            content = self.game_state.cast_vote(user, int(button.custom_id) - 1)
             await interaction.response.send_message(ephemeral=True, content=content)
 
         button.callback = cast_vote  # type: ignore[method-assign]
