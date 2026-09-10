@@ -230,8 +230,7 @@ class CitationView(discord.ui.View):
             self.game_state.article = self.game_state.article.replace('_', ' ')
 
     async def finish_up_round(self) -> None:
-        """Calculate round result and updated view based on it
-        """
+        """Calculate round result and updated view based on it"""
         description = self.game_state.round_result()
         await helper.edit_embed(self.message, self, description)
 

@@ -10,8 +10,7 @@ logger = Logger()
 
 
 class Player:
-    """Represents a player in the game
-    """
+    """Represents a player in the game"""
 
     def __init__(self, user: discord.User | discord.Member) -> None:
         self.user = user
@@ -60,8 +59,7 @@ class CitationGame:
         self.players = [p for p in self.players if p.user.id != player.id]
 
     async def send_link(self) -> None:
-        """Send dm to editor with wikipedia link
-        """
+        """Send dm to editor with wikipedia link"""
         editor = self.get_editor()
         desc = f"Skim the article and close it before the questions begin {Emotes.HUG}" \
                + "\n" + self._get_link()
@@ -71,6 +69,7 @@ class CitationGame:
 
     def round_result(self) -> str:
         """ Tallies up vote result and returns description of it.
+
         Final description shows (in order):
         - Whether editor was found and who they were
         - List of players who voted for the correct player
@@ -147,7 +146,7 @@ class CitationGame:
 
             Returns:
                 discord.Embed: The constructed embed
-            """
+        """
         desc = "Playing now:\n " + "\n".join(p.user.display_name for p in self.players)
         return discord.Embed(title=title, description=desc, colour=Colours.PRIMARY)
 
