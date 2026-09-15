@@ -244,9 +244,7 @@ class CitationView(discord.ui.View):
 
         if guess.choice is None:
             button = guess.children[0] if len(guess.children) > 0 else None
-            if (type(button) is discord.ui.Button 
-                and button.label is not None
-            ):
+            if type(button) is discord.ui.Button and button.label is not None:
                 button.disabled = True
                 guess.children = [button]
                 await guess.message.edit(view=guess)
