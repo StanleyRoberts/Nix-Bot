@@ -1,5 +1,6 @@
 import random
 import discord
+import requests
 
 from helpers.style import Emotes, Colours
 from helpers.logger import Logger
@@ -31,10 +32,10 @@ class CitationGame:
         self.article = ""
         self.players = [Player(initiator)]
 
-    def _choose_misinformant(self) -> None:
+    def _choose_editor(self) -> None:
         editor = random.choice(self.players)
         editor.is_misinformant = False
-        logger.debug(f"Random misinformant was selected: {editor.user.id}")
+        logger.debug(f"Random editor was selected: {editor.user.id}")
 
     def get_article_choices(self) -> list[str]:
         """Returns a list of CHOICE_AMOUNT random article titles"""
@@ -58,11 +59,20 @@ class CitationGame:
         """Remove player from game if they exist"""
         self.players = [p for p in self.players if p.user.id != player.id]
 
-    async def send_link(self) -> None:
+    async def send_article(self) -> None:
         """Send dm to editor with wikipedia link"""
         editor = self.get_editor()
-        desc = f"Skim the article and close it before the questions begin {Emotes.HUG}" \
-               + "\n" + self._get_link()
+        url = "https://en.wikipedia.org/w/api.php?format=json&action=query&" \
+              "prop=extracts&exintro&explaintext&redirects=1&titles=" + self.article
+        header = {'User-Agent': 'Nix-Bot (https://github.com/StanleyRoberts/Nix-Bot)'}
+        r = requests.get(url, headers=header)
+        try:
+            results = list(r.json()['query']['pages'].values())[0]['extract']
+            desc = f"### Familiarise yourself with the summary and answer truthfully:\n" + results
+        except Exception as _:
+            desc = f"Skim the article and close it before the questions begin {Emotes.HUG}" \
+                + "\n" + self._get_link()
+
         title = "You get to tell the truth."
         await editor.user.send(
             embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY))

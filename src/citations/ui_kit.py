@@ -145,18 +145,18 @@ class CitationView(discord.ui.View):
         _: discord.ui.Button[discord.ui.View],
         interaction: discord.Interaction
     ) -> None:
-        await interaction.response.defer()
         self.clear_items()
+        await interaction.response.defer()
         self.message = await interaction.original_response()
         await helper.edit_embed(self.message, self, description="Game is ongoing")
-        self.game_state._choose_misinformant()
+        self.game_state._choose_editor()
         await self.article_choice()
         await helper.edit_embed(
             message=self.message,
             view=self,
             description="Unless you received a DM, make up an article about:\n"
                         + self.game_state.article,)
-        await self.game_state.send_link()
+        await self.game_state.send_article()
         logger.debug("Begin player thinking timer")
         await sleep(helper.THINK_TIME)
         logger.debug("Begin talking stage until first vote gets casted")
