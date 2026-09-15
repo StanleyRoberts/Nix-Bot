@@ -29,7 +29,7 @@ class CitationGame:
             self,
             initiator: discord.User | discord.Member
     ) -> None:
-        self.article = ""
+        self.article: str | None = None
         self.players = [Player(initiator)]
 
     def _choose_editor(self) -> None:
@@ -47,9 +47,12 @@ class CitationGame:
                 + f"{CHOICE_AMOUNT - len(articles)}")
         return articles
 
-    def _get_link(self) -> str:
+    def _get_link(self) -> str | None:
         article_url = "https://en.wikipedia.org/wiki/"
-        return article_url + self.article.replace(' ', '_')
+        if self.article:
+            return article_url + self.article.replace(' ', '_')
+        logger.warning("Called _get_link without self.article being set.")
+        return None
 
     def add_player(self, new_player: discord.User | discord.Member) -> None:
         """Add new player to game"""
@@ -61,19 +64,27 @@ class CitationGame:
 
     async def send_article(self) -> None:
         """Send dm to editor with wikipedia link"""
+        title = "You get to tell the truth."
         editor = self.get_editor()
+
+        if self.article is None:
+            desc = f"Something went wrong getting the article {Emotes.CRYING}"
+            await editor.user.send(
+                embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY))
+            return
+
         url = "https://en.wikipedia.org/w/api.php?format=json&action=query&" \
-              "prop=extracts&exintro&explaintext&redirects=1&titles=" + self.article
+              +"prop=extracts&exintro&explaintext&redirects=1&titles=" + self.article
         header = {'User-Agent': 'Nix-Bot (https://github.com/StanleyRoberts/Nix-Bot)'}
         r = requests.get(url, headers=header)
         try:
             results = list(r.json()['query']['pages'].values())[0]['extract']
             desc = f"### Familiarise yourself with the summary and answer truthfully:\n" + results
         except Exception as _:
+            link = self._get_link()
             desc = f"Skim the article and close it before the questions begin {Emotes.HUG}" \
-                + "\n" + self._get_link()
+                + "\n" + (link if link else self.article)
 
-        title = "You get to tell the truth."
         await editor.user.send(
             embed=discord.Embed(title=title, description=desc, colour=Colours.PRIMARY))
 

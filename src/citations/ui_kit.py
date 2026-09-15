@@ -150,12 +150,20 @@ class CitationView(discord.ui.View):
         self.message = await interaction.original_response()
         await helper.edit_embed(self.message, self, description="Game is ongoing")
         self.game_state._choose_editor()
-        await self.article_choice()
+        self.game_state.article = await self.article_choice()
+
+        if self.game_state.article is None:
+            await helper.edit_embed(
+                message=self.message,
+                view=self,
+                description=f"An error has occured with the game {Emotes.CRYING}")
+            return
+
         await helper.edit_embed(
             message=self.message,
             view=self,
             description="Unless you received a DM, make up an article about:\n"
-                        + self.game_state.article,)
+                        + self.game_state.article)
         await self.game_state.send_article()
         logger.debug("Begin player thinking timer")
         await sleep(helper.THINK_TIME)
@@ -169,6 +177,9 @@ class CitationView(discord.ui.View):
             channel (discord.TextChannel): Channel to vote using
         """
         async def callback_voting() -> None:
+            if self.game_state.article is None:
+                logger.warning("Voting callback called with article being None")
+                return
             while self.phase is not helper.Phases.FINISHED:
                 match self.phase:
                     case helper.Phases.TALKING:
@@ -197,6 +208,9 @@ class CitationView(discord.ui.View):
                     case helper.Phases.FINISHED:
                         return
 
+        if self.game_state.article is None:
+            logger.warning("Voting called with article being None")
+            return
         view = PlayerVoting(self.game_state, callback_voting)
         await helper.edit_embed(
             message=self.message,
@@ -212,11 +226,14 @@ class CitationView(discord.ui.View):
         view.message = self.message
         self.clear_items()
 
-    async def article_choice(self) -> None:
+    async def article_choice(self) -> str | None:
         """Handles editor choosing an article
 
         Sends a voting dm to the editor.
         Called at start of game.
+        If no article is chosen by the time CHOICE_VOTE_TIME is up, uses first option as choice.
+
+        Return: Article that was chosen; None in case of an error.
         """
 
         logger.debug("Beginning article voting")
@@ -225,9 +242,20 @@ class CitationView(discord.ui.View):
         await self.game_state.get_editor().user.send(view=guess)
         await sleep(helper.CHOICE_VOTE_TIME)
 
-        if not guess.choice_made:
-            self.game_state.article = article_list[0] if len(article_list) > 0 else "Error"
-            self.game_state.article = self.game_state.article.replace('_', ' ')
+        if guess.choice is None:
+            button = guess.children[0] if len(guess.children) > 0 else None
+            if (type(button) is discord.ui.Button 
+                and button.label is not None
+            ):
+                button.disabled = True
+                guess.children = [button]
+                await guess.message.edit(view=guess)
+                guess.choice = button.label
+            else:
+                logger.warning("Could not get an article for citation game")
+                return None
+        guess.choice = guess.choice.replace('_', ' ')
+        return guess.choice
 
     async def finish_up_round(self) -> None:
         """Calculate round result and updated view based on it"""
@@ -247,12 +275,9 @@ class CitationChoice(discord.ui.View):
         logger.debug("Created new CitationChoice view")
         super().__init__(timeout=120)
         self.parent_view: CitationView = parent
-        self.choice_made = False
+        self.choice: str | None = None
         for i, button_word in enumerate(article_list):
-            self.add_button(
-                i,
-                button_word
-            )
+            self.add_button(i, button_word)
 
     def add_button(self, i: int, article: str) -> None:
         """Adds a button to the view
@@ -268,15 +293,15 @@ class CitationChoice(discord.ui.View):
 
         async def word_guess(interaction: discord.Interaction) -> None:
             """Callback for the added button"""
-            if self.choice_made:
+            if self.choice is not None:
                 return
 
-            self.choice_made = True
-            self.parent_view.game_state.article = article
+            self.choice = article
             logger.debug("CitationChoice, choice made.")
             response = f"Article chosen {Emotes.HAPPY}"
             self.children = [button]
             button.disabled = True
-            await self.message.edit(content=response, view=self)
+            await self.message.edit(view=self)
+            await interaction.respond(content=response)
         button.callback = word_guess  # type: ignore[method-assign]
         self.add_item(button)
